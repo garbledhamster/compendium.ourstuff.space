@@ -1,0 +1,25 @@
+- id: monokai-dark
+  label: Monokai (Dark)
+  colors:
+    primaryColor: "#a6e22e"
+    secondaryColor: "#66d9ef"
+    backgroundColor: "#272822"
+    surfaceColor: "#1f201d"
+    surfaceMutedColor: "#2c2d29"
+    borderColor: "#3e3d32"
+    textColor: "#f8f8f2"
+    textMutedColor: "#9a9a8f"
+    dangerColor: "#f92672"
+
+- id: monokai-light
+  label: Monokai (Light)
+  colors:
+    primaryColor: "#5b8c00"
+    secondaryColor: "#007f94"
+    backgroundColor: "#f8f8f2"
+    surfaceColor: "#ffffff"
+    surfaceMutedColor: "#f2f2eb"
+    borderColor: "#ddd9c3"
+    textColor: "#272822"
+    textMutedColor: "#6b6a5e"
+    dangerColor: "#c40033"
