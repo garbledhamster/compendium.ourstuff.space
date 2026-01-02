@@ -84,10 +84,6 @@
             </button>
           </div>
 
-          <button id="googleSignInBtn" type="button"
-            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10">
-            Sign in with Google
-          </button>
         </div>
       </div>
     </div>
@@ -160,7 +156,7 @@
           </div>
 
           <div class="mt-4 text-xs text-slate-400">
-            Tip: use <span class="font-semibold text-slate-200">Tools → Export</span> to back up your compendiums (JSON).
+            Tip: use <span class="font-semibold text-slate-200">Settings → Export</span> to back up your compendiums (JSON).
           </div>
         </main>
       </div>
@@ -377,12 +373,13 @@
     </form>
   </dialog>
 
-  <!-- Tools Dialog -->
-  <dialog id="toolsDialog" class="w-[min(760px,96vw)] rounded-2xl border border-white/10 bg-slate-950 text-slate-100 shadow-soft">
-    <form method="dialog" class="p-0">
+  <div id="settingsOverlay" class="fixed inset-0 z-40 hidden bg-slate-950/60 backdrop-blur-sm" data-action="close-tools"></div>
+  <aside id="settingsDrawer"
+    class="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] translate-y-full rounded-t-3xl border-t border-white/10 bg-slate-950/95 shadow-2xl backdrop-blur transition-transform duration-200 ease-out">
+    <div class="flex h-full flex-col">
       <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
         <div>
-          <div class="text-base font-bold">Tools</div>
+          <div class="text-base font-bold">Settings</div>
           <div class="text-xs text-slate-400">Export, import, or reset your data.</div>
         </div>
         <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
@@ -391,7 +388,7 @@
         </button>
       </div>
 
-      <div class="px-5 py-5">
+      <div class="flex-1 overflow-auto px-5 py-5">
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
             <div class="text-sm font-semibold">Export</div>
@@ -428,12 +425,26 @@
           </div>
         </div>
 
+        <div class="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div class="flex items-start gap-3">
+            <div class="mt-0.5 text-slate-200"><i data-lucide="log-out" class="h-5 w-5"></i></div>
+            <div class="flex-1">
+              <div class="text-sm font-semibold text-slate-100">Account</div>
+              <div class="mt-1 text-xs text-slate-400">Sign out of this device.</div>
+              <button type="button" class="mt-3 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                data-action="logout">
+                Log out
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="mt-4 text-xs text-slate-400">
           Storage: synced to your account with a local cache for faster loads.
         </div>
       </div>
-    </form>
-  </dialog>
+    </div>
+  </aside>
 
   <!-- Image Viewer (NEW, not inside entry form) -->
   <dialog id="imageViewerDialog" class="w-[min(1100px,98vw)] rounded-2xl border border-white/10 bg-slate-950 text-slate-100 shadow-soft">
@@ -494,10 +505,9 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import {
       getAuth,
-      GoogleAuthProvider,
-      signInWithPopup,
       createUserWithEmailAndPassword,
       signInWithEmailAndPassword,
+      signOut,
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import {
@@ -976,7 +986,8 @@
       primaryActionBtn: $("#primaryActionBtn"),
       globalSearch: $("#globalSearch"),
       entryDialog: $("#entryDialog"),
-      toolsDialog: $("#toolsDialog"),
+      settingsDrawer: $("#settingsDrawer"),
+      settingsOverlay: $("#settingsOverlay"),
       imageViewerDialog: $("#imageViewerDialog"),
       compendiumDrawer: $("#compendiumDrawer"),
       drawerOverlay: $("#drawerOverlay"),
@@ -988,7 +999,6 @@
       password: $("#authPassword"),
       createBtn: $("#createAccountBtn"),
       signInBtn: $("#signInBtn"),
-      googleBtn: $("#googleSignInBtn"),
       error: $("#authError")
     };
 
@@ -1066,6 +1076,22 @@
       els.compendiumDrawer.classList.add("-translate-x-full");
       els.compendiumDrawer.classList.remove("translate-x-0");
       els.drawerOverlay.classList.add("hidden");
+      document.body.classList.remove("overflow-hidden");
+    }
+
+    function openSettingsDrawer() {
+      if (!els.settingsDrawer || !els.settingsOverlay) return;
+      els.settingsDrawer.classList.remove("translate-y-full");
+      els.settingsDrawer.classList.add("translate-y-0");
+      els.settingsOverlay.classList.remove("hidden");
+      document.body.classList.add("overflow-hidden");
+    }
+
+    function closeSettingsDrawer() {
+      if (!els.settingsDrawer || !els.settingsOverlay) return;
+      els.settingsDrawer.classList.add("translate-y-full");
+      els.settingsDrawer.classList.remove("translate-y-0");
+      els.settingsOverlay.classList.add("hidden");
       document.body.classList.remove("overflow-hidden");
     }
 
@@ -1227,7 +1253,7 @@
                   </button>
                   <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
                     data-action="open-tools">
-                    <span class="inline-flex items-center gap-2"><i data-lucide="settings" class="h-4 w-4"></i>Tools</span>
+                    <span class="inline-flex items-center gap-2"><i data-lucide="settings" class="h-4 w-4"></i>Settings</span>
                   </button>
                 </div>
               </div>
@@ -2255,15 +2281,6 @@
       }
     });
 
-    authEls.googleBtn?.addEventListener("click", async () => {
-      try {
-        setAuthError("");
-        await signInWithPopup(auth, new GoogleAuthProvider());
-      } catch (err) {
-        setAuthError(err?.message || "Google sign-in failed.");
-      }
-    });
-
     onAuthStateChanged(auth, async (user) => {
       currentUser = user;
       if (user) {
@@ -2515,8 +2532,13 @@
         return;
       }
 
-      if (action === "open-tools") { closeCompendiumDrawer(); els.toolsDialog.showModal(); refreshIcons(); return; }
-      if (action === "close-tools") { try { els.toolsDialog.close(); } catch {} return; }
+      if (action === "open-tools") { closeCompendiumDrawer(); openSettingsDrawer(); refreshIcons(); return; }
+      if (action === "close-tools") { closeSettingsDrawer(); return; }
+      if (action === "logout") {
+        closeSettingsDrawer();
+        signOut(auth);
+        return;
+      }
       if (action === "export-json") { exportJSON(); return; }
 
       if (action === "import-json") {
