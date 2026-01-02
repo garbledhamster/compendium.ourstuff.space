@@ -532,6 +532,13 @@
 
     const uid = (p="id") => `${p}_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`;
     const nowISO = () => new Date().toISOString();
+    const generateSalt = (bytes = 16) => {
+      const buf = new Uint8Array(bytes);
+      crypto.getRandomValues(buf);
+      return Array.from(buf, (b) => b.toString(16).padStart(2, "0")).join("");
+    };
+    const getUserProvider = (user) => user?.providerData?.[0]?.providerId || user?.providerId || "unknown";
+    const getUserDisplayName = (user) => user?.displayName || user?.providerData?.[0]?.displayName || "";
     const toLines = (s) => String(s||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
     const fromLines = (arr) => (arr||[]).join("\n");
     const clamp = (n,min,max)=>Math.max(min,Math.min(max,n));
@@ -854,14 +861,39 @@
       try {
         const userRef = doc(db, "users", user.uid);
         const snapshot = await getDoc(userRef);
+        if (!snapshot.exists()) {
+          const salt = generateSalt();
+          await setDoc(
+            userRef,
+            {
+              email: user.email || "",
+              displayName: getUserDisplayName(user),
+              provider: getUserProvider(user),
+              salt,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+              state
+            },
+            { merge: true }
+          );
+          return;
+        }
+
         const data = snapshot.data();
-        if (snapshot.exists() && data?.state) {
+        if (data?.state) {
           state = data.state;
           saveStateLocal();
           render();
-          return;
+        } else {
+          await setDoc(userRef, { state }, { merge: true });
         }
-        await setDoc(userRef, { state, createdAt: serverTimestamp() }, { merge: true });
+
+        await updateDoc(userRef, {
+          email: user.email || "",
+          displayName: getUserDisplayName(user),
+          provider: getUserProvider(user),
+          updatedAt: serverTimestamp()
+        });
       } catch (err) {
         toast("Unable to load cloud data. Using local data.", "error");
       }
