@@ -29,12 +29,12 @@
         <form class="form" id="authForm">
           <label class="field">
             <span class="field__label">Email</span>
-            <input class="input" id="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+            <input class="input" id="email" type="email" autocomplete="email" required />
           </label>
 
           <label class="field">
             <span class="field__label">Password</span>
-            <input class="input" id="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
+            <input class="input" id="password" type="password" autocomplete="current-password" required />
             <span class="field__hint">Minimum 6 characters (Firebase default).</span>
           </label>
 
@@ -52,101 +52,6 @@
     </section>
   </main>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import {
-      getAuth,
-      createUserWithEmailAndPassword,
-      signInWithEmailAndPassword,
-      signOut,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDf199rSY0dMSD-OZYFeiqVqz_pBOEvXR4",
-      authDomain: "compendium-75ea8.firebaseapp.com",
-      projectId: "compendium-75ea8",
-      storageBucket: "compendium-75ea8.firebasestorage.app",
-      messagingSenderId: "290402747744",
-      appId: "1:290402747744:web:ffad2382b0739866ea4a05",
-      measurementId: "G-3VNX1C0PM7"
-    };
-
-    const firebaseApp = initializeApp(firebaseConfig);
-    const auth = getAuth(firebaseApp);
-    getFirestore(firebaseApp);
-
-    const $ = (s) => document.querySelector(s);
-    const errBox = $("#errBox");
-    const submitBtn = $("#submitBtn");
-    const modeSignIn = $("#modeSignIn");
-    const modeCreate = $("#modeCreate");
-    const showPw = $("#showPw");
-
-    let mode = "signin";
-
-    function setMode(next) {
-      mode = next;
-      modeSignIn.classList.toggle("is-active", mode === "signin");
-      modeCreate.classList.toggle("is-active", mode === "create");
-      submitBtn.textContent = mode === "signin" ? "Sign In" : "Create Account";
-      clearError();
-    }
-
-    function setBusy(busy) {
-      submitBtn.disabled = busy;
-      submitBtn.textContent = busy
-        ? (mode === "signin" ? "Signing in…" : "Creating…")
-        : (mode === "signin" ? "Sign In" : "Create Account");
-    }
-
-    function showError(msg) {
-      errBox.textContent = msg;
-      errBox.classList.remove("is-hidden");
-    }
-
-    function clearError() {
-      errBox.textContent = "";
-      errBox.classList.add("is-hidden");
-    }
-
-    modeSignIn.addEventListener("click", () => setMode("signin"));
-    modeCreate.addEventListener("click", () => setMode("create"));
-
-    showPw.addEventListener("change", () => {
-      $("#password").type = showPw.checked ? "text" : "password";
-    });
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) window.location.href = "./index.html";
-    });
-
-    $("#authForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      clearError();
-
-      const email = $("#email").value.trim();
-      const password = $("#password").value;
-
-      if (!email || !password) { showError("Email and password are required."); return; }
-
-      setBusy(true);
-      try {
-        if (mode === "create") {
-          await createUserWithEmailAndPassword(auth, email, password);
-        } else {
-          await signInWithEmailAndPassword(auth, email, password);
-        }
-        window.location.href = "./index.html";
-      } catch (err) {
-        showError(err?.message || "Authentication failed.");
-      } finally {
-        setBusy(false);
-      }
-    });
-
-    setMode("signin");
-  </script>
+  <script type="module" src="./scripts/login.js"></script>
 </body>
 </html>
