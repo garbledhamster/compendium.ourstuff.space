@@ -8,8 +8,10 @@
   --text: #f8f8f2;
   --muted: #9a9a8f;
   --danger: #f92672;
+  --overlay-color: #070707;
+  --text-on-image: #f8f8f2;
 
-  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  --shadow: 0 10px 30px rgb(from var(--overlay-color) r g b / 0.35);
   --radius: 14px;
   --radius-sm: 10px;
 
@@ -335,7 +337,7 @@ a { color: inherit; }
   max-width: calc(100vw - 26px);
   overflow-x: hidden;
 }
-.modal::backdrop { background: rgba(0,0,0,.55); backdrop-filter: blur(3px); }
+.modal::backdrop { background: rgb(from var(--overlay-color) r g b / 0.55); backdrop-filter: blur(3px); }
 .modal__card {
   width: min(920px, calc(100vw - 26px));
   max-width: 100%;
@@ -560,7 +562,7 @@ a { color: inherit; }
   aspect-ratio: 2 / 3;
   min-height: 280px;
   text-align: left;
-  color: #fff;
+  color: var(--text-on-image);
   border-radius: var(--radius);
   border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
   background: color-mix(in srgb, var(--surface) 88%, transparent);
@@ -589,11 +591,11 @@ a { color: inherit; }
   inset: 0;
   background-image: linear-gradient(
     to bottom,
-    rgba(0,0,0,0) 0%,
-    rgba(0,0,0,0.08) 20%,
-    rgba(0,0,0,0.25) 50%,
-    rgba(0,0,0,0.55) 75%,
-    rgba(0,0,0,0.82) 100%
+    rgb(from var(--overlay-color) r g b / 0) 0%,
+    rgb(from var(--overlay-color) r g b / 0.08) 20%,
+    rgb(from var(--overlay-color) r g b / 0.25) 50%,
+    rgb(from var(--overlay-color) r g b / 0.55) 75%,
+    rgb(from var(--overlay-color) r g b / 0.82) 100%
   );
   transform: translateY(-40%);
   transition: transform calc(var(--cp-d) * 2) var(--cp-e);
@@ -661,15 +663,15 @@ a { color: inherit; }
   font-weight: 800;
   line-height: 1.15;
   margin: 0;
-  text-shadow: 0 2px 8px rgba(0,0,0,.35);
+  text-shadow: 0 2px 8px rgb(from var(--overlay-color) r g b / 0.35);
 }
 
 .cp-pill {
   font-size: 11px;
   padding: 4px 8px;
   border-radius: 999px;
-  background: rgba(0,0,0,0.35);
-  border: 1px solid rgba(255,255,255,0.18);
+  background: rgb(from var(--overlay-color) r g b / 0.35);
+  border: 1px solid rgb(from var(--text-on-image) r g b / 0.18);
   backdrop-filter: blur(8px);
 }
 
@@ -679,14 +681,14 @@ a { color: inherit; }
   font-size: 1.02rem;
   font-style: italic;
   line-height: 1.25;
-  color: rgba(255,255,255,0.94);
-  text-shadow: 0 2px 8px rgba(0,0,0,.35);
+  color: rgb(from var(--text-on-image) r g b / 0.94);
+  text-shadow: 0 2px 8px rgb(from var(--overlay-color) r g b / 0.35);
 }
 
 .cp-meta {
   margin-top: 10px;
   font-size: 12px;
-  color: rgba(255,255,255,0.78);
+  color: rgb(from var(--text-on-image) r g b / 0.78);
 }
 
 .cp-tags {
@@ -700,8 +702,8 @@ a { color: inherit; }
   font-size: 11px;
   padding: 4px 8px;
   border-radius: 999px;
-  background: rgba(0,0,0,0.35);
-  border: 1px solid rgba(255,255,255,0.18);
+  background: rgb(from var(--overlay-color) r g b / 0.35);
+  border: 1px solid rgb(from var(--text-on-image) r g b / 0.18);
 }
 
 .cp-btn {
@@ -711,8 +713,8 @@ a { color: inherit; }
   justify-content: center;
   padding: 9px 12px;
   border-radius: 12px;
-  background: rgba(0,0,0,0.55);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: rgb(from var(--overlay-color) r g b / 0.55);
+  border: 1px solid rgb(from var(--text-on-image) r g b / 0.2);
   font-weight: 800;
   font-size: 12px;
   letter-spacing: 0.02em;
@@ -757,5 +759,5 @@ a { color: inherit; }
   background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+  box-shadow: inset 0 0 0 1px rgb(from var(--text-on-image) r g b / 0.05);
 }
