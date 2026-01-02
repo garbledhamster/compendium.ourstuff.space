@@ -38,6 +38,12 @@
             <span class="field__hint">Minimum 6 characters (Firebase default).</span>
           </label>
 
+          <label class="field is-hidden create-only" id="confirmField">
+            <span class="field__label">Retype Password</span>
+            <input class="input" id="confirmPassword" type="password" autocomplete="new-password" />
+            <span class="field__hint match-hint is-hidden" id="matchHint"></span>
+          </label>
+
           <label class="switch">
             <input id="showPw" type="checkbox" />
             <span class="switch__ui" aria-hidden="true"></span>
