@@ -259,6 +259,10 @@ a { color: inherit; }
   outline: none;
   transition: border-color .18s ease, background .18s ease;
 }
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--muted);
+}
 .textarea { resize: vertical; min-height: 120px; }
 .input:focus, .textarea:focus, .select:focus, .file:focus {
   border-color: color-mix(in srgb, var(--secondary) 55%, var(--border));

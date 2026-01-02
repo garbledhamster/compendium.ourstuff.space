@@ -1,8 +1,27 @@
 import { redirectIfAuthed, createAccount, signIn } from "./authentication.js";
+import { loadThemesFromYaml, applyTheme, pickTheme } from "./themes.js";
+
+const THEME_STORAGE_KEY = "compendium.themeId";
 
 const $ = (s) => document.querySelector(s);
 
 redirectIfAuthed({ redirectTo: "./index.html" });
+
+async function initTheme() {
+  let themeId = "monokai-dark";
+  try {
+    const storedThemeId = localStorage.getItem(THEME_STORAGE_KEY);
+    if (storedThemeId) themeId = storedThemeId;
+  } catch {}
+
+  try {
+    const themes = await loadThemesFromYaml({ allowedIds: ["monokai-dark", "monokai-light"] });
+    const chosen = pickTheme(themes, themeId, "monokai-dark");
+    if (chosen) applyTheme(chosen);
+  } catch (err) {
+    console.error(err);
+  }
+}
 
 const errBox = $("#errBox");
 const submitBtn = $("#submitBtn");
@@ -111,4 +130,5 @@ $("#authForm").addEventListener("submit", async (e) => {
   }
 });
 
+initTheme();
 setMode("signin");
