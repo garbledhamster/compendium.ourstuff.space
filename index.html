@@ -45,6 +45,54 @@
 </head>
 
 <body class="h-full bg-slate-950 text-slate-100">
+  <div id="authScreen" class="fixed inset-0 z-50 hidden bg-slate-950/95 backdrop-blur">
+    <div class="flex min-h-full items-center justify-center px-4 py-10">
+      <div class="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-glow">
+        <div class="flex items-center gap-3">
+          <div class="grid h-12 w-12 place-items-center rounded-2xl bg-white/10">
+            <i data-lucide="book-open" class="h-6 w-6"></i>
+          </div>
+          <div>
+            <div class="text-lg font-semibold">Compendium Builder</div>
+            <div class="text-xs text-slate-300">Sign in to sync your library.</div>
+          </div>
+        </div>
+
+        <div class="mt-6 space-y-4">
+          <label class="block">
+            <span class="mb-1 block text-xs font-semibold text-slate-300">Email</span>
+            <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"
+              class="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20" />
+          </label>
+
+          <label class="block">
+            <span class="mb-1 block text-xs font-semibold text-slate-300">Password</span>
+            <input id="authPassword" type="password" autocomplete="current-password" placeholder="••••••••"
+              class="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20" />
+          </label>
+
+          <div id="authError" class="hidden rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-200"></div>
+
+          <div class="grid gap-3 sm:grid-cols-2">
+            <button id="createAccountBtn" type="button"
+              class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10">
+              Create account
+            </button>
+            <button id="signInBtn" type="button"
+              class="rounded-xl bg-cyan-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400">
+              Sign in
+            </button>
+          </div>
+
+          <button id="googleSignInBtn" type="button"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10">
+            Sign in with Google
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="min-h-full">
     <div class="fixed inset-0 -z-10">
       <div class="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900"></div>
@@ -514,8 +562,32 @@
       return st;
     }
 
-    function saveState() {
+    let currentUser = null;
+    let remoteSaveTimer = null;
+
+    function saveStateLocal() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function scheduleRemoteSave() {
+      if (!currentUser) return;
+      clearTimeout(remoteSaveTimer);
+      remoteSaveTimer = setTimeout(async () => {
+        try {
+          await setDoc(
+            doc(db, "users", currentUser.uid),
+            { state, updatedAt: serverTimestamp() },
+            { merge: true }
+          );
+        } catch (err) {
+          toast("Cloud sync failed. Changes saved locally.", "error");
+        }
+      }, 400);
+    }
+
+    function saveState() {
+      saveStateLocal();
+      scheduleRemoteSave();
     }
 
     function loadTheme() {
@@ -754,6 +826,46 @@
       compendiumDrawer: $("#compendiumDrawer"),
       drawerOverlay: $("#drawerOverlay"),
     };
+
+    const authEls = {
+      screen: $("#authScreen"),
+      email: $("#authEmail"),
+      password: $("#authPassword"),
+      createBtn: $("#createAccountBtn"),
+      signInBtn: $("#signInBtn"),
+      googleBtn: $("#googleSignInBtn"),
+      error: $("#authError")
+    };
+
+    function setAuthError(message) {
+      if (!authEls.error) return;
+      authEls.error.textContent = message || "";
+      authEls.error.classList.toggle("hidden", !message);
+    }
+
+    function setAuthScreenVisible(isVisible) {
+      if (!authEls.screen) return;
+      authEls.screen.classList.toggle("hidden", !isVisible);
+      document.body.classList.toggle("overflow-hidden", isVisible);
+    }
+
+    async function loadUserData(user) {
+      if (!user) return;
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const snapshot = await getDoc(userRef);
+        const data = snapshot.data();
+        if (snapshot.exists() && data?.state) {
+          state = data.state;
+          saveStateLocal();
+          render();
+          return;
+        }
+        await setDoc(userRef, { state, createdAt: serverTimestamp() }, { merge: true });
+      } catch (err) {
+        toast("Unable to load cloud data. Using local data.", "error");
+      }
+    }
 
     function openCompendiumDrawer() {
       if (!els.compendiumDrawer || !els.drawerOverlay) return;
@@ -1920,6 +2032,61 @@
         images: getImagesDraft()
       };
     }
+
+    /***********************
+     * Auth
+     ***********************/
+    setAuthScreenVisible(true);
+
+    authEls.createBtn?.addEventListener("click", async () => {
+      const email = authEls.email?.value.trim() || "";
+      const password = authEls.password?.value || "";
+      if (!password) {
+        setAuthError("Password is required to create an account.");
+        authEls.password?.focus();
+        return;
+      }
+      try {
+        setAuthError("");
+        await createUserWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        setAuthError(err?.message || "Unable to create account.");
+      }
+    });
+
+    authEls.signInBtn?.addEventListener("click", async () => {
+      const email = authEls.email?.value.trim() || "";
+      const password = authEls.password?.value || "";
+      if (!email || !password) {
+        setAuthError("Enter both email and password to sign in.");
+        return;
+      }
+      try {
+        setAuthError("");
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        setAuthError(err?.message || "Unable to sign in.");
+      }
+    });
+
+    authEls.googleBtn?.addEventListener("click", async () => {
+      try {
+        setAuthError("");
+        await signInWithPopup(auth, new GoogleAuthProvider());
+      } catch (err) {
+        setAuthError(err?.message || "Google sign-in failed.");
+      }
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      if (user) {
+        setAuthScreenVisible(false);
+        await loadUserData(user);
+        return;
+      }
+      setAuthScreenVisible(true);
+    });
 
     /***********************
      * Events (delegation)
