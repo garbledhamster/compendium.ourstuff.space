@@ -36,6 +36,15 @@
     ::-webkit-scrollbar-thumb { background: rgba(148,163,184,.35); border-radius: 999px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,.5); }
     dialog::backdrop { background: rgba(2,6,23,.55); }
+    .app-shell { max-width: 500px; margin: 0 auto; }
+    .app-fixed {
+      max-width: 500px;
+      width: 100%;
+      left: 0;
+      right: 0;
+      margin-left: auto;
+      margin-right: auto;
+    }
     .noise {
       background-image:
         radial-gradient(circle at 1px 1px, rgba(255,255,255,.06) 1px, transparent 0);
@@ -96,7 +105,7 @@
       <div class="absolute inset-0 noise opacity-[0.35]"></div>
     </div>
 
-    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div class="app-shell px-4 py-6 sm:px-6 lg:px-8">
       <div class="flex flex-col gap-4">
         <header class="hidden lg:flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 shadow-glow backdrop-blur px-4 py-3">
           <div class="flex items-center gap-3">
@@ -108,24 +117,10 @@
               <div class="text-xs text-slate-300">Syncs across devices with your account</div>
             </div>
           </div>
-
-          <nav class="flex items-center gap-2">
-            <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
-              data-action="open-compendium-drawer">
-              <span class="inline-flex items-center gap-2"><i data-lucide="layout-list" class="h-4 w-4"></i>Compendiums</span>
-            </button>
-            <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
-              data-action="nav" data-view="entries">
-              <span class="inline-flex items-center gap-2"><i data-lucide="list" class="h-4 w-4"></i>Entries</span>
-            </button>
-            <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
-              data-action="open-tools">
-              <span class="inline-flex items-center gap-2"><i data-lucide="settings" class="h-4 w-4"></i>Settings</span>
-            </button>
-          </nav>
+          <div class="text-xs text-slate-400">Use the menu bar above to navigate.</div>
         </header>
 
-        <main class="flex-1 pb-24 lg:pb-8">
+        <main class="flex-1 pb-24 pt-6 lg:pb-8 lg:pt-20">
           <div class="rounded-2xl border border-white/10 bg-white/5 shadow-glow backdrop-blur">
             <div class="border-b border-white/10 px-4 py-4 sm:px-6">
               <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -163,21 +158,24 @@
     </div>
   </div>
 
-  <nav class="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-slate-950/90 backdrop-blur lg:hidden">
-    <div class="mx-auto flex max-w-4xl items-center justify-around px-3 py-3">
-      <button type="button" class="flex flex-col items-center gap-1 text-xs font-semibold text-slate-200"
+  <nav class="app-fixed fixed bottom-0 lg:top-0 lg:bottom-auto z-40 border-t lg:border-t-0 lg:border-b border-white/10 bg-slate-950/90 backdrop-blur">
+    <div class="mx-auto flex max-w-4xl items-center justify-around px-3 py-3 lg:justify-end lg:gap-2">
+      <button type="button"
+        class="flex flex-col items-center gap-1 text-xs font-semibold text-slate-200 lg:flex-row lg:gap-2 lg:rounded-xl lg:border lg:border-white/10 lg:bg-white/5 lg:px-3 lg:py-2 lg:text-sm lg:hover:bg-white/10"
         data-action="open-compendium-drawer">
-        <i data-lucide="layout-list" class="h-5 w-5"></i>
+        <i data-lucide="layout-list" class="h-5 w-5 lg:h-4 lg:w-4"></i>
         Compendiums
       </button>
-      <button type="button" class="flex flex-col items-center gap-1 text-xs font-semibold text-slate-200"
+      <button type="button"
+        class="flex flex-col items-center gap-1 text-xs font-semibold text-slate-200 lg:flex-row lg:gap-2 lg:rounded-xl lg:border lg:border-white/10 lg:bg-white/5 lg:px-3 lg:py-2 lg:text-sm lg:hover:bg-white/10"
         data-action="nav" data-view="entries">
-        <i data-lucide="list" class="h-5 w-5"></i>
+        <i data-lucide="list" class="h-5 w-5 lg:h-4 lg:w-4"></i>
         Entries
       </button>
-      <button type="button" class="flex flex-col items-center gap-1 text-xs font-semibold text-slate-200"
+      <button type="button"
+        class="flex flex-col items-center gap-1 text-xs font-semibold text-slate-200 lg:flex-row lg:gap-2 lg:rounded-xl lg:border lg:border-white/10 lg:bg-white/5 lg:px-3 lg:py-2 lg:text-sm lg:hover:bg-white/10"
         data-action="open-tools">
-        <i data-lucide="settings" class="h-5 w-5"></i>
+        <i data-lucide="settings" class="h-5 w-5 lg:h-4 lg:w-4"></i>
         Settings
       </button>
     </div>
@@ -185,7 +183,7 @@
 
   <div id="drawerOverlay" class="fixed inset-0 z-40 hidden bg-slate-950/60 backdrop-blur-sm" data-action="close-compendium-drawer"></div>
   <aside id="compendiumDrawer"
-    class="fixed inset-y-0 left-0 z-50 w-full max-w-sm -translate-x-full border-r border-white/10 bg-slate-950/95 shadow-2xl backdrop-blur transition-transform duration-200 ease-out">
+    class="app-fixed fixed inset-y-0 z-50 w-full -translate-x-full border-r border-white/10 bg-slate-950/95 shadow-2xl backdrop-blur transition-transform duration-200 ease-out">
     <div class="flex h-full flex-col">
       <div class="flex items-center justify-between border-b border-white/10 px-4 py-4">
         <div>
@@ -375,7 +373,7 @@
 
   <div id="settingsOverlay" class="fixed inset-0 z-40 hidden bg-slate-950/60 backdrop-blur-sm" data-action="close-tools"></div>
   <aside id="settingsDrawer"
-    class="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] translate-y-full rounded-t-3xl border-t border-white/10 bg-slate-950/95 shadow-2xl backdrop-blur transition-transform duration-200 ease-out">
+    class="app-fixed fixed bottom-0 z-50 max-h-[85vh] translate-y-full rounded-t-3xl border-t border-white/10 bg-slate-950/95 shadow-2xl backdrop-blur transition-transform duration-200 ease-out">
     <div class="flex h-full flex-col">
       <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
         <div>
