@@ -10,6 +10,8 @@
     textColor: "#f8f8f2"
     textMutedColor: "#9a9a8f"
     dangerColor: "#f92672"
+    overlayColor: "#272822"
+    overlayTextColor: "#f8f8f2"
 
 - id: monokai-light
   label: Monokai (Light)
@@ -23,3 +25,5 @@
     textColor: "#272822"
     textMutedColor: "#6b6a5e"
     dangerColor: "#c40033"
+    overlayColor: "#272822"
+    overlayTextColor: "#f8f8f2"
