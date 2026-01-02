@@ -4,8 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Compendium</title>
+
   <link rel="stylesheet" href="./style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+
+  <!-- Optional: card fonts from your reference design -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cardo:ital,wght@1,400&family=Rubik:wght@400;700;800&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -52,10 +57,11 @@
             </button>
           </div>
 
-          <div class="list" id="personalCompendiumList" aria-label="Personal compendium list"></div>
+          <!-- NEW: card picker grid -->
+          <div class="picker-grid" id="personalCompendiumList" aria-label="Personal compendium picker"></div>
 
           <div class="panel__foot subtle">
-            Select a compendium to edit it and manage entries.
+            Hover a card to see description. Click to open.
           </div>
         </aside>
 
@@ -87,21 +93,34 @@
                 <span class="subtle small" id="personalOwnerLine"></span>
               </div>
 
+              <div class="cover-preview" id="personalCoverPreview" aria-label="Cover preview"></div>
+
               <div class="form__row">
                 <label class="field">
                   <span class="field__label">Compendium Name</span>
-                  <input class="input" id="personalCompName" type="text" placeholder="e.g., Stoicism Notes" autocomplete="off" />
+                  <input class="input" id="personalCompName" type="text" autocomplete="off" />
                 </label>
 
                 <label class="field">
                   <span class="field__label">Compendium Topic</span>
-                  <input class="input" id="personalCompTopic" type="text" placeholder="e.g., Practical philosophy" autocomplete="off" />
+                  <input class="input" id="personalCompTopic" type="text" autocomplete="off" />
                 </label>
               </div>
 
               <label class="field">
+                <span class="field__label">Description</span>
+                <textarea class="textarea" id="personalCompDesc" rows="4" placeholder="Shown on hover in the picker cards."></textarea>
+              </label>
+
+              <label class="field">
+                <span class="field__label">Cover URL (optional)</span>
+                <input class="input" id="personalCompCoverUrl" type="url" placeholder="https://..." autocomplete="off" />
+                <span class="field__hint">Leave empty to use an automatic Picsum cover.</span>
+              </label>
+
+              <label class="field">
                 <span class="field__label">Tags</span>
-                <input class="input" id="personalCompTags" type="text" placeholder="comma-separated: virtue, ethics, marcus aurelius" autocomplete="off" />
+                <input class="input" id="personalCompTags" type="text" placeholder="comma-separated" autocomplete="off" />
                 <span class="field__hint">Stored as an array in Firestore.</span>
               </label>
 
@@ -156,10 +175,11 @@
             </button>
           </div>
 
-          <div class="list" id="publicCompendiumList" aria-label="Public compendium list"></div>
+          <!-- NEW: card picker grid -->
+          <div class="picker-grid" id="publicCompendiumList" aria-label="Public compendium picker"></div>
 
           <div class="panel__foot subtle">
-            Any logged-in user can add entries to a public compendium. Editing is limited by rules.
+            Hover a card to see description. Click to open.
           </div>
         </aside>
 
@@ -191,6 +211,8 @@
                 <span class="subtle small" id="publicOwnerLine"></span>
               </div>
 
+              <div class="cover-preview" id="publicCoverPreview" aria-label="Cover preview"></div>
+
               <div class="form__row">
                 <label class="field">
                   <span class="field__label">Compendium Name</span>
@@ -202,6 +224,17 @@
                   <input class="input" id="publicCompTopic" type="text" autocomplete="off" />
                 </label>
               </div>
+
+              <label class="field">
+                <span class="field__label">Description</span>
+                <textarea class="textarea" id="publicCompDesc" rows="4" placeholder="Shown on hover in the picker cards."></textarea>
+              </label>
+
+              <label class="field">
+                <span class="field__label">Cover URL (optional)</span>
+                <input class="input" id="publicCompCoverUrl" type="url" placeholder="https://..." autocomplete="off" />
+                <span class="field__hint">Leave empty to use an automatic Picsum cover.</span>
+              </label>
 
               <label class="field">
                 <span class="field__label">Tags</span>
@@ -280,7 +313,7 @@
             <label class="field">
               <span class="field__label">Theme</span>
               <select class="select" id="themeSelect"></select>
-              <span class="field__hint">Only Monokai Dark/Light are selectable right now.</span>
+              <span class="field__hint">Loaded from themes.yaml. Monokai dark/light.</span>
             </label>
           </div>
         </div>
@@ -304,12 +337,23 @@
       <div class="modal__body">
         <label class="field">
           <span class="field__label">Name</span>
-          <input class="input" id="newCompName" type="text" placeholder="e.g., Great Books" required />
+          <input class="input" id="newCompName" type="text" required />
         </label>
 
         <label class="field">
           <span class="field__label">Topic</span>
-          <input class="input" id="newCompTopic" type="text" placeholder="e.g., Classic literature & philosophy" required />
+          <input class="input" id="newCompTopic" type="text" required />
+        </label>
+
+        <label class="field">
+          <span class="field__label">Description</span>
+          <textarea class="textarea" id="newCompDesc" rows="4" placeholder="Shown on hover in the picker cards."></textarea>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Cover URL (optional)</span>
+          <input class="input" id="newCompCoverUrl" type="url" placeholder="https://..." />
+          <span class="field__hint">Leave empty to use an automatic Picsum cover.</span>
         </label>
 
         <label class="field">
@@ -322,12 +366,12 @@
           <label class="radio">
             <input type="radio" name="newCompType" value="personal" checked />
             <span>Personal</span>
-            <span class="subtle small">Only you can add/edit entries.</span>
+            <span class="subtle small">Only you can edit metadata/entries.</span>
           </label>
           <label class="radio">
             <input type="radio" name="newCompType" value="public" />
             <span>Public</span>
-            <span class="subtle small">Any logged-in user can add entries. Editing depends on rules/editors.</span>
+            <span class="subtle small">Anyone logged-in can add entries; editing controlled by owner/editors.</span>
           </label>
         </div>
 
@@ -357,18 +401,18 @@
       <div class="modal__body">
         <label class="field">
           <span class="field__label">Title</span>
-          <input class="input" id="entryTitle" type="text" placeholder="Entry title" autocomplete="off" required />
+          <input class="input" id="entryTitle" type="text" required />
         </label>
 
         <label class="field">
           <span class="field__label">Description</span>
-          <textarea class="textarea" id="entryDesc" rows="6" placeholder="Write the description..." required></textarea>
+          <textarea class="textarea" id="entryDesc" rows="6" required></textarea>
         </label>
 
         <div class="form__row">
           <label class="field">
             <span class="field__label">Image URL (optional)</span>
-            <input class="input" id="entryImageUrl" type="url" placeholder="https://..." autocomplete="off" />
+            <input class="input" id="entryImageUrl" type="url" placeholder="https://..." />
             <span class="field__hint">Uploading a file overrides this URL.</span>
           </label>
 
@@ -394,794 +438,7 @@
     </form>
   </dialog>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import {
-      getFirestore,
-      collection, doc, addDoc, setDoc, updateDoc, deleteDoc, getDoc,
-      onSnapshot, query, where, orderBy, serverTimestamp,
-      arrayUnion, arrayRemove
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDf199rSY0dMSD-OZYFeiqVqz_pBOEvXR4",
-      authDomain: "compendium-75ea8.firebaseapp.com",
-      projectId: "compendium-75ea8",
-      storageBucket: "compendium-75ea8.firebasestorage.app",
-      messagingSenderId: "290402747744",
-      appId: "1:290402747744:web:ffad2382b0739866ea4a05",
-      measurementId: "G-3VNX1C0PM7"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-
-    const $ = (s, r=document) => r.querySelector(s);
-    const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
-    const esc = (s) => (s ?? "").toString();
-
-    function toast(msg, kind="ok") {
-      const el = document.createElement("div");
-      el.className = `toast toast--${kind}`;
-      el.textContent = msg;
-      document.body.appendChild(el);
-      requestAnimationFrame(() => el.classList.add("is-on"));
-      setTimeout(() => { el.classList.remove("is-on"); setTimeout(() => el.remove(), 220); }, 2200);
-    }
-
-    function parseTags(raw) {
-      return (raw || "").split(",").map(x => x.trim()).filter(Boolean).slice(0, 40);
-    }
-
-    function fmtCount(n, label) {
-      return `${n} ${label}${n === 1 ? "" : "s"}`;
-    }
-
-    function normEmail(e) { return (e || "").trim().toLowerCase(); }
-    function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
-
-    // ---- Themes (Monokai only selectable) ----
-    const BUILTIN = [
-      {
-        id: "monokai-dark",
-        label: "Monokai (Dark)",
-        colors: {
-          primaryColor: "#a6e22e",
-          secondaryColor: "#66d9ef",
-          backgroundColor: "#272822",
-          surfaceColor: "#1f201d",
-          surfaceMutedColor: "#2c2d29",
-          borderColor: "#3e3d32",
-          textColor: "#f8f8f2",
-          textMutedColor: "#9a9a8f",
-          dangerColor: "#f92672"
-        }
-      },
-      {
-        id: "monokai-light",
-        label: "Monokai (Light)",
-        colors: {
-          primaryColor: "#5b8c00",
-          secondaryColor: "#007f94",
-          backgroundColor: "#f8f8f2",
-          surfaceColor: "#ffffff",
-          surfaceMutedColor: "#f2f2eb",
-          borderColor: "#ddd9c3",
-          textColor: "#272822",
-          textMutedColor: "#6b6a5e",
-          dangerColor: "#c40033"
-        }
-      }
-    ];
-
-    async function loadThemesYaml() {
-      try {
-        const res = await fetch("./themes.yaml", { cache: "no-store" });
-        if (!res.ok) throw new Error("themes.yaml missing");
-        const data = jsyaml.load(await res.text());
-        if (!Array.isArray(data)) throw new Error("themes.yaml must be a list");
-        return data.filter(t => t?.id && t?.colors);
-      } catch {
-        return BUILTIN;
-      }
-    }
-
-    function applyTheme(theme) {
-      const c = theme.colors || {};
-      const r = document.documentElement;
-      r.style.setProperty("--primary", c.primaryColor || "#a6e22e");
-      r.style.setProperty("--secondary", c.secondaryColor || "#66d9ef");
-      r.style.setProperty("--bg", c.backgroundColor || "#272822");
-      r.style.setProperty("--surface", c.surfaceColor || "#1f201d");
-      r.style.setProperty("--surface-muted", c.surfaceMutedColor || "#2c2d29");
-      r.style.setProperty("--border", c.borderColor || "#3e3d32");
-      r.style.setProperty("--text", c.textColor || "#f8f8f2");
-      r.style.setProperty("--muted", c.textMutedColor || "#9a9a8f");
-      r.style.setProperty("--danger", c.dangerColor || "#f92672");
-      r.dataset.theme = theme.id;
-    }
-
-    // ---- State ----
-    let currentUser = null;
-    let themes = [];
-    let themeAllowed = [];
-    let personalUnsub = null;
-    let publicUnsub = null;
-
-    let selectedPersonalId = null;
-    let selectedPersonalDoc = null;
-    let personalEntriesUnsub = null;
-
-    let selectedPublicId = null;
-    let selectedPublicDoc = null;
-    let publicEntriesUnsub = null;
-
-    // Entry modal state
-    let entryContext = null; // { scope: "personal"|"public", compId, compDoc }
-    let editingEntryId = null;
-    let editingEntryData = null;
-
-    // ---- Routing ----
-    function setRoute(route) {
-      $$(".tab").forEach(b => b.classList.toggle("is-active", b.dataset.route === route));
-      $$(".view").forEach(v => v.classList.toggle("is-active", v.dataset.view === route));
-    }
-    $$(".tab").forEach(b => b.addEventListener("click", () => setRoute(b.dataset.route)));
-
-    // ---- Auth gate ----
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) { window.location.href = "./login.html"; return; }
-      currentUser = user;
-      $("#userName").textContent = user.email || user.uid;
-
-      themes = await loadThemesYaml();
-      themeAllowed = themes.filter(t => t.id === "monokai-dark" || t.id === "monokai-light");
-      await initThemeSettings();
-
-      wireUI();
-      listenPersonalCompendiums();
-      listenPublicCompendiums();
-    });
-
-    $("#signOutLink").addEventListener("click", async (e) => {
-      e.preventDefault();
-      await signOut(auth);
-      window.location.href = "./login.html";
-    });
-
-    // ---- Theme settings ----
-    async function initThemeSettings() {
-      const sel = $("#themeSelect");
-      sel.innerHTML = "";
-      for (const t of themeAllowed) {
-        const opt = document.createElement("option");
-        opt.value = t.id;
-        opt.textContent = t.label || t.id;
-        sel.appendChild(opt);
-      }
-
-      let chosen = "monokai-dark";
-      try {
-        const snap = await getDoc(doc(db, `users/${currentUser.uid}/settings/ui`));
-        if (snap.exists() && snap.data()?.themeId) chosen = snap.data().themeId;
-      } catch {}
-
-      if (!themeAllowed.some(t => t.id === chosen)) chosen = "monokai-dark";
-      sel.value = chosen;
-      applyTheme(themeAllowed.find(t => t.id === chosen) || themeAllowed[0]);
-
-      sel.addEventListener("change", async () => {
-        const nextId = sel.value;
-        const t = themeAllowed.find(x => x.id === nextId);
-        if (t) applyTheme(t);
-        try {
-          await setDoc(doc(db, `users/${currentUser.uid}/settings/ui`), {
-            themeId: nextId,
-            updatedAt: serverTimestamp()
-          }, { merge: true });
-        } catch {}
-      });
-    }
-
-    // ---- Access helpers ----
-    function isOwner(comp) {
-      return !!comp && comp.ownerUid === currentUser.uid;
-    }
-    function isEditor(comp) {
-      if (!comp) return false;
-      if (comp.visibility !== "public") return false;
-      const emails = Array.isArray(comp.editorEmails) ? comp.editorEmails : [];
-      return emails.includes(normEmail(currentUser.email || ""));
-    }
-    function canEditCompendium(comp) {
-      if (!comp) return false;
-      if (comp.visibility === "personal") return isOwner(comp);
-      return isOwner(comp) || isEditor(comp);
-    }
-    function canManageEditors(comp) {
-      return !!comp && comp.visibility === "public" && isOwner(comp);
-    }
-    function canAddEntry(comp) {
-      if (!comp) return false;
-      if (comp.visibility === "public") return true; // any logged-in user
-      return isOwner(comp); // personal: owner only
-    }
-    function canEditEntry(comp, entry) {
-      if (!entry) return false;
-      if (entry.createdByUid === currentUser.uid) return true;
-      // optional escalations:
-      if (comp?.visibility === "public" && (isOwner(comp) || isEditor(comp))) return true;
-      return false;
-    }
-
-    // ---- UI wiring ----
-    function wireUI() {
-      $("#btnNewCompendium").addEventListener("click", openNewCompModal);
-      $("#btnCreateComp").addEventListener("click", createCompendiumFromModal);
-
-      $("#btnSavePersonalCompendium").addEventListener("click", () => saveCompendium("personal"));
-      $("#btnDeleteCompendium").addEventListener("click", () => deleteCompendium("personal"));
-      $("#btnAddPersonalEntry").addEventListener("click", () => openEntryModal("personal"));
-
-      $("#btnRefreshPublic").addEventListener("click", () => {
-        if (publicUnsub) publicUnsub();
-        publicUnsub = null;
-        listenPublicCompendiums();
-        toast("Refreshed");
-      });
-
-      $("#btnSavePublicCompendium").addEventListener("click", () => saveCompendium("public"));
-      $("#btnDeletePublicCompendium").addEventListener("click", () => deleteCompendium("public"));
-      $("#btnAddPublicEntry").addEventListener("click", () => openEntryModal("public"));
-
-      $("#btnAddEditor").addEventListener("click", addEditorEmail);
-
-      $("#entryImageFile").addEventListener("change", updateEntryPreview);
-      $("#entryImageUrl").addEventListener("input", updateEntryPreview);
-      $("#btnSaveEntry").addEventListener("click", saveEntry);
-    }
-
-    // ---- New compendium modal ----
-    function openNewCompModal() {
-      $("#newCompError").classList.add("is-hidden");
-      $("#newCompError").textContent = "";
-      $("#newCompName").value = "";
-      $("#newCompTopic").value = "";
-      $("#newCompTags").value = "";
-      const dlg = $("#newCompModal");
-      dlg.showModal?.();
-    }
-
-    function showNewCompError(msg) {
-      const el = $("#newCompError");
-      el.textContent = msg;
-      el.classList.remove("is-hidden");
-    }
-
-    async function createCompendiumFromModal() {
-      const name = $("#newCompName").value.trim();
-      const topic = $("#newCompTopic").value.trim();
-      const tags = parseTags($("#newCompTags").value);
-      const type = $$('input[name="newCompType"]').find(x => x.checked)?.value || "personal";
-
-      if (!name || !topic) { showNewCompError("Name and Topic are required."); return; }
-      if (type !== "personal" && type !== "public") { showNewCompError("Invalid type."); return; }
-
-      try {
-        const base = {
-          name,
-          topic,
-          tags,
-          visibility: type,                 // IMMUTABLE
-          ownerUid: currentUser.uid,        // IMMUTABLE
-          ownerEmail: normEmail(currentUser.email || ""),
-          editorEmails: type === "public" ? [] : [],
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        };
-        await addDoc(collection(db, "compendiums"), base);
-        $("#newCompModal").close?.();
-        toast("Compendium created");
-      } catch (e) {
-        showNewCompError(e?.message || "Create failed");
-      }
-    }
-
-    // ---- Listeners ----
-    function listenPersonalCompendiums() {
-      if (personalUnsub) personalUnsub();
-      const qy = query(
-        collection(db, "compendiums"),
-        where("ownerUid", "==", currentUser.uid),
-        where("visibility", "==", "personal"),
-        orderBy("updatedAt", "desc")
-      );
-
-      personalUnsub = onSnapshot(qy, (snap) => {
-        const items = [];
-        snap.forEach(d => items.push({ id: d.id, ...d.data() }));
-        $("#personalCount").textContent = fmtCount(items.length, "compendium");
-        renderCompendiumList(items, "personal");
-        // maintain selection
-        if (selectedPersonalId) {
-          const found = items.find(x => x.id === selectedPersonalId);
-          if (found) selectCompendium("personal", found.id, found);
-          else selectCompendium("personal", null, null);
-        } else {
-          selectCompendium("personal", null, null);
-        }
-      }, (err) => toast(err?.message || "Failed to load personal compendiums", "bad"));
-    }
-
-    function listenPublicCompendiums() {
-      if (publicUnsub) publicUnsub();
-      const qy = query(
-        collection(db, "compendiums"),
-        where("visibility", "==", "public"),
-        orderBy("updatedAt", "desc")
-      );
-
-      publicUnsub = onSnapshot(qy, (snap) => {
-        const items = [];
-        snap.forEach(d => items.push({ id: d.id, ...d.data() }));
-        $("#publicCount").textContent = fmtCount(items.length, "compendium");
-        renderCompendiumList(items, "public");
-        if (selectedPublicId) {
-          const found = items.find(x => x.id === selectedPublicId);
-          if (found) selectCompendium("public", found.id, found);
-          else selectCompendium("public", null, null);
-        } else {
-          selectCompendium("public", null, null);
-        }
-      }, (err) => toast(err?.message || "Failed to load public compendiums", "bad"));
-    }
-
-    function listenEntries(scope, compId) {
-      const qy = query(
-        collection(db, "entries"),
-        where("compendiumId", "==", compId),
-        orderBy("updatedAt", "desc")
-      );
-
-      const onOk = (snap) => {
-        const entries = [];
-        snap.forEach(d => entries.push({ id: d.id, ...d.data() }));
-        if (scope === "personal") {
-          $("#personalEntriesCount").textContent = fmtCount(entries.length, "entry");
-          renderEntries(entries, "personal");
-        } else {
-          $("#publicEntriesCount").textContent = fmtCount(entries.length, "entry");
-          renderEntries(entries, "public");
-        }
-      };
-
-      const onErr = (err) => toast(err?.message || "Failed to load entries", "bad");
-
-      if (scope === "personal") {
-        if (personalEntriesUnsub) personalEntriesUnsub();
-        personalEntriesUnsub = onSnapshot(qy, onOk, onErr);
-      } else {
-        if (publicEntriesUnsub) publicEntriesUnsub();
-        publicEntriesUnsub = onSnapshot(qy, onOk, onErr);
-      }
-    }
-
-    // ---- Rendering ----
-    function renderCompendiumList(items, scope) {
-      const root = scope === "personal" ? $("#personalCompendiumList") : $("#publicCompendiumList");
-      root.innerHTML = "";
-
-      if (!items.length) {
-        const d = document.createElement("div");
-        d.className = "subtle";
-        d.textContent = scope === "personal"
-          ? "No personal compendiums yet — click New to create one."
-          : "No public compendiums yet.";
-        root.appendChild(d);
-        return;
-      }
-
-      for (const c of items) {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        const activeId = scope === "personal" ? selectedPersonalId : selectedPublicId;
-        btn.className = "listitem" + (c.id === activeId ? " is-active" : "");
-        btn.innerHTML = `
-          <div class="listitem__row">
-            <div class="listitem__title">${esc(c.name || "Untitled")}</div>
-            <span class="pill">${c.visibility === "public" ? "Public" : "Personal"}</span>
-          </div>
-          <div class="listitem__sub">${esc(c.topic || "No topic")}</div>
-          <div class="listitem__tags">${(c.tags || []).slice(0, 4).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>
-        `;
-        btn.addEventListener("click", () => selectCompendium(scope, c.id, c));
-        root.appendChild(btn);
-      }
-    }
-
-    function selectCompendium(scope, compId, compData) {
-      if (scope === "personal") {
-        selectedPersonalId = compId;
-        selectedPersonalDoc = compData || null;
-        paintCompendiumEditor("personal");
-        if (compId) listenEntries("personal", compId);
-        else {
-          if (personalEntriesUnsub) personalEntriesUnsub();
-          personalEntriesUnsub = null;
-        }
-      } else {
-        selectedPublicId = compId;
-        selectedPublicDoc = compData || null;
-        paintCompendiumEditor("public");
-        if (compId) listenEntries("public", compId);
-        else {
-          if (publicEntriesUnsub) publicEntriesUnsub();
-          publicEntriesUnsub = null;
-        }
-      }
-    }
-
-    function paintCompendiumEditor(scope) {
-      const isPersonal = scope === "personal";
-      const compId = isPersonal ? selectedPersonalId : selectedPublicId;
-      const comp = isPersonal ? selectedPersonalDoc : selectedPublicDoc;
-
-      const empty = isPersonal ? $("#personalEditorEmpty") : $("#publicEditorEmpty");
-      const form  = isPersonal ? $("#personalCompendiumForm") : $("#publicCompendiumForm");
-
-      if (!compId || !comp) {
-        empty.classList.remove("is-hidden");
-        form.classList.add("is-hidden");
-        if (isPersonal) {
-          $("#personalEditorTitle").textContent = "Select a compendium";
-          $("#personalEditorSubtitle").textContent = "—";
-          $("#btnDeleteCompendium").disabled = true;
-          $("#personalEntriesList").innerHTML = "";
-          $("#personalEntriesCount").textContent = "—";
-        } else {
-          $("#publicEditorTitle").textContent = "Select a public compendium";
-          $("#publicEditorSubtitle").textContent = "—";
-          $("#btnDeletePublicCompendium").disabled = true;
-          $("#btnSavePublicCompendium").disabled = true;
-          $("#publicEntriesList").innerHTML = "";
-          $("#publicEntriesCount").textContent = "—";
-          $("#editorsSection").classList.add("is-hidden");
-        }
-        return;
-      }
-
-      empty.classList.add("is-hidden");
-      form.classList.remove("is-hidden");
-
-      if (isPersonal) {
-        $("#personalEditorTitle").textContent = comp.name || "Untitled";
-        $("#personalEditorSubtitle").textContent = comp.topic ? `Topic: ${comp.topic}` : "—";
-        $("#personalOwnerLine").textContent = `Owner: ${comp.ownerEmail || comp.ownerUid}`;
-        $("#personalCompName").value = comp.name || "";
-        $("#personalCompTopic").value = comp.topic || "";
-        $("#personalCompTags").value = (comp.tags || []).join(", ");
-        $("#btnDeleteCompendium").disabled = !isOwner(comp);
-        $("#btnAddPersonalEntry").disabled = !canAddEntry(comp);
-      } else {
-        $("#publicEditorTitle").textContent = comp.name || "Untitled";
-        $("#publicEditorSubtitle").textContent = comp.topic ? `Topic: ${comp.topic}` : "—";
-        $("#publicOwnerLine").textContent = `Owner: ${comp.ownerEmail || comp.ownerUid}`;
-
-        const editable = canEditCompendium(comp);
-        $("#publicEditHint").textContent = editable
-          ? "You can edit title/topic/tags (type is locked)."
-          : "Read-only compendium details (you can still add entries).";
-
-        $("#publicCompName").value = comp.name || "";
-        $("#publicCompTopic").value = comp.topic || "";
-        $("#publicCompTags").value = (comp.tags || []).join(", ");
-
-        $("#publicCompName").disabled = !editable;
-        $("#publicCompTopic").disabled = !editable;
-        $("#publicCompTags").disabled = !editable;
-
-        $("#btnSavePublicCompendium").disabled = !editable;
-        $("#btnDeletePublicCompendium").disabled = !isOwner(comp);
-        $("#btnAddPublicEntry").disabled = !canAddEntry(comp);
-
-        // editors UI only for owner
-        if (canManageEditors(comp)) {
-          $("#editorsSection").classList.remove("is-hidden");
-          renderEditorChips(comp);
-        } else {
-          $("#editorsSection").classList.add("is-hidden");
-        }
-      }
-    }
-
-    function renderEntries(entries, scope) {
-      const root = scope === "personal" ? $("#personalEntriesList") : $("#publicEntriesList");
-      const comp = scope === "personal" ? selectedPersonalDoc : selectedPublicDoc;
-
-      root.innerHTML = "";
-      if (!entries.length) {
-        const d = document.createElement("div");
-        d.className = "subtle";
-        d.textContent = "No entries yet.";
-        root.appendChild(d);
-        return;
-      }
-
-      for (const e of entries) {
-        const card = document.createElement("div");
-        card.className = "card";
-        const img = e.imageUrl
-          ? `<img class="thumb" src="${esc(e.imageUrl)}" alt="Entry image" loading="lazy" />`
-          : `<div class="thumb thumb--empty">No image</div>`;
-
-        const allowEdit = canEditEntry(comp, e);
-
-        card.innerHTML = `
-          <div class="card__row">
-            ${img}
-            <div class="card__body">
-              <div class="card__title">${esc(e.title || "Untitled")}</div>
-              <div class="card__text">${esc((e.description || "").slice(0, 240))}${(e.description || "").length > 240 ? "…" : ""}</div>
-              <div class="card__meta">by ${esc(e.createdByEmail || e.createdByUid || "unknown")}</div>
-              <div class="card__actions">
-                <button class="btn" data-act="edit" type="button" ${allowEdit ? "" : "disabled"}>Edit</button>
-                <button class="btn btn--danger" data-act="del" type="button" ${allowEdit ? "" : "disabled"}>Delete</button>
-              </div>
-            </div>
-          </div>
-        `;
-
-        card.querySelector('[data-act="edit"]').addEventListener("click", () => openEntryModal(scope, e.id, e));
-        card.querySelector('[data-act="del"]').addEventListener("click", () => deleteEntry(scope, e));
-        root.appendChild(card);
-      }
-    }
-
-    // ---- Save compendium ----
-    async function saveCompendium(scope) {
-      const isPersonal = scope === "personal";
-      const compId = isPersonal ? selectedPersonalId : selectedPublicId;
-      const comp = isPersonal ? selectedPersonalDoc : selectedPublicDoc;
-      if (!compId || !comp) return;
-
-      const name = (isPersonal ? $("#personalCompName").value : $("#publicCompName").value).trim();
-      const topic = (isPersonal ? $("#personalCompTopic").value : $("#publicCompTopic").value).trim();
-      const tags = parseTags(isPersonal ? $("#personalCompTags").value : $("#publicCompTags").value);
-
-      // UI enforces, rules enforce harder
-      if (!name || !topic) { toast("Name and topic required", "bad"); return; }
-      if (!canEditCompendium(comp)) { toast("You cannot edit this compendium", "bad"); return; }
-
-      try {
-        await updateDoc(doc(db, "compendiums", compId), {
-          name, topic, tags,
-          // visibility is intentionally NOT updated (locked forever)
-          updatedAt: serverTimestamp()
-        });
-        toast("Saved");
-      } catch (e) {
-        toast(e?.message || "Save failed", "bad");
-      }
-    }
-
-    async function deleteCompendium(scope) {
-      const isPersonal = scope === "personal";
-      const compId = isPersonal ? selectedPersonalId : selectedPublicId;
-      const comp = isPersonal ? selectedPersonalDoc : selectedPublicDoc;
-      if (!compId || !comp) return;
-
-      if (!isOwner(comp)) { toast("Owner only", "bad"); return; }
-
-      const ok = confirm("Delete this compendium?\n\nNote: entries remain unless you delete them separately.");
-      if (!ok) return;
-
-      try {
-        await deleteDoc(doc(db, "compendiums", compId));
-        toast("Deleted");
-        if (scope === "personal") selectCompendium("personal", null, null);
-        else selectCompendium("public", null, null);
-      } catch (e) {
-        toast(e?.message || "Delete failed", "bad");
-      }
-    }
-
-    // ---- Editors (public, owner only) ----
-    function renderEditorChips(comp) {
-      const root = $("#editorChips");
-      root.innerHTML = "";
-      const emails = Array.isArray(comp.editorEmails) ? comp.editorEmails : [];
-      if (!emails.length) {
-        const d = document.createElement("div");
-        d.className = "subtle small";
-        d.textContent = "No editors added yet.";
-        root.appendChild(d);
-        return;
-      }
-      for (const email of emails) {
-        const chip = document.createElement("div");
-        chip.className = "chip";
-        chip.innerHTML = `
-          <span>${esc(email)}</span>
-          <button type="button" class="chip__x" aria-label="Remove">
-            <svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M18.3 5.7L12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3 10.6 10.6 16.9 4.3z"/></svg>
-          </button>
-        `;
-        chip.querySelector(".chip__x").addEventListener("click", () => removeEditorEmail(email));
-        root.appendChild(chip);
-      }
-    }
-
-    async function addEditorEmail() {
-      const comp = selectedPublicDoc;
-      const compId = selectedPublicId;
-      if (!comp || !compId) return;
-      if (!canManageEditors(comp)) { toast("Owner only", "bad"); return; }
-
-      const email = normEmail($("#editorEmailInput").value);
-      if (!isValidEmail(email)) { toast("Invalid email", "bad"); return; }
-      if (email === normEmail(currentUser.email || "")) { toast("You are already the owner", "bad"); return; }
-
-      try {
-        await updateDoc(doc(db, "compendiums", compId), {
-          editorEmails: arrayUnion(email),
-          updatedAt: serverTimestamp()
-        });
-        $("#editorEmailInput").value = "";
-        toast("Editor added");
-      } catch (e) {
-        toast(e?.message || "Failed to add editor", "bad");
-      }
-    }
-
-    async function removeEditorEmail(email) {
-      const comp = selectedPublicDoc;
-      const compId = selectedPublicId;
-      if (!comp || !compId) return;
-      if (!canManageEditors(comp)) { toast("Owner only", "bad"); return; }
-
-      try {
-        await updateDoc(doc(db, "compendiums", compId), {
-          editorEmails: arrayRemove(normEmail(email)),
-          updatedAt: serverTimestamp()
-        });
-        toast("Editor removed");
-      } catch (e) {
-        toast(e?.message || "Failed to remove editor", "bad");
-      }
-    }
-
-    // ---- Entry modal ----
-    function openEntryModal(scope, entryId=null, entryData=null) {
-      const comp = scope === "personal" ? selectedPersonalDoc : selectedPublicDoc;
-      const compId = scope === "personal" ? selectedPersonalId : selectedPublicId;
-      if (!comp || !compId) return;
-
-      if (!canAddEntry(comp) && !entryId) { toast("You cannot add entries here", "bad"); return; }
-
-      entryContext = { scope, compId, compDoc: comp };
-      editingEntryId = entryId;
-      editingEntryData = entryData;
-
-      $("#entryModalTitle").textContent = entryId ? "Edit Entry" : "Add Entry";
-      $("#entryModalSub").textContent = comp.name || "—";
-
-      $("#entryError").classList.add("is-hidden");
-      $("#entryError").textContent = "";
-
-      $("#entryTitle").value = entryData?.title || "";
-      $("#entryDesc").value = entryData?.description || "";
-      $("#entryImageUrl").value = entryData?.imageUrl || "";
-      $("#entryImageFile").value = "";
-
-      updateEntryPreview();
-      $("#entryModal").showModal?.();
-    }
-
-    function updateEntryPreview() {
-      const url = $("#entryImageUrl").value.trim();
-      const file = $("#entryImageFile").files?.[0] || null;
-
-      const wrap = $("#entryPreviewWrap");
-      const img = $("#entryPreviewImg");
-
-      if (file) {
-        img.src = URL.createObjectURL(file);
-        wrap.classList.remove("is-hidden");
-        return;
-      }
-      if (url) {
-        img.src = url;
-        wrap.classList.remove("is-hidden");
-        return;
-      }
-      wrap.classList.add("is-hidden");
-      img.removeAttribute("src");
-    }
-
-    function showEntryError(msg) {
-      const el = $("#entryError");
-      el.textContent = msg;
-      el.classList.remove("is-hidden");
-    }
-
-    async function saveEntry() {
-      if (!entryContext) return;
-      const { scope, compId, compDoc } = entryContext;
-
-      const title = $("#entryTitle").value.trim();
-      const description = $("#entryDesc").value.trim();
-      const url = $("#entryImageUrl").value.trim();
-      const file = $("#entryImageFile").files?.[0] || null;
-
-      if (!title || !description) { showEntryError("Title and Description are required."); return; }
-
-      // permission sanity (rules still enforce)
-      if (!editingEntryId && !canAddEntry(compDoc)) {
-        showEntryError("You cannot add entries here.");
-        return;
-      }
-
-      // for edit, ensure user is allowed
-      if (editingEntryId && !canEditEntry(compDoc, editingEntryData)) {
-        showEntryError("You cannot edit this entry.");
-        return;
-      }
-
-      try {
-        let imageUrl = url || "";
-        if (file) {
-          const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "_");
-          const path = `entries/${compId}/${Date.now()}_${safeName}`;
-          const r = sRef(storage, path);
-          await uploadBytes(r, file, { contentType: file.type || "image/*" });
-          imageUrl = await getDownloadURL(r);
-        }
-
-        const base = {
-          title,
-          description,
-          imageUrl,
-          updatedAt: serverTimestamp()
-        };
-
-        if (editingEntryId) {
-          // immutable fields: compendiumId, createdByUid
-          await updateDoc(doc(db, "entries", editingEntryId), base);
-          toast("Entry updated");
-        } else {
-          await addDoc(collection(db, "entries"), {
-            ...base,
-            compendiumId: compId,
-            createdByUid: currentUser.uid,
-            createdByEmail: normEmail(currentUser.email || ""),
-            createdAt: serverTimestamp()
-          });
-          toast("Entry created");
-        }
-
-        $("#entryModal").close?.();
-      } catch (e) {
-        showEntryError(e?.message || "Save failed");
-      }
-    }
-
-    async function deleteEntry(scope, entry) {
-      const comp = scope === "personal" ? selectedPersonalDoc : selectedPublicDoc;
-      if (!canEditEntry(comp, entry)) { toast("Not allowed", "bad"); return; }
-      const ok = confirm("Delete this entry?");
-      if (!ok) return;
-
-      try {
-        await deleteDoc(doc(db, "entries", entry.id));
-        toast("Deleted");
-      } catch (e) {
-        toast(e?.message || "Delete failed", "bad");
-      }
-    }
-  </script>
+  <!-- JS: all logic moved into /scripts -->
+  <script type="module" src="./scripts/app.js"></script>
 </body>
 </html>
