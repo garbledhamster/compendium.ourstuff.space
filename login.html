@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login • Compendium</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body class="authbg">
+  <main class="auth">
+    <section class="authcard">
+      <div class="authhead">
+        <div class="brand">
+          <div class="brand__dot" aria-hidden="true"></div>
+          <div class="brand__text">
+            <div class="brand__title">Compendium</div>
+            <div class="brand__sub">Sign in to your workspace</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="authbody">
+        <div class="seg">
+          <button class="seg__btn is-active" id="modeSignIn" type="button">Sign In</button>
+          <button class="seg__btn" id="modeCreate" type="button">Create Account</button>
+        </div>
+
+        <form class="form" id="authForm">
+          <label class="field">
+            <span class="field__label">Email</span>
+            <input class="input" id="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+          </label>
+
+          <label class="field">
+            <span class="field__label">Password</span>
+            <input class="input" id="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
+            <span class="field__hint">Minimum 6 characters (Firebase default).</span>
+          </label>
+
+          <label class="switch">
+            <input id="showPw" type="checkbox" />
+            <span class="switch__ui" aria-hidden="true"></span>
+            <span class="switch__label">Show password</span>
+          </label>
+
+          <div class="notice is-hidden" id="errBox"></div>
+
+          <button class="btn btn--primary btn--full" id="submitBtn" type="submit">Sign In</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDf199rSY0dMSD-OZYFeiqVqz_pBOEvXR4",
+      authDomain: "compendium-75ea8.firebaseapp.com",
+      projectId: "compendium-75ea8",
+      storageBucket: "compendium-75ea8.firebasestorage.app",
+      messagingSenderId: "290402747744",
+      appId: "1:290402747744:web:ffad2382b0739866ea4a05",
+      measurementId: "G-3VNX1C0PM7"
+    };
+
+    const firebaseApp = initializeApp(firebaseConfig);
+    const auth = getAuth(firebaseApp);
+    getFirestore(firebaseApp);
+
+    const $ = (s) => document.querySelector(s);
+    const errBox = $("#errBox");
+    const submitBtn = $("#submitBtn");
+    const modeSignIn = $("#modeSignIn");
+    const modeCreate = $("#modeCreate");
+    const showPw = $("#showPw");
+
+    let mode = "signin";
+
+    function setMode(next) {
+      mode = next;
+      modeSignIn.classList.toggle("is-active", mode === "signin");
+      modeCreate.classList.toggle("is-active", mode === "create");
+      submitBtn.textContent = mode === "signin" ? "Sign In" : "Create Account";
+      clearError();
+    }
+
+    function setBusy(busy) {
+      submitBtn.disabled = busy;
+      submitBtn.textContent = busy
+        ? (mode === "signin" ? "Signing in…" : "Creating…")
+        : (mode === "signin" ? "Sign In" : "Create Account");
+    }
+
+    function showError(msg) {
+      errBox.textContent = msg;
+      errBox.classList.remove("is-hidden");
+    }
+
+    function clearError() {
+      errBox.textContent = "";
+      errBox.classList.add("is-hidden");
+    }
+
+    modeSignIn.addEventListener("click", () => setMode("signin"));
+    modeCreate.addEventListener("click", () => setMode("create"));
+
+    showPw.addEventListener("change", () => {
+      $("#password").type = showPw.checked ? "text" : "password";
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) window.location.href = "./index.html";
+    });
+
+    $("#authForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearError();
+
+      const email = $("#email").value.trim();
+      const password = $("#password").value;
+
+      if (!email || !password) { showError("Email and password are required."); return; }
+
+      setBusy(true);
+      try {
+        if (mode === "create") {
+          await createUserWithEmailAndPassword(auth, email, password);
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+        }
+        window.location.href = "./index.html";
+      } catch (err) {
+        showError(err?.message || "Authentication failed.");
+      } finally {
+        setBusy(false);
+      }
+    });
+
+    setMode("signin");
+  </script>
+</body>
+</html>
