@@ -7,8 +7,15 @@ import { initEntries } from "./entries.js";
 const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
 
+const routeTabs = new Map([
+  ["compendiums", "compendiums"],
+  ["compendium-detail", "compendiums"],
+  ["settings", "settings"]
+]);
+
 function setRoute(route) {
-  $$(".tab").forEach(b => b.classList.toggle("is-active", b.dataset.route === route));
+  const activeTab = routeTabs.get(route) || route;
+  $$(".tab").forEach(b => b.classList.toggle("is-active", b.dataset.route === activeTab));
   $$(".view").forEach(v => v.classList.toggle("is-active", v.dataset.view === route));
 }
 
@@ -18,6 +25,12 @@ function initTabs() {
 
 (async function main() {
   initTabs();
+
+  document.addEventListener("app:route", (event) => {
+    if (event?.detail?.route) {
+      setRoute(event.detail.route);
+    }
+  });
 
   const user = await requireAuth({ redirectTo: "./login.html" });
 
@@ -54,5 +67,5 @@ function initTabs() {
   });
 
   // default route
-  setRoute("personal");
+  setRoute("compendiums");
 })();

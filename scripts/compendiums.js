@@ -56,8 +56,13 @@ function fmtCount(n, label) {
 }
 
 export function initCompendiums({ user, onSelectCompendium }) {
+  const goToRoute = (route) => {
+    document.dispatchEvent(new CustomEvent("app:route", { detail: { route } }));
+  };
+
   // --- DOM ---
   const personal = {
+    panel: $("#personalEditorPanel"),
     list: $("#personalCompendiumList"),
     count: $("#personalCount"),
     editorEmpty: $("#personalEditorEmpty"),
@@ -79,6 +84,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
   };
 
   const pub = {
+    panel: $("#publicEditorPanel"),
     list: $("#publicCompendiumList"),
     count: $("#publicCount"),
     editorEmpty: $("#publicEditorEmpty"),
@@ -129,6 +135,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
   let selectedPersonalDoc = null;
   let selectedPublicDoc = null;
+  let selectedScope = "personal";
 
   // --- Events ---
   $("#btnNewCompendium").addEventListener("click", () => {
@@ -162,6 +169,10 @@ export function initCompendiums({ user, onSelectCompendium }) {
   pub.coverUrl.addEventListener("input", () => updateCoverPreview(pub.coverPreview, pub.coverUrl.value, selectedPublicDoc));
   personal.coverUrl.addEventListener("input", () => updateCoverPreview(personal.coverPreview, personal.coverUrl.value, selectedPersonalDoc));
 
+  $$('[data-action="back-to-compendiums"]').forEach((btn) => {
+    btn.addEventListener("click", () => goToRoute("compendiums"));
+  });
+
   // --- Listen ---
   listenPersonal();
   listenPublic();
@@ -174,10 +185,10 @@ export function initCompendiums({ user, onSelectCompendium }) {
       renderPicker(personal.list, items, "personal");
       if (selectedPersonalId) {
         const found = items.find(x => x.id === selectedPersonalId);
-        if (found) select("personal", found.id, found);
-        else select("personal", null, null);
+        if (found) select("personal", found.id, found, { navigate: false });
+        else select("personal", null, null, { navigate: false });
       } else {
-        select("personal", null, null);
+        select("personal", null, null, { navigate: false });
       }
     }, (err) => {
       console.error(err);
@@ -193,10 +204,10 @@ export function initCompendiums({ user, onSelectCompendium }) {
       renderPicker(pub.list, items, "public");
       if (selectedPublicId) {
         const found = items.find(x => x.id === selectedPublicId);
-        if (found) select("public", found.id, found);
-        else select("public", null, null);
+        if (found) select("public", found.id, found, { navigate: false });
+        else select("public", null, null, { navigate: false });
       } else {
-        select("public", null, null);
+        select("public", null, null, { navigate: false });
       }
     }, (err) => {
       console.error(err);
@@ -240,16 +251,19 @@ export function initCompendiums({ user, onSelectCompendium }) {
           <div class="cp-tags">
             ${(c.tags || []).slice(0, 4).map(t => `<span class="cp-tag">${esc(t)}</span>`).join("")}
           </div>
-          <div class="cp-btn">Open</div>
+          <div class="cp-btn">Open details</div>
         </div>
       `;
 
-      btn.addEventListener("click", () => select(scope, c.id, c));
+      btn.addEventListener("click", () => select(scope, c.id, c, { navigate: true }));
       root.appendChild(btn);
     }
   }
 
-  function select(scope, id, doc) {
+  function select(scope, id, doc, { navigate = false } = {}) {
+    selectedScope = scope;
+    showDetailPanel(scope);
+
     if (scope === "personal") {
       selectedPersonalId = id;
       selectedPersonalDoc = doc || null;
@@ -262,6 +276,20 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
     // notify entries module
     onSelectCompendium?.(scope, id, doc || null);
+
+    if (navigate) {
+      goToRoute("compendium-detail");
+    }
+  }
+
+  function showDetailPanel(scope) {
+    if (scope === "personal") {
+      personal.panel?.classList?.remove("is-hidden");
+      pub.panel?.classList?.add("is-hidden");
+    } else {
+      personal.panel?.classList?.add("is-hidden");
+      pub.panel?.classList?.remove("is-hidden");
+    }
   }
 
   function paintEditor(scope) {
@@ -434,8 +462,8 @@ export function initCompendiums({ user, onSelectCompendium }) {
       await deleteCompendium(compId);
       toast("Deleted");
 
-      if (scope === "personal") select("personal", null, null);
-      else select("public", null, null);
+      if (scope === "personal") select("personal", null, null, { navigate: false });
+      else select("public", null, null, { navigate: false });
     } catch (e) {
       toast(e?.message || "Delete failed", "bad");
     }
