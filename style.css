@@ -507,7 +507,8 @@ a { color: inherit; }
   overflow: hidden;
   padding: 1rem;
   width: 100%;
-  min-height: 240px;
+  aspect-ratio: 2 / 3;
+  min-height: 280px;
   text-align: left;
   color: #fff;
   border-radius: var(--radius);
