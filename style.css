@@ -167,7 +167,7 @@ a { color: inherit; }
 
 .compendium-controls {
   display: grid;
-  grid-template-columns: minmax(220px, 1.4fr) repeat(2, minmax(180px, 0.8fr));
+  grid-template-columns: minmax(220px, 1.4fr) repeat(3, minmax(160px, 0.8fr));
   gap: 12px;
   align-items: end;
   margin-bottom: 18px;
@@ -522,11 +522,19 @@ a { color: inherit; }
   grid-template-columns: 1fr;
 }
 
+.picker-grid--list {
+  grid-template-columns: 1fr;
+}
+
 @media (min-width: 600px) {
   .picker-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (min-width: 900px) {
   .picker-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.picker-grid.picker-grid--list {
+  grid-template-columns: 1fr;
 }
 
 .cp-card {
@@ -582,6 +590,41 @@ a { color: inherit; }
 .cp-card.is-active {
   border-color: color-mix(in srgb, var(--primary) 65%, var(--border));
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent), var(--shadow);
+}
+
+.cp-card--list {
+  min-height: auto;
+  aspect-ratio: auto;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  align-items: flex-start;
+}
+
+.cp-card--list::before,
+.cp-card--list::after {
+  display: none;
+}
+
+.cp-card--list .cp-title {
+  color: var(--text);
+  text-shadow: none;
+  font-size: 1.05rem;
+}
+
+.cp-card--list .cp-copy {
+  font-style: normal;
+  color: color-mix(in srgb, var(--text) 78%, var(--muted));
+  text-shadow: none;
+}
+
+.cp-card--list .cp-meta {
+  color: var(--muted);
+}
+
+.cp-list {
+  display: grid;
+  gap: 6px;
+  width: 100%;
 }
 
 .cp-content {

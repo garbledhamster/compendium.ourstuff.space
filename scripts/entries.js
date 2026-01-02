@@ -89,6 +89,27 @@ export function initEntries({ user }) {
     openModal("public", null, null);
   });
 
+  function resetLists() {
+    ui.personalList.innerHTML = "";
+    ui.publicList.innerHTML = "";
+    ui.personalCount.textContent = "—";
+    ui.publicCount.textContent = "—";
+    ui.btnAddPersonal.disabled = true;
+    ui.btnAddPublic.disabled = true;
+  }
+
+  function resetInactive(scope) {
+    if (scope === "personal") {
+      ui.publicList.innerHTML = "";
+      ui.publicCount.textContent = "—";
+      ui.btnAddPublic.disabled = true;
+    } else if (scope === "public") {
+      ui.personalList.innerHTML = "";
+      ui.personalCount.textContent = "—";
+      ui.btnAddPersonal.disabled = true;
+    }
+  }
+
   function setActiveCompendium(scope, compId, compDoc) {
     // called by compendiums module
     active = { scope, compId, compDoc };
@@ -96,17 +117,18 @@ export function initEntries({ user }) {
     unsub?.();
     unsub = null;
 
-    // Clear UI if nothing selected
-    if (!compId || !compDoc) {
-      if (scope === "personal") {
-        ui.personalList.innerHTML = "";
-        ui.personalCount.textContent = "—";
-      } else if (scope === "public") {
-        ui.publicList.innerHTML = "";
-        ui.publicCount.textContent = "—";
-      }
+    if (scope !== "personal" && scope !== "public") {
+      resetLists();
       return;
     }
+
+    // Clear UI if nothing selected
+    if (!compId || !compDoc) {
+      resetLists();
+      return;
+    }
+
+    resetInactive(scope);
 
     // Enable/disable add button UI-side
     if (scope === "personal") ui.btnAddPersonal.disabled = !canAddEntry(user, compDoc);

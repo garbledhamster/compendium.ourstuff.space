@@ -124,7 +124,8 @@ export function initCompendiums({ user, onSelectCompendium }) {
     count: $("#compendiumCount"),
     search: $("#compendiumSearch"),
     visibility: $("#compendiumVisibility"),
-    sort: $("#compendiumSort")
+    sort: $("#compendiumSort"),
+    viewMode: $("#compendiumViewMode")
   };
 
   // --- State ---
@@ -134,17 +135,18 @@ export function initCompendiums({ user, onSelectCompendium }) {
   let personalItems = [];
   let publicItems = [];
 
-  let selectedPersonalId = null;
-  let selectedPublicId = null;
-
-  let selectedPersonalDoc = null;
-  let selectedPublicDoc = null;
+  let selectedCompendium = null;
   let selectedScope = "personal";
   let filterState = {
     search: "",
     visibility: "all",
-    sort: "recent"
+    sort: "recent",
+    viewMode: "book"
   };
+
+  if (listView.viewMode) {
+    filterState.viewMode = listView.viewMode.value || "book";
+  }
 
   // --- Events ---
   $("#btnNewCompendium").addEventListener("click", () => {
@@ -175,8 +177,14 @@ export function initCompendiums({ user, onSelectCompendium }) {
   });
 
   pub.btnAddEditor.addEventListener("click", () => addEditor());
-  pub.coverUrl.addEventListener("input", () => updateCoverPreview(pub.coverPreview, pub.coverUrl.value, selectedPublicDoc));
-  personal.coverUrl.addEventListener("input", () => updateCoverPreview(personal.coverPreview, personal.coverUrl.value, selectedPersonalDoc));
+  pub.coverUrl.addEventListener("input", () => {
+    const { doc } = getSelectedForScope("public");
+    updateCoverPreview(pub.coverPreview, pub.coverUrl.value, doc);
+  });
+  personal.coverUrl.addEventListener("input", () => {
+    const { doc } = getSelectedForScope("personal");
+    updateCoverPreview(personal.coverPreview, personal.coverUrl.value, doc);
+  });
 
   $$('[data-action="back-to-compendiums"]').forEach((btn) => {
     btn.addEventListener("click", () => goToRoute("compendiums"));
@@ -197,6 +205,11 @@ export function initCompendiums({ user, onSelectCompendium }) {
     renderCombinedList();
   });
 
+  listView.viewMode.addEventListener("change", () => {
+    filterState.viewMode = listView.viewMode.value;
+    renderCombinedList();
+  });
+
   // --- Listen ---
   listenPersonal();
   listenPublic();
@@ -205,7 +218,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     personalUnsub?.();
     personalUnsub = listenPersonalCompendiums(user.uid, (items) => {
       personalItems = items.map(item => normalizeCompendium(item, "personal"));
-      syncSelected("personal", personalItems);
+      syncSelected();
       renderCombinedList();
     }, (err) => {
       console.error(err);
@@ -217,7 +230,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     publicUnsub?.();
     publicUnsub = listenPublicCompendiums((items) => {
       publicItems = items.map(item => normalizeCompendium(item, "public"));
-      syncSelected("public", publicItems);
+      syncSelected();
       renderCombinedList();
     }, (err) => {
       console.error(err);
@@ -232,23 +245,25 @@ export function initCompendiums({ user, onSelectCompendium }) {
     };
   }
 
-  function syncSelected(scope, items) {
-    if (scope === "personal") {
-      if (selectedPersonalId) {
-        const found = items.find(x => x.id === selectedPersonalId);
-        if (found) select("personal", found.id, found, { navigate: false });
-        else select("personal", null, null, { navigate: false });
-      } else {
-        select("personal", null, null, { navigate: false });
-      }
+  function syncSelected() {
+    if (!selectedCompendium) {
+      showDetailPanel(selectedScope);
+      paintEditor(selectedScope);
+      return;
+    }
+    const scope = selectedCompendium.doc?.visibility;
+    const allItems = [...personalItems, ...publicItems];
+    const found = allItems.find(item => item.id === selectedCompendium.id && item.visibility === scope);
+    if (found) {
+      selectedCompendium = { id: found.id, doc: found };
+      showDetailPanel(scope);
+      paintEditor(scope);
+      onSelectCompendium?.(scope, found.id, found);
     } else {
-      if (selectedPublicId) {
-        const found = items.find(x => x.id === selectedPublicId);
-        if (found) select("public", found.id, found, { navigate: false });
-        else select("public", null, null, { navigate: false });
-      } else {
-        select("public", null, null, { navigate: false });
-      }
+      selectedCompendium = null;
+      showDetailPanel(selectedScope);
+      paintEditor(selectedScope);
+      onSelectCompendium?.(selectedScope, null, null);
     }
   }
 
@@ -256,11 +271,12 @@ export function initCompendiums({ user, onSelectCompendium }) {
     const allItems = [...personalItems, ...publicItems];
     const filteredItems = filterCompendiums(allItems);
     listView.count.textContent = fmtCount(filteredItems.length, "compendium");
-    renderPicker(listView.list, filteredItems, allItems.length);
+    renderPicker(listView.list, filteredItems, allItems.length, filterState.viewMode);
   }
 
-  function renderPicker(root, items, totalCount) {
+  function renderPicker(root, items, totalCount, viewMode) {
     root.innerHTML = "";
+    root.classList.toggle("picker-grid--list", viewMode === "list");
 
     if (!items.length) {
       const d = document.createElement("div");
@@ -273,32 +289,44 @@ export function initCompendiums({ user, onSelectCompendium }) {
     }
 
     for (const c of items) {
-      const activeId = c.visibility === "personal" ? selectedPersonalId : selectedPublicId;
+      const isActive = selectedCompendium?.id === c.id && selectedCompendium?.doc?.visibility === c.visibility;
       const cover = coverUrlFor(c);
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "cp-card" + (c.id === activeId ? " is-active" : "");
-      btn.style.setProperty("--cp-bg", `url("${cover}")`);
+      btn.className = `cp-card${viewMode === "list" ? " cp-card--list" : ""}${isActive ? " is-active" : ""}`;
+      if (viewMode !== "list") {
+        btn.style.setProperty("--cp-bg", `url("${cover}")`);
+      }
 
       const desc = (c.description || "").trim() || "No description yet.";
       const topic = (c.topic || "").trim();
 
-      btn.innerHTML = `
-        <div class="cp-content">
-          <div class="cp-top">
-            <h2 class="cp-title">${esc(c.name || "Untitled")}</h2>
-            <div class="cp-pill">${c.visibility === "public" ? "Public" : "Personal"}</div>
+      if (viewMode === "list") {
+        btn.innerHTML = `
+          <div class="cp-list">
+            <div class="cp-title">${esc(c.name || "Untitled")}</div>
+            <div class="cp-meta">${esc(topic) || "No topic"}</div>
+            <div class="cp-copy">${esc(desc)}</div>
           </div>
-          <p class="cp-copy">${esc(desc)}</p>
-          <div class="cp-meta">${esc(topic)}</div>
-          <div class="cp-tags">
-            ${(c.tags || []).slice(0, 4).map(t => `<span class="cp-tag">${esc(t)}</span>`).join("")}
+        `;
+      } else {
+        btn.innerHTML = `
+          <div class="cp-content">
+            <div class="cp-top">
+              <h2 class="cp-title">${esc(c.name || "Untitled")}</h2>
+              <div class="cp-pill">${c.visibility === "public" ? "Public" : "Personal"}</div>
+            </div>
+            <p class="cp-copy">${esc(desc)}</p>
+            <div class="cp-meta">${esc(topic)}</div>
+            <div class="cp-tags">
+              ${(c.tags || []).slice(0, 4).map(t => `<span class="cp-tag">${esc(t)}</span>`).join("")}
+            </div>
+            <div class="cp-btn">Open details</div>
           </div>
-          <div class="cp-btn">Open details</div>
-        </div>
-      `;
+        `;
+      }
 
-      btn.addEventListener("click", () => select(c.visibility, c.id, c, { navigate: true }));
+      btn.addEventListener("click", () => selectCompendium(c, { navigate: true }));
       root.appendChild(btn);
     }
   }
@@ -356,22 +384,14 @@ export function initCompendiums({ user, onSelectCompendium }) {
     return Number.isNaN(parsed) ? 0 : parsed;
   }
 
-  function select(scope, id, doc, { navigate = false } = {}) {
-    selectedScope = scope;
-    showDetailPanel(scope);
+  function selectCompendium(comp, { navigate = false } = {}) {
+    selectedCompendium = comp ? { id: comp.id, doc: comp } : null;
+    if (comp?.visibility) selectedScope = comp.visibility;
+    showDetailPanel(selectedScope);
+    paintEditor(selectedScope);
 
-    if (scope === "personal") {
-      selectedPersonalId = id;
-      selectedPersonalDoc = doc || null;
-      paintEditor("personal");
-    } else {
-      selectedPublicId = id;
-      selectedPublicDoc = doc || null;
-      paintEditor("public");
-    }
-
-    // notify entries module
-    onSelectCompendium?.(scope, id, doc || null);
+    const scope = comp?.visibility || selectedScope;
+    onSelectCompendium?.(scope, comp?.id || null, comp || null);
 
     if (navigate) {
       goToRoute("compendium-detail");
@@ -392,8 +412,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     const isPersonal = scope === "personal";
     const el = isPersonal ? personal : pub;
 
-    const compId = isPersonal ? selectedPersonalId : selectedPublicId;
-    const comp = isPersonal ? selectedPersonalDoc : selectedPublicDoc;
+    const { id: compId, doc: comp } = getSelectedForScope(scope);
 
     if (!compId || !comp) {
       el.editorEmpty.classList.remove("is-hidden");
@@ -457,6 +476,13 @@ export function initCompendiums({ user, onSelectCompendium }) {
     }
   }
 
+  function getSelectedForScope(scope) {
+    if (selectedCompendium?.doc?.visibility !== scope) {
+      return { id: null, doc: null };
+    }
+    return { id: selectedCompendium.id, doc: selectedCompendium.doc };
+  }
+
   function updateCoverPreview(previewEl, coverUrl, comp) {
     const url = (coverUrl || "").trim() || coverUrlFor(comp);
     previewEl.style.setProperty("--cover", `url("${url}")`);
@@ -506,8 +532,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
   async function saveCompendium(scope) {
     const isPersonal = scope === "personal";
-    const compId = isPersonal ? selectedPersonalId : selectedPublicId;
-    const comp = isPersonal ? selectedPersonalDoc : selectedPublicDoc;
+    const { id: compId, doc: comp } = getSelectedForScope(scope);
     if (!compId || !comp) return;
 
     if (!canEditCompendium(user, comp)) {
@@ -542,8 +567,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
   async function removeCompendium(scope) {
     const isPersonal = scope === "personal";
-    const compId = isPersonal ? selectedPersonalId : selectedPublicId;
-    const comp = isPersonal ? selectedPersonalDoc : selectedPublicDoc;
+    const { id: compId, doc: comp } = getSelectedForScope(scope);
     if (!compId || !comp) return;
 
     if (!isOwner(user, comp)) {
@@ -558,8 +582,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
       await deleteCompendium(compId);
       toast("Deleted");
 
-      if (scope === "personal") select("personal", null, null, { navigate: false });
-      else select("public", null, null, { navigate: false });
+      selectCompendium(null, { navigate: false });
     } catch (e) {
       toast(e?.message || "Delete failed", "bad");
     }
@@ -592,8 +615,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
   }
 
   async function addEditor() {
-    const comp = selectedPublicDoc;
-    const compId = selectedPublicId;
+    const { id: compId, doc: comp } = getSelectedForScope("public");
     if (!comp || !compId) return;
 
     if (!canManageEditors(user, comp)) {
@@ -615,8 +637,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
   }
 
   async function dropEditor(email) {
-    const comp = selectedPublicDoc;
-    const compId = selectedPublicId;
+    const { id: compId, doc: comp } = getSelectedForScope("public");
     if (!comp || !compId) return;
 
     if (!canManageEditors(user, comp)) {
@@ -635,9 +656,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
   // Public API (useful for future)
   return {
     getSelected(scope) {
-      return scope === "personal"
-        ? { id: selectedPersonalId, doc: selectedPersonalDoc }
-        : { id: selectedPublicId, doc: selectedPublicDoc };
+      return getSelectedForScope(scope);
     }
   };
 }
