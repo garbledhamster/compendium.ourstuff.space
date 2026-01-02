@@ -1,0 +1,2310 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Compendium Builder (Local)</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui"] },
+          boxShadow: {
+            soft: "0 10px 30px rgba(0,0,0,.12)",
+            glow: "0 0 0 1px rgba(255,255,255,.06), 0 10px 30px rgba(0,0,0,.25)"
+          }
+        }
+      }
+    }
+  </script>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: rgba(148,163,184,.35); border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,.5); }
+    dialog::backdrop { background: rgba(2,6,23,.55); }
+    .noise {
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(255,255,255,.06) 1px, transparent 0);
+      background-size: 18px 18px;
+    }
+  </style>
+</head>
+
+<body class="h-full bg-slate-950 text-slate-100">
+  <div class="min-h-full">
+    <div class="fixed inset-0 -z-10">
+      <div class="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900"></div>
+      <div class="absolute -top-32 left-1/2 h-[540px] w-[900px] -translate-x-1/2 rounded-full bg-gradient-to-r from-cyan-500/18 via-indigo-500/12 to-fuchsia-500/14 blur-3xl"></div>
+      <div class="absolute inset-0 noise opacity-[0.35]"></div>
+    </div>
+
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <div class="flex gap-4">
+        <aside class="hidden lg:flex lg:w-80 lg:flex-col">
+          <div class="rounded-2xl border border-white/10 bg-white/5 shadow-glow backdrop-blur px-4 py-4">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <div class="grid h-10 w-10 place-items-center rounded-xl bg-white/10">
+                  <i data-lucide="book-open" class="h-5 w-5"></i>
+                </div>
+                <div>
+                  <div class="text-sm font-semibold leading-tight">Compendium Builder</div>
+                  <div class="text-xs text-slate-300">All data stays in your browser</div>
+                </div>
+              </div>
+              <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                data-action="toggle-theme" title="Toggle theme">
+                <span class="inline-flex items-center gap-2">
+                  <i data-lucide="moon" class="h-4 w-4"></i>
+                </span>
+              </button>
+            </div>
+
+            <div class="mt-4 flex gap-2">
+              <button type="button" class="flex-1 rounded-xl bg-cyan-500/90 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+                data-action="new-compendium">
+                <span class="inline-flex items-center justify-center gap-2">
+                  <i data-lucide="plus" class="h-4 w-4"></i>
+                  New
+                </span>
+              </button>
+              <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
+                data-action="open-tools">
+                <span class="inline-flex items-center gap-2">
+                  <i data-lucide="settings" class="h-4 w-4"></i>
+                  Tools
+                </span>
+              </button>
+            </div>
+
+            <div class="mt-4">
+              <div class="flex items-center justify-between">
+                <div class="text-xs font-semibold tracking-wide text-slate-300">COMPENDIUMS</div>
+                <div class="text-[11px] text-slate-400" id="compendiumCount"></div>
+              </div>
+              <div class="mt-2 max-h-[55vh] overflow-auto pr-1" id="compendiumList"></div>
+            </div>
+
+            <div class="mt-4 border-t border-white/10 pt-4">
+              <div class="grid grid-cols-3 gap-2">
+                <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                  data-action="nav" data-view="entries">
+                  <span class="inline-flex items-center gap-2"><i data-lucide="list" class="h-4 w-4"></i>Entries</span>
+                </button>
+                <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                  data-action="nav" data-view="study">
+                  <span class="inline-flex items-center gap-2"><i data-lucide="brain" class="h-4 w-4"></i>Study</span>
+                </button>
+                <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                  data-action="nav" data-view="index">
+                  <span class="inline-flex items-center gap-2"><i data-lucide="search" class="h-4 w-4"></i>Index</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <main class="flex-1">
+          <div class="lg:hidden mb-4 rounded-2xl border border-white/10 bg-white/5 shadow-glow backdrop-blur px-4 py-4">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <div class="grid h-10 w-10 place-items-center rounded-xl bg-white/10">
+                  <i data-lucide="book-open" class="h-5 w-5"></i>
+                </div>
+                <div>
+                  <div class="text-sm font-semibold leading-tight">Compendium Builder</div>
+                  <div class="text-xs text-slate-300">Local-only</div>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                  data-action="toggle-theme">
+                  <i data-lucide="moon" class="h-4 w-4"></i>
+                </button>
+                <button type="button" class="rounded-xl bg-cyan-500/90 px-3 py-2 text-xs font-semibold text-slate-950 hover:bg-cyan-400"
+                  data-action="new-compendium">
+                  <span class="inline-flex items-center gap-2"><i data-lucide="plus" class="h-4 w-4"></i>New</span>
+                </button>
+                <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                  data-action="open-tools">
+                  <i data-lucide="settings" class="h-4 w-4"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="mt-3 grid grid-cols-3 gap-2">
+              <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                data-action="nav" data-view="entries">
+                <span class="inline-flex items-center gap-2"><i data-lucide="list" class="h-4 w-4"></i>Entries</span>
+              </button>
+              <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                data-action="nav" data-view="study">
+                <span class="inline-flex items-center gap-2"><i data-lucide="brain" class="h-4 w-4"></i>Study</span>
+              </button>
+              <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                data-action="nav" data-view="index">
+                <span class="inline-flex items-center gap-2"><i data-lucide="search" class="h-4 w-4"></i>Index</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-white/10 bg-white/5 shadow-glow backdrop-blur">
+            <div class="border-b border-white/10 px-4 py-4 sm:px-6">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div class="text-lg font-bold" id="pageTitle">Welcome</div>
+                  <div class="text-sm text-slate-300" id="pageSubtitle">Create a compendium and build it step-by-step.</div>
+                </div>
+
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div class="relative">
+                    <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                      <i data-lucide="search" class="h-4 w-4"></i>
+                    </span>
+                    <input id="globalSearch" type="search" placeholder="Search entries…"
+                      class="w-full sm:w-80 rounded-xl border border-white/10 bg-slate-950/40 pl-10 pr-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20" />
+                  </div>
+
+                  <button id="primaryActionBtn"
+                    class="rounded-xl bg-cyan-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-50 disabled:hover:bg-cyan-500/90"
+                    data-action="primary-action">
+                    Get started
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="px-4 py-5 sm:px-6" id="mainContent"></div>
+          </div>
+
+          <div class="mt-4 text-xs text-slate-400">
+            Tip: use <span class="font-semibold text-slate-200">Tools → Export</span> to back up your compendiums (JSON).
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- Entry Editor -->
+  <dialog id="entryDialog" class="w-[min(920px,96vw)] rounded-2xl border border-white/10 bg-slate-950 text-slate-100 shadow-soft">
+    <form method="dialog" class="p-0" id="entryForm">
+      <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
+        <div>
+          <div class="text-base font-bold" id="entryDialogTitle">New Entry</div>
+          <div class="text-xs text-slate-400" id="entryDialogSub">Write in your own words. Keep it reference-friendly.</div>
+        </div>
+        <div class="flex gap-2">
+          <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
+            data-action="close-entry-dialog">
+            Cancel
+          </button>
+          <button type="submit" class="rounded-xl bg-cyan-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+            data-action="save-entry">
+            Save
+          </button>
+        </div>
+      </div>
+
+      <div class="max-h-[70vh] overflow-auto px-5 py-5">
+        <input type="hidden" id="entryId" />
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="block">
+            <div class="mb-1 text-xs font-semibold text-slate-300">Title</div>
+            <input id="entryTitle" required
+              class="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+              placeholder="e.g., Cartesian mind vs. transcendental ego" />
+          </label>
+
+          <label class="block">
+            <div class="mb-1 text-xs font-semibold text-slate-300">Category</div>
+            <input id="entryCategory"
+              class="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+              placeholder="e.g., Distinctions / Definitions / Arguments" />
+          </label>
+        </div>
+
+        <div class="mt-4 grid gap-4">
+          <label class="block">
+            <div class="mb-1 text-xs font-semibold text-slate-300">What it is (1–2 lines)</div>
+            <textarea id="entryWhat" rows="2"
+              class="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+              placeholder="Concise definition in your own words."></textarea>
+          </label>
+
+          <label class="block">
+            <div class="mb-1 text-xs font-semibold text-slate-300">Key points (bullets)</div>
+            <textarea id="entryKeyPoints" rows="4"
+              class="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+              placeholder="- Point 1&#10;- Point 2"></textarea>
+          </label>
+
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="block">
+              <div class="mb-1 text-xs font-semibold text-slate-300">Distinctions / contrasts</div>
+              <textarea id="entryDistinctions" rows="4"
+                class="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+                placeholder="- X vs Y"></textarea>
+            </label>
+
+            <label class="block">
+              <div class="mb-1 text-xs font-semibold text-slate-300">Examples / cases</div>
+              <textarea id="entryExamples" rows="4"
+                class="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+                placeholder="- Example 1"></textarea>
+            </label>
+          </div>
+
+          <label class="block">
+            <div class="mb-1 text-xs font-semibold text-slate-300">Why it matters / use cases</div>
+            <textarea id="entryWhy" rows="3"
+              class="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+              placeholder="When would you look this up? Why is it important?"></textarea>
+          </label>
+
+          <label class="block">
+            <div class="mb-1 text-xs font-semibold text-slate-300">My understanding (2–5 lines)</div>
+            <textarea id="entryUnderstanding" rows="3"
+              class="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+              placeholder="Explain it as if you’re teaching it."></textarea>
+          </label>
+
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="block">
+              <div class="mb-1 text-xs font-semibold text-slate-300">Sources (one per line)</div>
+              <textarea id="entrySources" rows="3"
+                class="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+                placeholder="Author — Title — page/link"></textarea>
+            </label>
+
+            <label class="block">
+              <div class="mb-1 text-xs font-semibold text-slate-300">Tags (comma-separated)</div>
+              <input id="entryTags"
+                class="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+                placeholder="mind, epistemology, argument" />
+              <div class="mt-2 text-[11px] text-slate-400">
+                Study uses tags + due dates for quick filtering.
+              </div>
+            </label>
+          </div>
+
+          <!-- Images (NEW) -->
+          <div class="rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="text-xs font-semibold text-slate-300">Images (slideshow)</div>
+                <div class="mt-1 text-[11px] text-slate-400">Paste web image URLs (https). Stored locally as links.</div>
+              </div>
+              <button type="button"
+                class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                data-action="open-image-viewer">
+                <span class="inline-flex items-center gap-2"><i data-lucide="maximize-2" class="h-4 w-4"></i>Viewer</span>
+              </button>
+            </div>
+
+            <textarea id="entryImagesJSON" class="hidden"></textarea>
+
+            <div class="mt-3 grid gap-2 sm:grid-cols-3">
+              <input id="newImageUrl"
+                class="sm:col-span-2 w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+                placeholder="Image URL (https://...jpg/png/webp/gif)" />
+              <button type="button"
+                class="rounded-xl bg-cyan-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+                data-action="add-image">
+                Add
+              </button>
+              <input id="newImageCaption"
+                class="sm:col-span-3 w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+                placeholder="Caption (optional)" />
+            </div>
+
+            <div class="mt-3 grid gap-2" id="imagesList"></div>
+
+            <div class="mt-3" id="imagesCarousel"></div>
+
+            <div class="mt-2 text-[11px] text-slate-400">
+              Tip: You can edit URL/caption inline below. Click the image (or Viewer) to open large.
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Tools Dialog -->
+  <dialog id="toolsDialog" class="w-[min(760px,96vw)] rounded-2xl border border-white/10 bg-slate-950 text-slate-100 shadow-soft">
+    <form method="dialog" class="p-0">
+      <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
+        <div>
+          <div class="text-base font-bold">Tools</div>
+          <div class="text-xs text-slate-400">Export, import, or reset local data.</div>
+        </div>
+        <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
+          data-action="close-tools">
+          Close
+        </button>
+      </div>
+
+      <div class="px-5 py-5">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div class="text-sm font-semibold">Export</div>
+            <div class="mt-1 text-xs text-slate-400">Download a JSON backup of all compendiums.</div>
+            <button type="button" class="mt-3 w-full rounded-xl bg-cyan-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+              data-action="export-json">
+              Export JSON
+            </button>
+          </div>
+
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div class="text-sm font-semibold">Import</div>
+            <div class="mt-1 text-xs text-slate-400">Restore from a JSON backup.</div>
+            <input id="importFile" type="file" accept="application/json"
+              class="mt-3 w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm" />
+            <button type="button" class="mt-3 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+              data-action="import-json">
+              Import JSON
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-4 rounded-2xl border border-rose-500/25 bg-rose-500/10 p-4">
+          <div class="flex items-start gap-3">
+            <div class="mt-0.5 text-rose-200"><i data-lucide="alert-triangle" class="h-5 w-5"></i></div>
+            <div class="flex-1">
+              <div class="text-sm font-semibold text-rose-100">Danger zone</div>
+              <div class="mt-1 text-xs text-rose-200/80">This permanently clears your local compendium data (in this browser only).</div>
+              <button type="button" class="mt-3 rounded-xl bg-rose-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-rose-400"
+                data-action="reset-all">
+                Reset all data
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 text-xs text-slate-400">
+          Storage: localStorage (same browser + same domain). For cross-device sync, use Export/Import.
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Image Viewer (NEW, not inside entry form) -->
+  <dialog id="imageViewerDialog" class="w-[min(1100px,98vw)] rounded-2xl border border-white/10 bg-slate-950 text-slate-100 shadow-soft">
+    <div class="p-0">
+      <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
+        <div>
+          <div class="text-base font-bold" id="viewerTitle">Images</div>
+          <div class="text-xs text-slate-400" id="viewerSub">—</div>
+        </div>
+        <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
+          data-action="close-image-viewer">
+          Close
+        </button>
+      </div>
+
+      <div class="px-5 py-5">
+        <div class="relative overflow-hidden rounded-2xl border border-white/10 bg-black/20">
+          <img id="viewerImg" class="w-full h-[70vh] object-contain"
+            src="" alt="Image"
+            loading="lazy"
+            referrerpolicy="no-referrer" />
+        </div>
+
+        <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div class="min-w-0">
+            <div class="text-sm text-slate-100" id="viewerCaption"></div>
+            <div class="mt-1 text-[11px] text-slate-400 truncate" id="viewerUrl"></div>
+          </div>
+
+          <div class="flex gap-2">
+            <button type="button"
+              class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+              data-action="viewer-prev" title="Previous">
+              <span class="inline-flex items-center gap-2"><i data-lucide="chevron-left" class="h-4 w-4"></i>Prev</span>
+            </button>
+            <button type="button"
+              class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+              data-action="viewer-next" title="Next">
+              <span class="inline-flex items-center gap-2">Next<i data-lucide="chevron-right" class="h-4 w-4"></i></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-3 flex flex-wrap gap-2" id="viewerDots"></div>
+      </div>
+    </div>
+  </dialog>
+
+  <script type="module">
+    /***********************
+     * Compendium Builder
+     * - Local-only storage (localStorage)
+     * - Guided wizard (type → template → starter set)
+     * - Entries + index + study mode (active recall)
+     * - NEW: images per entry + slideshow + full viewer
+     ***********************/
+
+    const STORAGE_KEY = "compendium_builder_v1";
+    const THEME_KEY = "compendium_builder_theme_v1";
+
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    const uid = (p="id") => `${p}_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`;
+    const nowISO = () => new Date().toISOString();
+    const toLines = (s) => String(s||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+    const fromLines = (arr) => (arr||[]).join("\n");
+    const clamp = (n,min,max)=>Math.max(min,Math.min(max,n));
+
+    function safeJSONParse(raw, fallback) {
+      try { return JSON.parse(raw); } catch { return fallback; }
+    }
+
+    function defaultState() {
+      return {
+        version: 1,
+        activeCompendiumId: null,
+        view: "welcome",
+        wizard: { step: 1 },
+        compendiums: {}
+      };
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultState();
+      const st = safeJSONParse(raw, null);
+      if (!st || typeof st !== "object") return defaultState();
+      if (!st.version) st.version = 1;
+      if (!st.compendiums) st.compendiums = {};
+      if (!("view" in st)) st.view = "welcome";
+      if (!("wizard" in st)) st.wizard = { step: 1 };
+      return st;
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadTheme() {
+      const t = localStorage.getItem(THEME_KEY);
+      if (t === "light") return "light";
+      if (t === "dark") return "dark";
+      return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.classList.toggle("dark", theme === "dark");
+      if (theme === "light") {
+        document.body.className = document.body.className.replace("bg-slate-950 text-slate-100", "bg-slate-50 text-slate-900");
+      } else {
+        document.body.className = document.body.className.replace("bg-slate-50 text-slate-900", "bg-slate-950 text-slate-100");
+      }
+    }
+
+    let state = loadState();
+    let theme = loadTheme();
+    applyTheme(theme);
+
+    function refreshIcons() {
+      try { lucide.createIcons(); } catch {}
+    }
+
+    function activeCompendium() {
+      return state.activeCompendiumId ? state.compendiums[state.activeCompendiumId] : null;
+    }
+
+    function setActiveCompendium(id) {
+      state.activeCompendiumId = id;
+      saveState();
+      render();
+    }
+
+    function setView(view) {
+      state.view = view;
+      saveState();
+      render();
+    }
+
+    function setWizardStep(step) {
+      state.wizard.step = clamp(step, 1, 3);
+      state.view = "wizard";
+      saveState();
+      render();
+    }
+
+    function ensureActiveOrWelcome() {
+      const c = activeCompendium();
+      if (!c) state.view = "welcome";
+    }
+
+    function newCompendium() {
+      const id = uid("cmp");
+      const c = {
+        id,
+        name: "Untitled Compendium",
+        topic: "",
+        scope: "topic",
+        audience: "personal",
+        template: "parker",
+        createdAt: nowISO(),
+        updatedAt: nowISO(),
+        starterTitles: [],
+        categories: [],
+        entries: {},
+        settings: { studyMode: "due" }
+      };
+      state.compendiums[id] = c;
+      state.activeCompendiumId = id;
+      state.view = "wizard";
+      state.wizard.step = 1;
+      saveState();
+      render();
+    }
+
+    function deleteCompendium(id) {
+      if (!state.compendiums[id]) return;
+      delete state.compendiums[id];
+      if (state.activeCompendiumId === id) state.activeCompendiumId = null;
+      ensureActiveOrWelcome();
+      saveState();
+      render();
+    }
+
+    function upsertEntry(compendiumId, entry) {
+      const c = state.compendiums[compendiumId];
+      if (!c) return;
+
+      const id = entry.id || uid("ent");
+      const prev = c.entries[id] || null;
+
+      const merged = {
+        id,
+        title: entry.title || "",
+        category: entry.category || "",
+        what: entry.what || "",
+        keyPoints: entry.keyPoints || [],
+        distinctions: entry.distinctions || [],
+        examples: entry.examples || [],
+        why: entry.why || "",
+        understanding: entry.understanding || "",
+        sources: entry.sources || [],
+        tags: entry.tags || [],
+        images: entry.images || prev?.images || [], // NEW
+        createdAt: prev?.createdAt || nowISO(),
+        updatedAt: nowISO(),
+        study: prev?.study || {
+          intervalDays: 1,
+          dueAt: nowISO(),
+          lapses: 0,
+          lastReviewedAt: null
+        }
+      };
+
+      c.entries[id] = merged;
+      c.updatedAt = nowISO();
+      saveState();
+      render();
+      return { id, isNew: !prev };
+    }
+
+    function deleteEntry(compendiumId, entryId) {
+      const c = state.compendiums[compendiumId];
+      if (!c || !c.entries[entryId]) return;
+      delete c.entries[entryId];
+      c.updatedAt = nowISO();
+      saveState();
+      render();
+    }
+
+    function reviewEntry(compendiumId, entryId, grade) {
+      const c = state.compendiums[compendiumId];
+      const e = c?.entries?.[entryId];
+      if (!e) return;
+
+      const today = new Date();
+      const interval = e.study?.intervalDays ?? 1;
+
+      let nextInterval = interval;
+      let lapses = e.study?.lapses ?? 0;
+
+      if (grade === "good") {
+        nextInterval = clamp(Math.round(interval * 2), 1, 365);
+      } else {
+        lapses += 1;
+        nextInterval = 1;
+      }
+
+      const due = new Date(today);
+      due.setDate(due.getDate() + nextInterval);
+
+      e.study = {
+        intervalDays: nextInterval,
+        dueAt: due.toISOString(),
+        lapses,
+        lastReviewedAt: today.toISOString()
+      };
+      e.updatedAt = nowISO();
+      c.updatedAt = nowISO();
+      saveState();
+      render();
+    }
+
+    function exportJSON() {
+      const data = JSON.stringify(state, null, 2);
+      const blob = new Blob([data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `compendium-backup-${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function importJSONFromFile(file) {
+      const text = await file.text();
+      const parsed = safeJSONParse(text, null);
+      if (!parsed || typeof parsed !== "object" || !parsed.compendiums) {
+        toast("Invalid JSON backup.", "error");
+        return;
+      }
+      state = parsed;
+      if (!state.version) state.version = 1;
+      if (!state.view) state.view = "welcome";
+      if (!state.wizard) state.wizard = { step: 1 };
+      saveState();
+      toast("Imported backup.", "ok");
+      render();
+    }
+
+    function resetAll() {
+      localStorage.removeItem(STORAGE_KEY);
+      state = defaultState();
+      toast("Local data cleared.", "ok");
+      render();
+    }
+
+    let toastTimer = null;
+    function toast(msg, tone="ok") {
+      clearTimeout(toastTimer);
+      let el = $("#toast");
+      if (!el) {
+        el = document.createElement("div");
+        el.id = "toast";
+        el.className = "fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-white/10 bg-slate-950/80 px-4 py-2 text-sm shadow-soft backdrop-blur";
+        document.body.appendChild(el);
+      }
+      const toneCls = tone === "error"
+        ? "text-rose-200 border-rose-500/25"
+        : "text-slate-100 border-white/10";
+      el.className = `fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-xl border bg-slate-950/80 px-4 py-2 text-sm shadow-soft backdrop-blur ${toneCls}`;
+      el.textContent = msg;
+      el.style.opacity = "1";
+      toastTimer = setTimeout(() => { el.style.opacity = "0"; }, 2400);
+    }
+
+    /***********************
+     * Rendering
+     ***********************/
+    const els = {
+      compendiumCount: $("#compendiumCount"),
+      compendiumList: $("#compendiumList"),
+      pageTitle: $("#pageTitle"),
+      pageSubtitle: $("#pageSubtitle"),
+      mainContent: $("#mainContent"),
+      primaryActionBtn: $("#primaryActionBtn"),
+      globalSearch: $("#globalSearch"),
+      entryDialog: $("#entryDialog"),
+      toolsDialog: $("#toolsDialog"),
+      imageViewerDialog: $("#imageViewerDialog"),
+    };
+
+    function render() {
+      ensureActiveOrWelcome();
+      renderSidebar();
+      renderTopBar();
+      renderMain();
+      refreshIcons();
+    }
+
+    function renderSidebar() {
+      const compendiums = Object.values(state.compendiums)
+        .sort((a,b) => (b.updatedAt||"").localeCompare(a.updatedAt||""));
+
+      els.compendiumCount.textContent = `${compendiums.length}`;
+      els.compendiumList.innerHTML = compendiums.length
+        ? compendiums.map(c => sidebarItem(c, c.id === state.activeCompendiumId)).join("")
+        : emptySidebar();
+
+      function sidebarItem(c, isActive) {
+        const badge = `${c.scope === "general" ? "Encyclopedia" : "Topic"} • ${c.audience === "public" ? "Public" : "Personal"}`;
+        const topic = c.topic ? escapeHTML(c.topic) : "No topic yet";
+        return `
+          <div class="mb-2">
+            <button type="button" class="w-full rounded-2xl border ${isActive ? "border-cyan-400/40 bg-cyan-500/10" : "border-white/10 bg-white/5"} px-3 py-3 text-left hover:bg-white/10"
+              data-action="select-compendium" data-id="${c.id}">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <div class="truncate text-sm font-semibold">${escapeHTML(c.name)}</div>
+                  <div class="truncate text-xs text-slate-300">${topic}</div>
+                  <div class="mt-1 text-[11px] text-slate-400">${escapeHTML(badge)}</div>
+                </div>
+                <div class="flex gap-1">
+                  <button type="button" class="rounded-lg border border-white/10 bg-white/5 p-2 hover:bg-white/10"
+                    title="Open builder" data-action="open-wizard" data-id="${c.id}">
+                    <i data-lucide="wand-2" class="h-4 w-4"></i>
+                  </button>
+                  <button type="button" class="rounded-lg border border-white/10 bg-white/5 p-2 hover:bg-white/10"
+                    title="Delete" data-action="delete-compendium" data-id="${c.id}">
+                    <i data-lucide="trash-2" class="h-4 w-4"></i>
+                  </button>
+                </div>
+              </div>
+            </button>
+          </div>
+        `;
+      }
+
+      function emptySidebar() {
+        return `
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div class="text-sm font-semibold">No compendiums yet</div>
+            <div class="mt-1 text-xs text-slate-400">Create one to start building your first compendium.</div>
+            <button type="button" class="mt-3 w-full rounded-xl bg-cyan-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+              data-action="new-compendium">
+              <span class="inline-flex items-center gap-2"><i data-lucide="plus" class="h-4 w-4"></i>New compendium</span>
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    function renderTopBar() {
+      const c = activeCompendium();
+      const view = state.view;
+
+      if (!c) {
+        els.pageTitle.textContent = "Welcome";
+        els.pageSubtitle.textContent = "Create a compendium and build it step-by-step.";
+        els.primaryActionBtn.textContent = "Get started";
+        els.primaryActionBtn.disabled = false;
+        els.primaryActionBtn.dataset.primary = "start";
+        return;
+      }
+
+      const counts = Object.keys(c.entries || {}).length;
+      const due = getDueEntries(c).length;
+
+      if (view === "wizard") {
+        els.pageTitle.textContent = `Build: ${c.name}`;
+        els.pageSubtitle.textContent = `Guided setup • Step ${state.wizard.step} of 3`;
+        els.primaryActionBtn.textContent = state.wizard.step < 3 ? "Next" : "Finish";
+        els.primaryActionBtn.disabled = false;
+        els.primaryActionBtn.dataset.primary = "wizard-next";
+        return;
+      }
+
+      if (view === "entries") {
+        els.pageTitle.textContent = `${c.name}`;
+        els.pageSubtitle.textContent = `${counts} entries • ${due} due for review`;
+        els.primaryActionBtn.textContent = "New entry";
+        els.primaryActionBtn.disabled = false;
+        els.primaryActionBtn.dataset.primary = "new-entry";
+        return;
+      }
+
+      if (view === "study") {
+        els.pageTitle.textContent = `Study: ${c.name}`;
+        els.pageSubtitle.textContent = c.settings.studyMode === "random"
+          ? "Random active recall"
+          : `${due} entries due (spaced practice)`;
+        els.primaryActionBtn.textContent = "Start";
+        els.primaryActionBtn.disabled = counts === 0;
+        els.primaryActionBtn.dataset.primary = "study-start";
+        return;
+      }
+
+      if (view === "index") {
+        els.pageTitle.textContent = `Index: ${c.name}`;
+        els.pageSubtitle.textContent = "Browse categories, tags, and sources.";
+        els.primaryActionBtn.textContent = "Open builder";
+        els.primaryActionBtn.disabled = false;
+        els.primaryActionBtn.dataset.primary = "open-wizard";
+        return;
+      }
+
+      els.pageTitle.textContent = `${c.name}`;
+      els.pageSubtitle.textContent = `${counts} entries`;
+      els.primaryActionBtn.textContent = "New entry";
+      els.primaryActionBtn.disabled = false;
+      els.primaryActionBtn.dataset.primary = "new-entry";
+    }
+
+    function renderMain() {
+      const c = activeCompendium();
+      const view = state.view;
+
+      if (!c) {
+        els.mainContent.innerHTML = renderWelcome();
+        return;
+      }
+
+      if (view === "wizard") { els.mainContent.innerHTML = renderWizard(c); return; }
+      if (view === "entries") { els.mainContent.innerHTML = renderEntries(c); return; }
+      if (view === "index") { els.mainContent.innerHTML = renderIndex(c); return; }
+      if (view === "study") { els.mainContent.innerHTML = renderStudy(c); return; }
+
+      els.mainContent.innerHTML = renderEntries(c);
+    }
+
+    function renderWelcome() {
+      return `
+        <div class="grid gap-6 lg:grid-cols-2">
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="flex items-start gap-3">
+              <div class="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-500/20 text-cyan-200">
+                <i data-lucide="sparkles" class="h-5 w-5"></i>
+              </div>
+              <div class="flex-1">
+                <div class="text-lg font-bold">Build your first compendium</div>
+                <div class="mt-1 text-sm text-slate-300">
+                  This guided app helps you choose a compendium type, set a template, create starter entries, and then study with active recall.
+                </div>
+                <div class="mt-4 flex flex-col gap-2 sm:flex-row">
+                  <button type="button" class="rounded-xl bg-cyan-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+                    data-action="new-compendium">
+                    <span class="inline-flex items-center gap-2"><i data-lucide="plus" class="h-4 w-4"></i>New compendium</span>
+                  </button>
+                  <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                    data-action="open-tools">
+                    <span class="inline-flex items-center gap-2"><i data-lucide="settings" class="h-4 w-4"></i>Tools</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="text-sm font-semibold">What you’ll do</div>
+            <div class="mt-3 grid gap-3">
+              ${stepCard("1", "Pick type", "Topic vs. General, Personal vs. Public")}
+              ${stepCard("2", "Set structure", "Use a clean, reference-friendly entry template")}
+              ${stepCard("3", "Seed a starter index", "Create 10 starter entries (editable list)")}
+              ${stepCard("4", "Capture + refine", "Add entries ad hoc; build categories + tags")}
+              ${stepCard("5", "Master it", "Active recall + spaced review built-in")}
+            </div>
+          </div>
+        </div>
+      `;
+      function stepCard(n, t, d) {
+        return `
+          <div class="flex items-start gap-3 rounded-xl border border-white/10 bg-slate-950/30 p-3">
+            <div class="grid h-8 w-8 place-items-center rounded-lg bg-white/10 text-xs font-bold">${n}</div>
+            <div class="flex-1">
+              <div class="text-sm font-semibold">${t}</div>
+              <div class="text-xs text-slate-400">${d}</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function renderWizard(c) {
+      const step = state.wizard.step;
+
+      const header = `
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div class="text-sm font-semibold">Builder</div>
+            <div class="mt-1 text-xs text-slate-400">
+              Follow these steps once, then you can just add entries as you go.
+            </div>
+          </div>
+
+          <div class="flex gap-2">
+            <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+              data-action="wizard-back" ${step === 1 ? "disabled" : ""}>
+              Back
+            </button>
+            <button type="button" class="rounded-xl bg-cyan-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+              data-action="wizard-next">
+              ${step < 3 ? "Next" : "Finish"}
+            </button>
+          </div>
+        </div>
+      `;
+
+      const progress = `
+        <div class="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div class="flex items-center justify-between text-xs">
+            <div class="font-semibold text-slate-300">Progress</div>
+            <div class="text-slate-400">Step ${step} / 3</div>
+          </div>
+          <div class="mt-2 h-2 rounded-full bg-white/10">
+            <div class="h-2 rounded-full bg-cyan-400/70" style="width:${(step/3)*100}%"></div>
+          </div>
+        </div>
+      `;
+
+      const stepHTML = step === 1 ? wizardStep1(c) : step === 2 ? wizardStep2(c) : wizardStep3(c);
+      return `${header}${progress}<div class="mt-4">${stepHTML}</div>`;
+    }
+
+    function wizardStep1(c) {
+      return `
+        <div class="grid gap-4 lg:grid-cols-2">
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="text-sm font-semibold">Name + topic</div>
+            <div class="mt-1 text-xs text-slate-400">Keep the first one narrow and usable.</div>
+
+            <div class="mt-4 grid gap-3">
+              <label class="block">
+                <div class="mb-1 text-xs font-semibold text-slate-300">Compendium name</div>
+                <input class="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+                  value="${escapeAttr(c.name)}" data-action="edit-compendium" data-field="name"
+                  placeholder="e.g., Philosophy of Mind (Core Positions)" />
+              </label>
+
+              <label class="block">
+                <div class="mb-1 text-xs font-semibold text-slate-300">Topic (optional but recommended)</div>
+                <input class="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+                  value="${escapeAttr(c.topic)}" data-action="edit-compendium" data-field="topic"
+                  placeholder="e.g., Stoicism / Reptiles of North America / Note-taking methods" />
+              </label>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="text-sm font-semibold">Pick the type (2 questions → 4 types)</div>
+            <div class="mt-1 text-xs text-slate-400">Scope + audience determines your compendium style.</div>
+
+            <div class="mt-4 grid gap-3">
+              <div class="rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+                <div class="text-xs font-semibold text-slate-300">Scope</div>
+                <div class="mt-2 grid grid-cols-2 gap-2">
+                  ${pill("scope","topic","Topic-specific","Best for mastery", c.scope==="topic")}
+                  ${pill("scope","general","General (encyclopedia)","Many topics", c.scope==="general")}
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+                <div class="text-xs font-semibold text-slate-300">Audience</div>
+                <div class="mt-2 grid grid-cols-2 gap-2">
+                  ${pill("audience","personal","Personal","Just for you", c.audience==="personal")}
+                  ${pill("audience","public","Public/communal","Share/publish", c.audience==="public")}
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 p-4">
+                <div class="flex items-start gap-3">
+                  <div class="mt-0.5 text-cyan-200"><i data-lucide="info" class="h-5 w-5"></i></div>
+                  <div class="text-xs text-cyan-100/90">
+                    Recommended first compendium: <span class="font-semibold">Personal + Topic-specific</span>.
+                    It’s easiest to finish and easiest to study.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      function pill(field, value, title, sub, active) {
+        return `
+          <button type="button" class="rounded-xl border ${active ? "border-cyan-400/40 bg-cyan-500/10" : "border-white/10 bg-white/5"} p-3 text-left hover:bg-white/10"
+            data-action="set-type" data-field="${field}" data-value="${value}">
+            <div class="text-sm font-semibold">${title}</div>
+            <div class="text-xs text-slate-400">${sub}</div>
+          </button>
+        `;
+      }
+    }
+
+    function wizardStep2(c) {
+      const previews = {
+        parker: {
+          title: "Classic Compendium (Parker-style)",
+          desc: "Concise info + analysis in your own words. Great default.",
+          fields: ["What it is", "Key points", "Distinctions", "Examples", "Why it matters", "My understanding", "Sources", "Tags", "Images"]
+        },
+        onepage: {
+          title: "One-page-per-concept",
+          desc: "Forces compression and clarity. Great for exam-style mastery.",
+          fields: ["Definition", "3–7 bullets", "One example", "One contrast", "One takeaway", "Sources", "Tags", "Images"]
+        },
+        fieldguide: {
+          title: "Field-guide feel",
+          desc: "Best for reference topics: species, tools, systems, procedures.",
+          fields: ["Identification/What", "Key traits", "Similar items", "Range/Context", "Use cases", "Sources", "Tags", "Images"]
+        }
+      };
+
+      return `
+        <div class="grid gap-4 lg:grid-cols-2">
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="text-sm font-semibold">Choose an entry template</div>
+            <div class="mt-1 text-xs text-slate-400">This controls how you’ll write each entry.</div>
+
+            <div class="mt-4 grid gap-3">
+              ${templateCard("parker", c.template, previews.parker)}
+              ${templateCard("onepage", c.template, previews.onepage)}
+              ${templateCard("fieldguide", c.template, previews.fieldguide)}
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="text-sm font-semibold">Optional: starter categories</div>
+            <div class="mt-1 text-xs text-slate-400">You can change these any time.</div>
+
+            <div class="mt-4">
+              <div class="flex gap-2">
+                <input id="newCategoryInput"
+                  class="flex-1 rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+                  placeholder="Add a category (e.g., Definitions)" />
+                <button type="button" class="rounded-xl bg-cyan-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+                  data-action="add-category">
+                  Add
+                </button>
+              </div>
+
+              <div class="mt-3 flex flex-wrap gap-2" id="categoryChips">
+                ${(c.categories?.length ? c.categories : ["Definitions","Distinctions","Arguments","Examples","Glossary"]).map(cat => `
+                  <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs">
+                    ${escapeHTML(cat)}
+                    <button type="button" class="text-slate-300 hover:text-rose-200" title="Remove"
+                      data-action="remove-category" data-cat="${escapeAttr(cat)}">
+                      <i data-lucide="x" class="h-3 w-3"></i>
+                    </button>
+                  </span>
+                `).join("")}
+              </div>
+
+              <div class="mt-4 rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+                <div class="text-xs font-semibold text-slate-300">Rule of thumb</div>
+                <div class="mt-1 text-xs text-slate-400">
+                  Start with 3–6 categories. Too many categories early = friction.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      function templateCard(key, current, meta) {
+        const active = key === current;
+        return `
+          <button type="button" class="rounded-2xl border ${active ? "border-cyan-400/40 bg-cyan-500/10" : "border-white/10 bg-white/5"} p-4 text-left hover:bg-white/10"
+            data-action="set-template" data-template="${key}">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <div class="text-sm font-semibold">${meta.title}</div>
+                <div class="mt-1 text-xs text-slate-400">${meta.desc}</div>
+              </div>
+              <div class="mt-0.5 ${active ? "text-cyan-200" : "text-slate-400"}">
+                <i data-lucide="${active ? "check-circle-2" : "circle"}" class="h-5 w-5"></i>
+              </div>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-2">
+              ${meta.fields.map(f => `<span class="rounded-full border border-white/10 bg-slate-950/30 px-2 py-1 text-[11px] text-slate-300">${f}</span>`).join("")}
+            </div>
+          </button>
+        `;
+      }
+    }
+
+    function wizardStep3(c) {
+      const titles = c.starterTitles?.length ? c.starterTitles : [];
+      const hint = c.topic ? `for “${c.topic}”` : "for your topic";
+
+      return `
+        <div class="grid gap-4 lg:grid-cols-2">
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="text-sm font-semibold">Seed your starter index</div>
+            <div class="mt-1 text-xs text-slate-400">
+              Create 10 starter entry titles ${hint}. You can edit them anytime.
+            </div>
+
+            <div class="mt-4 flex flex-col gap-2 sm:flex-row">
+              <button type="button" class="rounded-xl bg-cyan-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+                data-action="generate-starters">
+                <span class="inline-flex items-center gap-2"><i data-lucide="sparkles" class="h-4 w-4"></i>Generate 10 starters</span>
+              </button>
+              <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                data-action="clear-starters">
+                Clear
+              </button>
+            </div>
+
+            <div class="mt-4">
+              <div class="text-xs font-semibold text-slate-300">Starter titles (one per line)</div>
+              <textarea id="starterTitlesBox" rows="12"
+                class="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-3 text-sm outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+                placeholder="e.g., Core concepts&#10;Key distinctions&#10;Common misconceptions">${escapeHTML(fromLines(titles))}</textarea>
+
+              <button type="button" class="mt-3 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                data-action="save-starters">
+                Save titles
+              </button>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="text-sm font-semibold">Finish → create placeholder entries</div>
+            <div class="mt-1 text-xs text-slate-400">
+              When you finish, we’ll create placeholder entries from your starter list so you can fill them in later.
+            </div>
+
+            <div class="mt-4 rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+              <div class="text-xs font-semibold text-slate-300">How to use it (built in)</div>
+              <ul class="mt-2 list-disc pl-5 text-xs text-slate-400 space-y-1">
+                <li>Flip through entries often (fast review).</li>
+                <li>Active recall: read → close → reproduce (write or speak).</li>
+                <li>Teach: explain one entry to someone (or to your phone).</li>
+                <li>Don’t aim for perfect. This is a first draft tool.</li>
+              </ul>
+            </div>
+
+            <div class="mt-4 rounded-2xl border border-cyan-400/20 bg-cyan-500/10 p-4">
+              <div class="flex items-start gap-3">
+                <div class="mt-0.5 text-cyan-200"><i data-lucide="zap" class="h-5 w-5"></i></div>
+                <div class="text-xs text-cyan-100/90">
+                  After finishing, go to <span class="font-semibold">Entries</span> and fill one placeholder per day.
+                  That’s enough to build a serious compendium fast.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderEntries(c) {
+      const q = String(els.globalSearch.value || "").trim().toLowerCase();
+
+      const entries = Object.values(c.entries || {}).sort((a,b) => (b.updatedAt||"").localeCompare(a.updatedAt||""));
+      const filtered = q ? entries.filter(e => entryMatches(e, q)) : entries;
+
+      const stats = `
+        <div class="grid gap-3 sm:grid-cols-3">
+          ${statCard("Entries", entries.length, "list")}
+          ${statCard("Due", getDueEntries(c).length, "calendar-clock")}
+          ${statCard("Categories", uniqueNonEmpty(entries.map(e => e.category)).length, "shapes")}
+        </div>
+      `;
+
+      const actions = `
+        <div class="mt-4 flex flex-col gap-2 sm:flex-row">
+          <button type="button" class="rounded-xl bg-cyan-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+            data-action="open-entry-dialog" data-id="">
+            <span class="inline-flex items-center gap-2"><i data-lucide="plus" class="h-4 w-4"></i>New entry</span>
+          </button>
+          <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+            data-action="open-wizard" data-id="${c.id}">
+            <span class="inline-flex items-center gap-2"><i data-lucide="wand-2" class="h-4 w-4"></i>Open builder</span>
+          </button>
+          <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+            data-action="bulk-create-from-starters">
+            <span class="inline-flex items-center gap-2"><i data-lucide="layers" class="h-4 w-4"></i>Create from starter titles</span>
+          </button>
+        </div>
+      `;
+
+      const list = filtered.length
+        ? `<div class="mt-4 grid gap-3">${filtered.map(e => entryCard(c, e)).join("")}</div>`
+        : `
+          <div class="mt-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="text-sm font-semibold">${entries.length ? "No matches" : "No entries yet"}</div>
+            <div class="mt-1 text-xs text-slate-400">
+              ${entries.length ? "Try a different search." : "Create your first entry or generate starter titles in the Builder."}
+            </div>
+            <button type="button" class="mt-3 rounded-xl bg-cyan-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+              data-action="open-entry-dialog" data-id="">
+              <span class="inline-flex items-center gap-2"><i data-lucide="plus" class="h-4 w-4"></i>New entry</span>
+            </button>
+          </div>
+        `;
+
+      return `${stats}${actions}${list}`;
+
+      function statCard(label, value, icon) {
+        return `
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div class="flex items-center justify-between">
+              <div class="text-xs font-semibold text-slate-300">${label}</div>
+              <i data-lucide="${icon}" class="h-4 w-4 text-slate-400"></i>
+            </div>
+            <div class="mt-2 text-2xl font-extrabold">${value}</div>
+          </div>
+        `;
+      }
+
+      function entryCard(c, e) {
+        const due = isDue(e) ? "Due" : "Not due";
+        const dueCls = isDue(e) ? "border-amber-400/25 bg-amber-500/10 text-amber-100" : "border-white/10 bg-slate-950/30 text-slate-300";
+        const tags = (e.tags||[]).slice(0,6);
+        const imgCount = (e.images || []).filter(x => x?.url).length;
+
+        return `
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <div class="truncate text-sm font-semibold">${escapeHTML(e.title || "Untitled")}</div>
+                  <span class="rounded-full border ${dueCls} px-2 py-0.5 text-[11px]">${due}</span>
+                  ${e.category ? `<span class="rounded-full border border-white/10 bg-slate-950/30 px-2 py-0.5 text-[11px] text-slate-300">${escapeHTML(e.category)}</span>` : ""}
+                  ${imgCount ? `<span class="inline-flex items-center gap-1 rounded-full border border-white/10 bg-slate-950/30 px-2 py-0.5 text-[11px] text-slate-300"><i data-lucide="image" class="h-3.5 w-3.5"></i>${imgCount}</span>` : ""}
+                </div>
+                <div class="mt-2 text-xs text-slate-400 line-clamp-2">
+                  ${escapeHTML(e.what || e.understanding || "") || "<span class='text-slate-500'>No summary yet.</span>"}
+                </div>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  ${tags.map(t => `<span class="rounded-full border border-white/10 bg-slate-950/30 px-2 py-0.5 text-[11px] text-slate-300">#${escapeHTML(t)}</span>`).join("")}
+                </div>
+              </div>
+
+              <div class="flex gap-2">
+                <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                  data-action="open-entry-dialog" data-id="${e.id}">
+                  <span class="inline-flex items-center gap-2"><i data-lucide="pencil" class="h-4 w-4"></i>Edit</span>
+                </button>
+                <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                  data-action="quick-review" data-grade="good" data-id="${e.id}">
+                  <span class="inline-flex items-center gap-2"><i data-lucide="check" class="h-4 w-4"></i>Remembered</span>
+                </button>
+                <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                  data-action="quick-review" data-grade="again" data-id="${e.id}">
+                  <span class="inline-flex items-center gap-2"><i data-lucide="rotate-ccw" class="h-4 w-4"></i>Need work</span>
+                </button>
+                <button type="button" class="rounded-xl border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-100 hover:bg-rose-500/20"
+                  data-action="delete-entry" data-id="${e.id}">
+                  <span class="inline-flex items-center gap-2"><i data-lucide="trash-2" class="h-4 w-4"></i>Delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function renderIndex(c) {
+      const entries = Object.values(c.entries || {});
+      const categories = uniqueNonEmpty(entries.map(e => e.category)).sort((a,b)=>a.localeCompare(b));
+      const tags = uniqueNonEmpty(entries.flatMap(e => e.tags || [])).sort((a,b)=>a.localeCompare(b));
+      const sources = uniqueNonEmpty(entries.flatMap(e => e.sources || [])).slice(0, 50);
+
+      return `
+        <div class="grid gap-4 lg:grid-cols-3">
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="flex items-center justify-between">
+              <div class="text-sm font-semibold">Categories</div>
+              <div class="text-xs text-slate-400">${categories.length}</div>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-2">
+              ${categories.length ? categories.map(cat => chip(cat, "category")).join("") : empty("No categories yet.")}
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="flex items-center justify-between">
+              <div class="text-sm font-semibold">Tags</div>
+              <div class="text-xs text-slate-400">${tags.length}</div>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-2">
+              ${tags.length ? tags.map(t => chip("#"+t, "tag")).join("") : empty("No tags yet.")}
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="flex items-center justify-between">
+              <div class="text-sm font-semibold">Sources</div>
+              <div class="text-xs text-slate-400">${sources.length}</div>
+            </div>
+            <div class="mt-3 max-h-[45vh] overflow-auto pr-1 space-y-2">
+              ${sources.length ? sources.map(s => `
+                <div class="rounded-xl border border-white/10 bg-slate-950/30 p-3 text-xs text-slate-300">
+                  ${escapeHTML(s)}
+                </div>
+              `).join("") : empty("No sources yet.")}
+            </div>
+          </div>
+        </div>
+      `;
+
+      function chip(label, kind) {
+        return `
+          <button type="button" class="rounded-full border border-white/10 bg-slate-950/30 px-3 py-1 text-xs text-slate-200 hover:bg-white/10"
+            data-action="filter-by" data-kind="${kind}" data-value="${escapeAttr(label)}">
+            ${escapeHTML(label)}
+          </button>
+        `;
+      }
+      function empty(msg) {
+        return `<div class="text-xs text-slate-400">${msg}</div>`;
+      }
+    }
+
+    function renderStudy(c) {
+      const entries = Object.values(c.entries || {});
+      if (!entries.length) {
+        return `
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="text-sm font-semibold">No entries to study yet</div>
+            <div class="mt-1 text-xs text-slate-400">Create at least one entry, then come back here.</div>
+            <button type="button" class="mt-3 rounded-xl bg-cyan-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+              data-action="open-entry-dialog" data-id="">
+              <span class="inline-flex items-center gap-2"><i data-lucide="plus" class="h-4 w-4"></i>New entry</span>
+            </button>
+          </div>
+        `;
+      }
+
+      const mode = c.settings.studyMode || "due";
+      const due = getDueEntries(c);
+      const candidate = mode === "random"
+        ? entries[Math.floor(Math.random() * entries.length)]
+        : (due[0] || null);
+
+      if (!candidate) {
+        return `
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="text-sm font-semibold">Nothing due right now</div>
+            <div class="mt-1 text-xs text-slate-400">Switch to Random mode, or come back later.</div>
+            <div class="mt-3 flex gap-2">
+              <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                data-action="set-study-mode" data-mode="random">
+                Random mode
+              </button>
+              <button type="button" class="rounded-xl bg-cyan-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+                data-action="nav" data-view="entries">
+                Go to entries
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      const carId = `study_${candidate.id}`;
+
+      return `
+        <div class="grid gap-4 lg:grid-cols-3">
+          <div class="lg:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div class="text-xs font-semibold text-slate-300">Active recall card</div>
+                <div class="mt-1 text-lg font-extrabold">${escapeHTML(candidate.title || "Untitled")}</div>
+                <div class="mt-1 text-xs text-slate-400">
+                  ${candidate.category ? `Category: ${escapeHTML(candidate.category)} • ` : "" }
+                  Interval: ${candidate.study?.intervalDays ?? 1} day(s)
+                </div>
+              </div>
+
+              <div class="flex gap-2">
+                <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                  data-action="toggle-reveal">
+                  <span class="inline-flex items-center gap-2"><i data-lucide="eye" class="h-4 w-4"></i>Reveal</span>
+                </button>
+                <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                  data-action="open-entry-dialog" data-id="${candidate.id}">
+                  <span class="inline-flex items-center gap-2"><i data-lucide="pencil" class="h-4 w-4"></i>Edit</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="mt-4 rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+              <div class="text-xs font-semibold text-slate-300">Prompt</div>
+              <div class="mt-2 text-sm text-slate-200">
+                Explain this from memory. Then reveal and compare.
+              </div>
+
+              <div class="mt-4 hidden" id="revealBox">
+                ${studyContent(candidate, carId)}
+              </div>
+            </div>
+
+            <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div class="text-xs text-slate-400">
+                Grade yourself honestly. “Need work” resets the interval to 1 day.
+              </div>
+              <div class="flex gap-2">
+                <button type="button" class="rounded-xl border border-rose-500/25 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-100 hover:bg-rose-500/20"
+                  data-action="study-grade" data-grade="again" data-id="${candidate.id}">
+                  Need work
+                </button>
+                <button type="button" class="rounded-xl bg-cyan-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+                  data-action="study-grade" data-grade="good" data-id="${candidate.id}">
+                  Remembered
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="flex items-center justify-between">
+              <div class="text-sm font-semibold">Study settings</div>
+              <i data-lucide="sliders" class="h-4 w-4 text-slate-400"></i>
+            </div>
+
+            <div class="mt-3 rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+              <div class="text-xs font-semibold text-slate-300">Mode</div>
+              <div class="mt-2 grid grid-cols-2 gap-2">
+                <button type="button" class="rounded-xl border ${mode==="due" ? "border-cyan-400/40 bg-cyan-500/10" : "border-white/10 bg-white/5"} px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                  data-action="set-study-mode" data-mode="due">
+                  Due
+                </button>
+                <button type="button" class="rounded-xl border ${mode==="random" ? "border-cyan-400/40 bg-cyan-500/10" : "border-white/10 bg-white/5"} px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                  data-action="set-study-mode" data-mode="random">
+                  Random
+                </button>
+              </div>
+
+              <div class="mt-3 text-xs text-slate-400">
+                Due mode = spaced practice using your review grades.
+              </div>
+            </div>
+
+            <div class="mt-4 rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+              <div class="text-xs font-semibold text-slate-300">Due queue</div>
+              <div class="mt-2 text-xs text-slate-400">${getDueEntries(c).length} due</div>
+              <div class="mt-3 space-y-2 max-h-[36vh] overflow-auto pr-1">
+                ${getDueEntries(c).slice(0, 12).map(e => `
+                  <button type="button" class="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-left hover:bg-white/10"
+                    data-action="study-pick" data-id="${e.id}">
+                    <div class="truncate text-xs font-semibold">${escapeHTML(e.title || "Untitled")}</div>
+                    <div class="mt-0.5 truncate text-[11px] text-slate-400">${escapeHTML(e.category || "—")}</div>
+                  </button>
+                `).join("") || `<div class="text-xs text-slate-400">Nothing due.</div>`}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      function studyContent(e, carouselId) {
+        const block = (label, html) => html ? `
+          <div class="mt-3">
+            <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">${label}</div>
+            <div class="mt-1 text-sm text-slate-200">${html}</div>
+          </div>
+        ` : "";
+
+        const bullets = (arr) => (arr?.length)
+          ? `<ul class="list-disc pl-5 space-y-1">${arr.map(x => `<li>${escapeHTML(x)}</li>`).join("")}</ul>`
+          : "";
+
+        const imgArr = (e.images || []).filter(x => x?.url);
+
+        return `
+          ${block("What it is", escapeHTML(e.what))}
+          ${block("Key points", bullets(e.keyPoints))}
+          ${block("Distinctions", bullets(e.distinctions))}
+          ${block("Examples", bullets(e.examples))}
+          ${block("Why it matters", escapeHTML(e.why))}
+          ${block("My understanding", escapeHTML(e.understanding))}
+          ${imgArr.length ? block("Images", renderCarousel(imgArr, carouselId, { compact: false })) : ""}
+          ${block("Sources", bullets(e.sources))}
+        `;
+      }
+    }
+
+    /***********************
+     * Helpers
+     ***********************/
+    function escapeHTML(s) {
+      return String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+    function escapeAttr(s) { return escapeHTML(s); }
+
+    function entryMatches(e, q) {
+      const hay = [
+        e.title, e.category, e.what, e.why, e.understanding,
+        ...(e.keyPoints||[]), ...(e.distinctions||[]), ...(e.examples||[]),
+        ...(e.tags||[]), ...(e.sources||[]),
+        ...((e.images||[]).map(im => `${im.url||""} ${im.caption||""}`))
+      ].join(" ").toLowerCase();
+      return hay.includes(q);
+    }
+
+    function uniqueNonEmpty(arr) {
+      return Array.from(new Set((arr||[]).map(x => String(x||"").trim()).filter(Boolean)));
+    }
+
+    function isDue(e) {
+      const due = e?.study?.dueAt ? new Date(e.study.dueAt).getTime() : 0;
+      return due <= Date.now();
+    }
+
+    function getDueEntries(c) {
+      return Object.values(c.entries || {}).filter(isDue)
+        .sort((a,b) => new Date(a.study?.dueAt || 0) - new Date(b.study?.dueAt || 0));
+    }
+
+    function generateStarterTitles(topic) {
+      const t = (topic || "the topic").trim();
+      const base = [
+        `Definition of ${t}`,
+        `Core concepts in ${t}`,
+        `Key distinctions within ${t}`,
+        `Common misconceptions about ${t}`,
+        `Major positions or models in ${t}`,
+        `Strongest arguments for a central claim in ${t}`,
+        `Strongest objections / counterarguments in ${t}`,
+        `Important examples / case studies in ${t}`,
+        `Practical applications / why ${t} matters`,
+        `${t} mini-glossary (key terms)`
+      ];
+      if (!topic || !topic.trim()) {
+        return [
+          "Definition (in my words)",
+          "Core concepts",
+          "Key distinctions",
+          "Common misconceptions",
+          "Major positions / models",
+          "Best arguments (for)",
+          "Best arguments (against)",
+          "Examples / cases",
+          "Applications / why it matters",
+          "Mini-glossary"
+        ];
+      }
+      return base;
+    }
+
+    /***********************
+     * Carousel (generic)
+     ***********************/
+    function renderCarousel(images, carouselId, opts = {}) {
+      const imgs = (images || []).filter(x => x?.url);
+      const compact = !!opts.compact;
+      if (!imgs.length) return `<div class="text-xs text-slate-400">No images added.</div>`;
+
+      const json = JSON.stringify(imgs).replaceAll("<", "\\u003c");
+      const h = compact ? "h-48" : "h-64";
+
+      return `
+        <div class="rounded-2xl border border-white/10 bg-slate-950/30 p-3"
+             data-carousel-root="1" data-carousel-id="${escapeAttr(carouselId)}">
+          <div class="relative overflow-hidden rounded-xl border border-white/10 bg-black/20">
+            <button type="button" class="block w-full" data-action="open-image-viewer">
+              <img
+                data-carousel-img="1"
+                data-carousel-index="0"
+                class="w-full ${h} object-contain"
+                src="${escapeAttr(imgs[0].url)}"
+                alt="Entry image"
+                loading="lazy"
+                referrerpolicy="no-referrer"
+              />
+            </button>
+          </div>
+
+          <div class="mt-2 flex items-center justify-between gap-2">
+            <div class="min-w-0 flex-1 text-xs text-slate-300 truncate" data-carousel-caption="1">
+              ${escapeHTML(imgs[0].caption || "")}
+            </div>
+
+            <div class="flex gap-2">
+              <button type="button"
+                class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                data-action="carousel-prev" title="Previous">
+                <span class="inline-flex items-center gap-2">
+                  <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                </span>
+              </button>
+
+              <button type="button"
+                class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                data-action="carousel-next" title="Next">
+                <span class="inline-flex items-center gap-2">
+                  <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-2 flex flex-wrap gap-2" data-carousel-dots="1">
+            ${imgs.map((_, i) => `
+              <button type="button"
+                class="${carouselDotClass(i===0)}"
+                data-action="carousel-dot" data-index="${i}"
+                title="Go to ${i+1}">
+              </button>
+            `).join("")}
+          </div>
+
+          <template data-carousel-data="1">${json}</template>
+        </div>
+      `;
+    }
+
+    function carouselDotClass(active) {
+      const base = "h-2.5 w-2.5 rounded-full border border-white/15";
+      return active
+        ? `${base} bg-cyan-400/80`
+        : `${base} bg-white/10 hover:bg-white/20`;
+    }
+
+    function carouselRead(root) {
+      const tpl = root?.querySelector?.('[data-carousel-data="1"]');
+      return safeJSONParse(tpl?.textContent || "[]", []);
+    }
+
+    function carouselCurrentIndex(root) {
+      const img = root?.querySelector?.('[data-carousel-img="1"]');
+      const n = parseInt(img?.dataset?.carouselIndex || "0", 10);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function carouselSetIndex(root, idx) {
+      if (!root) return;
+      const imgs = carouselRead(root);
+      if (!imgs.length) return;
+
+      const n = imgs.length;
+      idx = ((idx % n) + n) % n;
+
+      const imgEl = root.querySelector('[data-carousel-img="1"]');
+      const capEl = root.querySelector('[data-carousel-caption="1"]');
+      const dots = root.querySelectorAll('[data-action="carousel-dot"]');
+
+      if (imgEl) {
+        imgEl.src = imgs[idx].url;
+        imgEl.dataset.carouselIndex = String(idx);
+      }
+      if (capEl) capEl.textContent = imgs[idx].caption || "";
+
+      dots.forEach((d, i) => {
+        d.className = carouselDotClass(i === idx);
+      });
+
+      refreshIcons();
+    }
+
+    /***********************
+     * Images (entry editor state)
+     ***********************/
+    let entryCarouselId = `entrydlg_${uid("car")}`;
+
+    function sanitizeImageUrl(url) {
+      const u = String(url || "").trim();
+      if (!u) return "";
+      if (u.startsWith("https://") || u.startsWith("http://")) return u;
+      return ""; // keep it strict to avoid weird schemes
+    }
+
+    function getImagesDraft() {
+      return safeJSONParse($("#entryImagesJSON")?.value || "[]", []).filter(x => x && typeof x === "object");
+    }
+
+    function setImagesDraft(arr) {
+      const cleaned = (arr || [])
+        .map(x => ({ url: sanitizeImageUrl(x?.url), caption: String(x?.caption || "").trim() }))
+        .filter(x => x.url);
+      $("#entryImagesJSON").value = JSON.stringify(cleaned);
+      renderEntryImagesUI();
+    }
+
+    function renderEntryImagesUI() {
+      const imgs = getImagesDraft();
+      const list = $("#imagesList");
+      const car = $("#imagesCarousel");
+
+      if (list) {
+        list.innerHTML = imgs.length ? imgs.map((im, i) => `
+          <div class="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-3">
+            <button type="button" class="shrink-0" data-action="open-image-viewer" data-index="${i}" title="Open viewer">
+              <img src="${escapeAttr(im.url)}" alt="thumb"
+                class="h-14 w-20 rounded-xl border border-white/10 bg-black/20 object-cover"
+                loading="lazy" referrerpolicy="no-referrer" />
+            </button>
+
+            <div class="min-w-0 flex-1 grid gap-2">
+              <input
+                class="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-xs outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+                value="${escapeAttr(im.url)}"
+                data-action="image-edit" data-index="${i}" data-field="url"
+                placeholder="https://..." />
+              <input
+                class="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-xs outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+                value="${escapeAttr(im.caption || "")}"
+                data-action="image-edit" data-index="${i}" data-field="caption"
+                placeholder="Caption (optional)" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                data-action="move-image-up" data-index="${i}" title="Move up" ${i===0 ? "disabled" : ""}>
+                <i data-lucide="chevron-up" class="h-4 w-4"></i>
+              </button>
+              <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                data-action="move-image-down" data-index="${i}" title="Move down" ${i===imgs.length-1 ? "disabled" : ""}>
+                <i data-lucide="chevron-down" class="h-4 w-4"></i>
+              </button>
+              <button type="button" class="rounded-xl border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-100 hover:bg-rose-500/20"
+                data-action="remove-image" data-index="${i}" title="Remove">
+                <i data-lucide="trash-2" class="h-4 w-4"></i>
+              </button>
+            </div>
+          </div>
+        `).join("") : `
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-slate-400">
+            No images yet. Add one above.
+          </div>
+        `;
+      }
+
+      if (car) {
+        car.innerHTML = imgs.length
+          ? renderCarousel(imgs, entryCarouselId, { compact: true })
+          : "";
+      }
+
+      refreshIcons();
+    }
+
+    /***********************
+     * Image Viewer (global)
+     ***********************/
+    const viewer = { images: [], index: 0, title: "Images" };
+
+    function openImageViewer(images, startIndex = 0, title = "Images") {
+      viewer.images = (images || []).filter(x => x?.url);
+      if (!viewer.images.length) { toast("No images to view.", "error"); return; }
+      viewer.index = clamp(startIndex, 0, viewer.images.length - 1);
+      viewer.title = title;
+
+      renderImageViewer();
+      try { els.imageViewerDialog.showModal(); } catch {}
+      refreshIcons();
+    }
+
+    function closeImageViewer() {
+      try { els.imageViewerDialog.close(); } catch {}
+    }
+
+    function renderImageViewer() {
+      const imgs = viewer.images || [];
+      const n = imgs.length;
+      const i = clamp(viewer.index, 0, Math.max(0, n - 1));
+      viewer.index = i;
+
+      $("#viewerTitle").textContent = viewer.title || "Images";
+      $("#viewerSub").textContent = n ? `${i+1} / ${n}` : "—";
+
+      const im = imgs[i] || {};
+      $("#viewerImg").src = im.url || "";
+      $("#viewerCaption").textContent = im.caption || "";
+      $("#viewerUrl").textContent = im.url || "";
+
+      const dots = $("#viewerDots");
+      if (dots) {
+        dots.innerHTML = n ? imgs.map((_, idx) => `
+          <button type="button"
+            class="${carouselDotClass(idx===i)}"
+            data-action="viewer-dot" data-index="${idx}"
+            title="Go to ${idx+1}">
+          </button>
+        `).join("") : "";
+      }
+
+      refreshIcons();
+    }
+
+    /***********************
+     * Entry Dialog
+     ***********************/
+    function openEntryDialog(entryId = "") {
+      const c = activeCompendium();
+      if (!c) return;
+
+      const e = entryId ? c.entries?.[entryId] : null;
+
+      $("#entryId").value = e?.id || "";
+      $("#entryTitle").value = e?.title || "";
+      $("#entryCategory").value = e?.category || "";
+      $("#entryWhat").value = e?.what || "";
+      $("#entryKeyPoints").value = fromLines(e?.keyPoints || []);
+      $("#entryDistinctions").value = fromLines(e?.distinctions || []);
+      $("#entryExamples").value = fromLines(e?.examples || []);
+      $("#entryWhy").value = e?.why || "";
+      $("#entryUnderstanding").value = e?.understanding || "";
+      $("#entrySources").value = fromLines(e?.sources || []);
+      $("#entryTags").value = (e?.tags || []).join(", ");
+
+      $("#entryDialogTitle").textContent = e ? "Edit Entry" : "New Entry";
+      $("#entryDialogSub").textContent = "Write in your own words. Keep it reference-friendly.";
+
+      $("#newImageUrl").value = "";
+      $("#newImageCaption").value = "";
+
+      entryCarouselId = `entrydlg_${(e?.id || "new")}_${uid("car")}`;
+      setImagesDraft(e?.images || []);
+
+      els.entryDialog.showModal();
+      refreshIcons();
+    }
+
+    function closeEntryDialog() {
+      try { els.entryDialog.close(); } catch {}
+    }
+
+    function readEntryForm() {
+      return {
+        id: $("#entryId").value.trim() || null,
+        title: $("#entryTitle").value.trim(),
+        category: $("#entryCategory").value.trim(),
+        what: $("#entryWhat").value.trim(),
+        keyPoints: toLines($("#entryKeyPoints").value),
+        distinctions: toLines($("#entryDistinctions").value),
+        examples: toLines($("#entryExamples").value),
+        why: $("#entryWhy").value.trim(),
+        understanding: $("#entryUnderstanding").value.trim(),
+        sources: toLines($("#entrySources").value),
+        tags: $("#entryTags").value.split(",").map(x=>x.trim()).filter(Boolean),
+        images: getImagesDraft()
+      };
+    }
+
+    /***********************
+     * Events (delegation)
+     ***********************/
+    document.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("[data-action]");
+      if (!btn) return;
+
+      const action = btn.dataset.action;
+      const c = activeCompendium();
+
+      // Safety net: never let carousel/viewer controls submit any form
+      if (action.startsWith("carousel-") || action.startsWith("viewer-") || action === "open-image-viewer") {
+        ev.preventDefault();
+        ev.stopPropagation();
+      }
+
+      if (action === "toggle-theme") {
+        theme = (theme === "dark") ? "light" : "dark";
+        localStorage.setItem(THEME_KEY, theme);
+        applyTheme(theme);
+        toast(`Theme: ${theme}`, "ok");
+        return;
+      }
+
+      if (action === "new-compendium") { newCompendium(); return; }
+
+      if (action === "select-compendium") {
+        const id = btn.dataset.id;
+        setActiveCompendium(id);
+        if (state.view === "welcome") setView("entries");
+        return;
+      }
+
+      if (action === "delete-compendium") {
+        const id = btn.dataset.id;
+        const name = state.compendiums[id]?.name || "this compendium";
+        if (confirm(`Delete “${name}”? This can’t be undone.`)) deleteCompendium(id);
+        return;
+      }
+
+      if (action === "nav") {
+        const view = btn.dataset.view;
+        if (!activeCompendium()) { setView("welcome"); return; }
+        setView(view);
+        return;
+      }
+
+      if (action === "open-wizard") {
+        const id = btn.dataset.id || state.activeCompendiumId;
+        if (id) setActiveCompendium(id);
+        setWizardStep(1);
+        return;
+      }
+
+      if (action === "wizard-next") {
+        if (!c) return;
+        if (state.wizard.step < 3) {
+          setWizardStep(state.wizard.step + 1);
+        } else {
+          bulkCreateFromStarters();
+          setView("entries");
+          toast("Builder finished. Starter entries created.", "ok");
+        }
+        return;
+      }
+
+      if (action === "wizard-back") {
+        if (state.wizard.step > 1) setWizardStep(state.wizard.step - 1);
+        return;
+      }
+
+      if (action === "set-type") {
+        if (!c) return;
+        const field = btn.dataset.field;
+        const value = btn.dataset.value;
+        c[field] = value;
+        c.updatedAt = nowISO();
+        saveState();
+        render();
+        return;
+      }
+
+      if (action === "set-template") {
+        if (!c) return;
+        c.template = btn.dataset.template;
+        c.updatedAt = nowISO();
+        saveState();
+        render();
+        return;
+      }
+
+      if (action === "add-category") {
+        if (!c) return;
+        const input = $("#newCategoryInput");
+        const v = input?.value?.trim();
+        if (!v) return;
+        c.categories = uniqueNonEmpty([...(c.categories || []), v]);
+        c.updatedAt = nowISO();
+        input.value = "";
+        saveState();
+        render();
+        return;
+      }
+
+      if (action === "remove-category") {
+        if (!c) return;
+        const cat = btn.dataset.cat;
+        c.categories = (c.categories || []).filter(x => x !== cat);
+        c.updatedAt = nowISO();
+        saveState();
+        render();
+        return;
+      }
+
+      if (action === "generate-starters") {
+        if (!c) return;
+        const generated = generateStarterTitles(c.topic);
+        c.starterTitles = generated;
+        saveState();
+        render();
+        toast("Starter titles generated.", "ok");
+        return;
+      }
+
+      if (action === "clear-starters") {
+        if (!c) return;
+        c.starterTitles = [];
+        saveState();
+        render();
+        return;
+      }
+
+      if (action === "save-starters") {
+        if (!c) return;
+        const box = $("#starterTitlesBox");
+        const titles = uniqueNonEmpty(toLines(box.value));
+        c.starterTitles = titles;
+        c.updatedAt = nowISO();
+        saveState();
+        toast("Starter titles saved.", "ok");
+        render();
+        return;
+      }
+
+      if (action === "bulk-create-from-starters") { bulkCreateFromStarters(); return; }
+
+      if (action === "open-entry-dialog") { openEntryDialog(btn.dataset.id || ""); return; }
+      if (action === "close-entry-dialog") { closeEntryDialog(); return; }
+
+      if (action === "delete-entry") {
+        if (!c) return;
+        const id = btn.dataset.id;
+        const title = c.entries[id]?.title || "this entry";
+        if (confirm(`Delete “${title}”?`)) deleteEntry(c.id, id);
+        return;
+      }
+
+      if (action === "quick-review") {
+        if (!c) return;
+        const id = btn.dataset.id;
+        const grade = btn.dataset.grade === "good" ? "good" : "again";
+        reviewEntry(c.id, id, grade);
+        toast(grade === "good" ? "Scheduled later ✅" : "Reset for tomorrow ↩️", "ok");
+        return;
+      }
+
+      if (action === "primary-action") {
+        const primary = els.primaryActionBtn.dataset.primary;
+
+        if (primary === "start") { newCompendium(); return; }
+        if (primary === "wizard-next") { btn.dataset.action = "wizard-next"; btn.click(); return; }
+        if (primary === "new-entry") { openEntryDialog(""); return; }
+        if (primary === "study-start") { setView("study"); toast("Study ready.", "ok"); return; }
+        if (primary === "open-wizard") { setWizardStep(1); return; }
+      }
+
+      if (action === "toggle-reveal") {
+        const reveal = $("#revealBox");
+        if (!reveal) return;
+        reveal.classList.toggle("hidden");
+        return;
+      }
+
+      if (action === "set-study-mode") {
+        if (!c) return;
+        c.settings.studyMode = btn.dataset.mode;
+        c.updatedAt = nowISO();
+        saveState();
+        render();
+        return;
+      }
+
+      if (action === "study-grade") {
+        if (!c) return;
+        const id = btn.dataset.id;
+        const grade = btn.dataset.grade === "good" ? "good" : "again";
+        reviewEntry(c.id, id, grade);
+        toast(grade === "good" ? "Nice. Pushed out. ✅" : "Good catch. Back tomorrow. ↩️", "ok");
+        return;
+      }
+
+      if (action === "study-pick") {
+        if (!c) return;
+        const id = btn.dataset.id;
+        const e = c.entries[id];
+        if (!e) return;
+        e.study = e.study || { intervalDays: 1, dueAt: nowISO(), lapses: 0, lastReviewedAt: null };
+        e.study.dueAt = nowISO();
+        saveState();
+        render();
+        return;
+      }
+
+      if (action === "filter-by") {
+        const kind = btn.dataset.kind;
+        const value = btn.dataset.value;
+        if (kind === "tag") els.globalSearch.value = value.replace(/^#/, "");
+        if (kind === "category") els.globalSearch.value = value;
+        setView("entries");
+        render();
+        return;
+      }
+
+      if (action === "open-tools") { els.toolsDialog.showModal(); refreshIcons(); return; }
+      if (action === "close-tools") { try { els.toolsDialog.close(); } catch {} return; }
+      if (action === "export-json") { exportJSON(); return; }
+
+      if (action === "import-json") {
+        const file = $("#importFile")?.files?.[0];
+        if (!file) { toast("Choose a JSON file first.", "error"); return; }
+        importJSONFromFile(file);
+        return;
+      }
+
+      if (action === "reset-all") {
+        if (confirm("Reset all local data? This cannot be undone.")) resetAll();
+        return;
+      }
+
+      /***********************
+       * Images: entry editor
+       ***********************/
+      if (action === "add-image") {
+        const url = sanitizeImageUrl($("#newImageUrl").value);
+        const caption = String($("#newImageCaption").value || "").trim();
+
+        if (!url) { toast("Image URL must start with https:// (or http://).", "error"); return; }
+
+        const imgs = getImagesDraft();
+        const exists = imgs.some(x => (x.url || "").trim().toLowerCase() === url.trim().toLowerCase());
+        if (exists) { toast("That image URL is already added.", "error"); return; }
+
+        imgs.push({ url, caption });
+        $("#newImageUrl").value = "";
+        $("#newImageCaption").value = "";
+        setImagesDraft(imgs);
+        toast("Added image.", "ok");
+        return;
+      }
+
+      if (action === "remove-image") {
+        const idx = parseInt(btn.dataset.index || "-1", 10);
+        const imgs = getImagesDraft();
+        if (!Number.isFinite(idx) || idx < 0 || idx >= imgs.length) return;
+        imgs.splice(idx, 1);
+        setImagesDraft(imgs);
+        toast("Removed image.", "ok");
+        return;
+      }
+
+      if (action === "move-image-up" || action === "move-image-down") {
+        const idx = parseInt(btn.dataset.index || "-1", 10);
+        const imgs = getImagesDraft();
+        if (!Number.isFinite(idx) || idx < 0 || idx >= imgs.length) return;
+        const j = action === "move-image-up" ? idx - 1 : idx + 1;
+        if (j < 0 || j >= imgs.length) return;
+        const tmp = imgs[idx];
+        imgs[idx] = imgs[j];
+        imgs[j] = tmp;
+        setImagesDraft(imgs);
+        return;
+      }
+
+      if (action === "open-image-viewer") {
+        const root = btn.closest('[data-carousel-root="1"]');
+        if (root) {
+          const imgs = carouselRead(root);
+          const idx = carouselCurrentIndex(root);
+          openImageViewer(imgs, idx, "Images");
+          return;
+        }
+        const imgs = getImagesDraft();
+        const idx = parseInt(btn.dataset.index || "0", 10) || 0;
+        openImageViewer(imgs, idx, "Images");
+        return;
+      }
+
+      /***********************
+       * Carousel controls (in-page)
+       ***********************/
+      if (action === "carousel-prev" || action === "carousel-next") {
+        const root = btn.closest('[data-carousel-root="1"]');
+        if (!root) return;
+        const cur = carouselCurrentIndex(root);
+        const delta = action === "carousel-prev" ? -1 : 1;
+        carouselSetIndex(root, cur + delta);
+        return;
+      }
+
+      if (action === "carousel-dot") {
+        const root = btn.closest('[data-carousel-root="1"]');
+        if (!root) return;
+        const idx = parseInt(btn.dataset.index || "0", 10) || 0;
+        carouselSetIndex(root, idx);
+        return;
+      }
+
+      /***********************
+       * Viewer controls
+       ***********************/
+      if (action === "close-image-viewer") { closeImageViewer(); return; }
+      if (action === "viewer-prev") { viewer.index = viewer.index - 1; if (viewer.index < 0) viewer.index = (viewer.images.length || 1) - 1; renderImageViewer(); return; }
+      if (action === "viewer-next") { viewer.index = viewer.index + 1; if (viewer.index >= (viewer.images.length || 0)) viewer.index = 0; renderImageViewer(); return; }
+      if (action === "viewer-dot") { viewer.index = parseInt(btn.dataset.index || "0", 10) || 0; renderImageViewer(); return; }
+    });
+
+    // Inline edit handler (wizard step 1 fields)
+    document.addEventListener("input", (ev) => {
+      const el = ev.target.closest("[data-action='edit-compendium']");
+      if (el) {
+        const c = activeCompendium();
+        if (!c) return;
+        const field = el.dataset.field;
+        c[field] = el.value;
+        c.updatedAt = nowISO();
+        saveState();
+        renderSidebar();
+        renderTopBar();
+        return;
+      }
+
+      // Inline image edit (entry dialog)
+      const imgEdit = ev.target.closest("[data-action='image-edit']");
+      if (imgEdit) {
+        const idx = parseInt(imgEdit.dataset.index || "-1", 10);
+        const field = imgEdit.dataset.field;
+        const imgs = getImagesDraft();
+        if (!Number.isFinite(idx) || idx < 0 || idx >= imgs.length) return;
+
+        if (field === "url") {
+          const url = sanitizeImageUrl(imgEdit.value);
+          imgs[idx].url = url;
+          // If they wipe it or make it invalid, we keep it but filter on set (prevents broken state)
+          setImagesDraft(imgs);
+          return;
+        }
+
+        if (field === "caption") {
+          imgs[idx].caption = String(imgEdit.value || "").trim();
+          $("#entryImagesJSON").value = JSON.stringify(imgs.filter(x => x?.url));
+          // caption-only change: keep list stable, but refresh carousel caption if needed
+          renderEntryImagesUI();
+          return;
+        }
+      }
+    });
+
+    // Save entry form
+    $("#entryForm").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      const c = activeCompendium();
+      if (!c) return;
+
+      const data = readEntryForm();
+      if (!data.title.trim()) {
+        toast("Title is required.", "error");
+        return;
+      }
+      upsertEntry(c.id, data);
+      closeEntryDialog();
+      toast("Saved entry.", "ok");
+    });
+
+    // Search
+    els.globalSearch.addEventListener("input", () => {
+      if (state.view !== "entries") state.view = "entries";
+      saveState();
+      render();
+    });
+
+    function bulkCreateFromStarters() {
+      const c = activeCompendium();
+      if (!c) return;
+      const titles = uniqueNonEmpty(c.starterTitles || []);
+      if (!titles.length) {
+        toast("No starter titles yet. Use Builder → Step 3.", "error");
+        return;
+      }
+      let created = 0;
+      for (const t of titles) {
+        const exists = Object.values(c.entries || {}).some(e => (e.title||"").trim().toLowerCase() === t.trim().toLowerCase());
+        if (exists) continue;
+        upsertEntry(c.id, {
+          title: t,
+          category: "",
+          what: "",
+          keyPoints: [],
+          distinctions: [],
+          examples: [],
+          why: "",
+          understanding: "",
+          sources: [],
+          tags: [],
+          images: []
+        });
+        created++;
+      }
+      toast(created ? `Created ${created} placeholder entries.` : "All starter titles already exist.", "ok");
+      setView("entries");
+    }
+
+    // First render
+    render();
+  </script>
+</body>
+</html>
