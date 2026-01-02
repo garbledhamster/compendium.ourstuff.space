@@ -63,8 +63,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
   // --- DOM ---
   const personal = {
     panel: $("#personalEditorPanel"),
-    list: $("#personalCompendiumList"),
-    count: $("#personalCount"),
     editorEmpty: $("#personalEditorEmpty"),
     form: $("#personalCompendiumForm"),
     title: $("#personalEditorTitle"),
@@ -85,8 +83,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
   const pub = {
     panel: $("#publicEditorPanel"),
-    list: $("#publicCompendiumList"),
-    count: $("#publicCount"),
     editorEmpty: $("#publicEditorEmpty"),
     form: $("#publicCompendiumForm"),
     title: $("#publicEditorTitle"),
@@ -123,6 +119,14 @@ export function initCompendiums({ user, onSelectCompendium }) {
     btnCreate: $("#btnCreateComp")
   };
 
+  const listView = {
+    list: $("#compendiumList"),
+    count: $("#compendiumCount"),
+    search: $("#compendiumSearch"),
+    visibility: $("#compendiumVisibility"),
+    sort: $("#compendiumSort")
+  };
+
   // --- State ---
   let personalUnsub = null;
   let publicUnsub = null;
@@ -136,6 +140,11 @@ export function initCompendiums({ user, onSelectCompendium }) {
   let selectedPersonalDoc = null;
   let selectedPublicDoc = null;
   let selectedScope = "personal";
+  let filterState = {
+    search: "",
+    visibility: "all",
+    sort: "recent"
+  };
 
   // --- Events ---
   $("#btnNewCompendium").addEventListener("click", () => {
@@ -173,6 +182,21 @@ export function initCompendiums({ user, onSelectCompendium }) {
     btn.addEventListener("click", () => goToRoute("compendiums"));
   });
 
+  listView.search.addEventListener("input", () => {
+    filterState.search = listView.search.value.trim().toLowerCase();
+    renderCombinedList();
+  });
+
+  listView.visibility.addEventListener("change", () => {
+    filterState.visibility = listView.visibility.value;
+    renderCombinedList();
+  });
+
+  listView.sort.addEventListener("change", () => {
+    filterState.sort = listView.sort.value;
+    renderCombinedList();
+  });
+
   // --- Listen ---
   listenPersonal();
   listenPublic();
@@ -180,16 +204,9 @@ export function initCompendiums({ user, onSelectCompendium }) {
   function listenPersonal() {
     personalUnsub?.();
     personalUnsub = listenPersonalCompendiums(user.uid, (items) => {
-      personalItems = items;
-      personal.count.textContent = fmtCount(items.length, "compendium");
-      renderPicker(personal.list, items, "personal");
-      if (selectedPersonalId) {
-        const found = items.find(x => x.id === selectedPersonalId);
-        if (found) select("personal", found.id, found, { navigate: false });
-        else select("personal", null, null, { navigate: false });
-      } else {
-        select("personal", null, null, { navigate: false });
-      }
+      personalItems = items.map(item => normalizeCompendium(item, "personal"));
+      syncSelected("personal", personalItems);
+      renderCombinedList();
     }, (err) => {
       console.error(err);
       toast(err?.message || "Failed to load personal compendiums", "bad");
@@ -199,9 +216,32 @@ export function initCompendiums({ user, onSelectCompendium }) {
   function listenPublic() {
     publicUnsub?.();
     publicUnsub = listenPublicCompendiums((items) => {
-      publicItems = items;
-      pub.count.textContent = fmtCount(items.length, "compendium");
-      renderPicker(pub.list, items, "public");
+      publicItems = items.map(item => normalizeCompendium(item, "public"));
+      syncSelected("public", publicItems);
+      renderCombinedList();
+    }, (err) => {
+      console.error(err);
+      toast(err?.message || "Failed to load public compendiums", "bad");
+    });
+  }
+
+  function normalizeCompendium(item, fallbackVisibility) {
+    return {
+      ...item,
+      visibility: item.visibility || fallbackVisibility
+    };
+  }
+
+  function syncSelected(scope, items) {
+    if (scope === "personal") {
+      if (selectedPersonalId) {
+        const found = items.find(x => x.id === selectedPersonalId);
+        if (found) select("personal", found.id, found, { navigate: false });
+        else select("personal", null, null, { navigate: false });
+      } else {
+        select("personal", null, null, { navigate: false });
+      }
+    } else {
       if (selectedPublicId) {
         const found = items.find(x => x.id === selectedPublicId);
         if (found) select("public", found.id, found, { navigate: false });
@@ -209,28 +249,31 @@ export function initCompendiums({ user, onSelectCompendium }) {
       } else {
         select("public", null, null, { navigate: false });
       }
-    }, (err) => {
-      console.error(err);
-      toast(err?.message || "Failed to load public compendiums", "bad");
-    });
+    }
   }
 
-  function renderPicker(root, items, scope) {
+  function renderCombinedList() {
+    const allItems = [...personalItems, ...publicItems];
+    const filteredItems = filterCompendiums(allItems);
+    listView.count.textContent = fmtCount(filteredItems.length, "compendium");
+    renderPicker(listView.list, filteredItems, allItems.length);
+  }
+
+  function renderPicker(root, items, totalCount) {
     root.innerHTML = "";
 
     if (!items.length) {
       const d = document.createElement("div");
       d.className = "subtle";
-      d.textContent = scope === "personal"
-        ? "No personal compendiums yet — click New to create one."
-        : "No public compendiums yet.";
+      d.textContent = totalCount === 0
+        ? "No compendiums yet — click New to create one."
+        : "No compendiums match your filters.";
       root.appendChild(d);
       return;
     }
 
-    const activeId = scope === "personal" ? selectedPersonalId : selectedPublicId;
-
     for (const c of items) {
+      const activeId = c.visibility === "personal" ? selectedPersonalId : selectedPublicId;
       const cover = coverUrlFor(c);
       const btn = document.createElement("button");
       btn.type = "button";
@@ -255,9 +298,62 @@ export function initCompendiums({ user, onSelectCompendium }) {
         </div>
       `;
 
-      btn.addEventListener("click", () => select(scope, c.id, c, { navigate: true }));
+      btn.addEventListener("click", () => select(c.visibility, c.id, c, { navigate: true }));
       root.appendChild(btn);
     }
+  }
+
+  function filterCompendiums(items) {
+    const query = filterState.search;
+    const visibility = filterState.visibility;
+    const sort = filterState.sort;
+
+    let filtered = items;
+
+    if (visibility !== "all") {
+      filtered = filtered.filter(item => item.visibility === visibility);
+    }
+
+    if (query) {
+      filtered = filtered.filter(item => matchesSearch(item, query));
+    }
+
+    return [...filtered].sort((a, b) => sortCompendiums(a, b, sort));
+  }
+
+  function matchesSearch(item, query) {
+    const haystack = [
+      item.name,
+      item.topic,
+      item.description,
+      ...(item.tags || [])
+    ].filter(Boolean).join(" ").toLowerCase();
+    return haystack.includes(query);
+  }
+
+  function sortCompendiums(a, b, sort) {
+    if (sort === "name-asc") {
+      return (a.name || "").localeCompare(b.name || "");
+    }
+    if (sort === "name-desc") {
+      return (b.name || "").localeCompare(a.name || "");
+    }
+    const aTime = compendiumTimestamp(a);
+    const bTime = compendiumTimestamp(b);
+    if (bTime !== aTime) return bTime - aTime;
+    return (a.name || "").localeCompare(b.name || "");
+  }
+
+  function compendiumTimestamp(item) {
+    const stamp = item.updatedAt ?? item.createdAt ?? item.updated_at ?? item.created_at;
+    if (!stamp) return 0;
+    if (typeof stamp?.toMillis === "function") return stamp.toMillis();
+    if (typeof stamp?.seconds === "number") return stamp.seconds * 1000;
+    if (stamp instanceof Date) return stamp.getTime();
+    const numeric = Number(stamp);
+    if (!Number.isNaN(numeric)) return numeric;
+    const parsed = Date.parse(stamp);
+    return Number.isNaN(parsed) ? 0 : parsed;
   }
 
   function select(scope, id, doc, { navigate = false } = {}) {
