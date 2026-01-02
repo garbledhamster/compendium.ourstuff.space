@@ -1062,6 +1062,7 @@
 
     function openCompendiumDrawer() {
       if (!els.compendiumDrawer || !els.drawerOverlay) return;
+      els.compendiumDrawer.classList.remove("hidden");
       els.compendiumDrawer.classList.remove("-translate-x-full");
       els.compendiumDrawer.classList.add("translate-x-0");
       els.drawerOverlay.classList.remove("hidden");
@@ -1074,6 +1075,9 @@
       els.compendiumDrawer.classList.remove("translate-x-0");
       els.drawerOverlay.classList.add("hidden");
       document.body.classList.remove("overflow-hidden");
+      window.setTimeout(() => {
+        els.compendiumDrawer?.classList.add("hidden");
+      }, 200);
     }
 
     function openSettingsDrawer() {
