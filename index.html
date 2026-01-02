@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Compendium Builder (Local)</title>
+  <title>Compendium Builder</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -109,7 +109,7 @@
             </div>
             <div>
               <div class="text-sm font-semibold leading-tight">Compendium Builder</div>
-              <div class="text-xs text-slate-300">All data stays in your browser</div>
+              <div class="text-xs text-slate-300">Syncs across devices with your account</div>
             </div>
           </div>
 
@@ -383,7 +383,7 @@
       <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
         <div>
           <div class="text-base font-bold">Tools</div>
-          <div class="text-xs text-slate-400">Export, import, or reset local data.</div>
+          <div class="text-xs text-slate-400">Export, import, or reset your data.</div>
         </div>
         <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
           data-action="close-tools">
@@ -419,7 +419,7 @@
             <div class="mt-0.5 text-rose-200"><i data-lucide="alert-triangle" class="h-5 w-5"></i></div>
             <div class="flex-1">
               <div class="text-sm font-semibold text-rose-100">Danger zone</div>
-              <div class="mt-1 text-xs text-rose-200/80">This permanently clears your local compendium data (in this browser only).</div>
+              <div class="mt-1 text-xs text-rose-200/80">This clears the local cache for this browser. Cloud data stays intact.</div>
               <button type="button" class="mt-3 rounded-xl bg-rose-500/90 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-rose-400"
                 data-action="reset-all">
                 Reset all data
@@ -429,7 +429,7 @@
         </div>
 
         <div class="mt-4 text-xs text-slate-400">
-          Storage: localStorage (same browser + same domain). For cross-device sync, use Export/Import.
+          Storage: synced to your account with a local cache for faster loads.
         </div>
       </div>
     </form>
@@ -485,7 +485,7 @@
   <script type="module">
     /***********************
      * Compendium Builder
-     * - Local-only storage (localStorage)
+     * - Firestore-backed storage with local cache
      * - Guided wizard (type → template → starter set)
      * - Entries + index + study mode (active recall)
      * - NEW: images per entry + slideshow + full viewer
@@ -506,8 +506,9 @@
       setDoc,
       getDoc,
       collection,
-      addDoc,
+      getDocs,
       updateDoc,
+      deleteDoc,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -542,6 +543,12 @@
     const toLines = (s) => String(s||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
     const fromLines = (arr) => (arr||[]).join("\n");
     const clamp = (n,min,max)=>Math.max(min,Math.min(max,n));
+    const normalizeTimestamp = (value) => {
+      if (!value) return null;
+      if (typeof value === "string") return value;
+      if (typeof value.toDate === "function") return value.toDate().toISOString();
+      return value;
+    };
 
     function safeJSONParse(raw, fallback) {
       try { return JSON.parse(raw); } catch { return fallback; }
@@ -570,31 +577,162 @@
     }
 
     let currentUser = null;
-    let remoteSaveTimer = null;
 
     function saveStateLocal() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
 
-    function scheduleRemoteSave() {
-      if (!currentUser) return;
-      clearTimeout(remoteSaveTimer);
-      remoteSaveTimer = setTimeout(async () => {
-        try {
-          await setDoc(
-            doc(db, "users", currentUser.uid),
-            { state, updatedAt: serverTimestamp() },
-            { merge: true }
-          );
-        } catch (err) {
-          toast("Cloud sync failed. Changes saved locally.", "error");
-        }
-      }, 400);
-    }
-
     function saveState() {
       saveStateLocal();
-      scheduleRemoteSave();
+    }
+
+    async function saveCompendiumRemote(compendium, { isNew = false } = {}) {
+      if (!currentUser || !compendium?.id) return;
+      const { entries, createdAt, updatedAt, ...payload } = compendium;
+      const compendiumRef = doc(db, "users", currentUser.uid, "compendiums", compendium.id);
+      try {
+        if (isNew) {
+          await setDoc(compendiumRef, {
+            ...payload,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+        } else {
+          await updateDoc(compendiumRef, {
+            ...payload,
+            updatedAt: serverTimestamp()
+          });
+        }
+      } catch (err) {
+        try {
+          await setDoc(compendiumRef, {
+            ...payload,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        } catch (error) {
+          toast("Cloud sync failed for compendium updates.", "error");
+        }
+      }
+    }
+
+    async function saveEntryRemote(compendiumId, entry, { isNew = false } = {}) {
+      if (!currentUser || !compendiumId || !entry?.id) return;
+      const { createdAt, updatedAt, ...payload } = entry;
+      const entryRef = doc(db, "users", currentUser.uid, "compendiums", compendiumId, "entries", entry.id);
+      try {
+        if (isNew) {
+          await setDoc(entryRef, {
+            ...payload,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+        } else {
+          await updateDoc(entryRef, {
+            ...payload,
+            updatedAt: serverTimestamp()
+          });
+        }
+      } catch (err) {
+        try {
+          await setDoc(entryRef, {
+            ...payload,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        } catch (error) {
+          toast("Cloud sync failed for entry updates.", "error");
+        }
+      }
+    }
+
+    async function deleteCompendiumRemote(compendiumId) {
+      if (!currentUser || !compendiumId) return;
+      try {
+        const entriesSnap = await getDocs(collection(db, "users", currentUser.uid, "compendiums", compendiumId, "entries"));
+        for (const entrySnap of entriesSnap.docs) {
+          await deleteDoc(entrySnap.ref);
+        }
+        await deleteDoc(doc(db, "users", currentUser.uid, "compendiums", compendiumId));
+      } catch (err) {
+        toast("Cloud delete failed for compendium.", "error");
+      }
+    }
+
+    async function deleteEntryRemote(compendiumId, entryId) {
+      if (!currentUser || !compendiumId || !entryId) return;
+      try {
+        await deleteDoc(doc(db, "users", currentUser.uid, "compendiums", compendiumId, "entries", entryId));
+      } catch (err) {
+        toast("Cloud delete failed for entry.", "error");
+      }
+    }
+
+    async function fetchUserCompendiums(user) {
+      const compendiums = {};
+      const compendiumSnap = await getDocs(collection(db, "users", user.uid, "compendiums"));
+      for (const docSnap of compendiumSnap.docs) {
+        const data = docSnap.data() || {};
+        const entriesSnap = await getDocs(collection(db, "users", user.uid, "compendiums", docSnap.id, "entries"));
+        const entries = {};
+        for (const entrySnap of entriesSnap.docs) {
+          const entryData = entrySnap.data() || {};
+          const study = entryData.study
+            ? {
+                ...entryData.study,
+                dueAt: normalizeTimestamp(entryData.study.dueAt),
+                lastReviewedAt: normalizeTimestamp(entryData.study.lastReviewedAt)
+              }
+            : entryData.study;
+          entries[entrySnap.id] = {
+            ...entryData,
+            id: entrySnap.id,
+            createdAt: normalizeTimestamp(entryData.createdAt) || nowISO(),
+            updatedAt: normalizeTimestamp(entryData.updatedAt) || nowISO(),
+            study
+          };
+        }
+
+        compendiums[docSnap.id] = {
+          id: docSnap.id,
+          name: data.name || "Untitled Compendium",
+          topic: data.topic || "",
+          scope: data.scope || "topic",
+          audience: data.audience || "personal",
+          template: data.template || "parker",
+          createdAt: normalizeTimestamp(data.createdAt) || nowISO(),
+          updatedAt: normalizeTimestamp(data.updatedAt) || nowISO(),
+          starterTitles: data.starterTitles || [],
+          categories: data.categories || [],
+          entries,
+          settings: data.settings || { studyMode: "due" }
+        };
+      }
+      return compendiums;
+    }
+
+    async function seedRemoteFromLocal(compendiums) {
+      if (!currentUser) return;
+      const compendiumList = Object.values(compendiums || {});
+      for (const compendium of compendiumList) {
+        await saveCompendiumRemote(compendium, { isNew: true });
+        const entryList = Object.values(compendium.entries || {});
+        for (const entry of entryList) {
+          await saveEntryRemote(compendium.id, entry, { isNew: true });
+        }
+      }
+    }
+
+    async function syncRemoteFromLocal(compendiums) {
+      if (!currentUser) return;
+      const compendiumList = Object.values(compendiums || {});
+      for (const compendium of compendiumList) {
+        await saveCompendiumRemote(compendium);
+        const entryList = Object.values(compendium.entries || {});
+        for (const entry of entryList) {
+          await saveEntryRemote(compendium.id, entry);
+        }
+      }
     }
 
     function loadTheme() {
@@ -670,6 +808,7 @@
       state.view = "wizard";
       state.wizard.step = 1;
       saveState();
+      saveCompendiumRemote(c, { isNew: true });
       render();
     }
 
@@ -679,6 +818,7 @@
       if (state.activeCompendiumId === id) state.activeCompendiumId = null;
       ensureActiveOrWelcome();
       saveState();
+      deleteCompendiumRemote(id);
       render();
     }
 
@@ -715,6 +855,8 @@
       c.entries[id] = merged;
       c.updatedAt = nowISO();
       saveState();
+      saveEntryRemote(compendiumId, merged, { isNew: !prev });
+      saveCompendiumRemote(c);
       render();
       return { id, isNew: !prev };
     }
@@ -725,6 +867,8 @@
       delete c.entries[entryId];
       c.updatedAt = nowISO();
       saveState();
+      deleteEntryRemote(compendiumId, entryId);
+      saveCompendiumRemote(c);
       render();
     }
 
@@ -758,6 +902,8 @@
       e.updatedAt = nowISO();
       c.updatedAt = nowISO();
       saveState();
+      saveEntryRemote(compendiumId, e);
+      saveCompendiumRemote(c);
       render();
     }
 
@@ -786,6 +932,7 @@
       if (!state.view) state.view = "welcome";
       if (!state.wizard) state.wizard = { step: 1 };
       saveState();
+      await syncRemoteFromLocal(state.compendiums);
       toast("Imported backup.", "ok");
       render();
     }
@@ -871,29 +1018,35 @@
               provider: getUserProvider(user),
               salt,
               createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-              state
+              updatedAt: serverTimestamp()
             },
             { merge: true }
           );
-          return;
-        }
-
-        const data = snapshot.data();
-        if (data?.state) {
-          state = data.state;
-          saveStateLocal();
-          render();
         } else {
-          await setDoc(userRef, { state }, { merge: true });
+          await updateDoc(userRef, {
+            email: user.email || "",
+            displayName: getUserDisplayName(user),
+            provider: getUserProvider(user),
+            updatedAt: serverTimestamp()
+          });
         }
 
-        await updateDoc(userRef, {
-          email: user.email || "",
-          displayName: getUserDisplayName(user),
-          provider: getUserProvider(user),
-          updatedAt: serverTimestamp()
-        });
+        const remoteCompendiums = await fetchUserCompendiums(user);
+        if (Object.keys(remoteCompendiums).length) {
+          state = { ...state, compendiums: remoteCompendiums };
+        } else if (Object.keys(state.compendiums || {}).length) {
+          await seedRemoteFromLocal(state.compendiums);
+        }
+
+        if (state.activeCompendiumId && !state.compendiums[state.activeCompendiumId]) {
+          state.activeCompendiumId = null;
+        }
+        if (!state.activeCompendiumId) {
+          state.activeCompendiumId = Object.keys(state.compendiums || {})[0] || null;
+        }
+
+        saveStateLocal();
+        render();
       } catch (err) {
         toast("Unable to load cloud data. Using local data.", "error");
       }
@@ -2206,6 +2359,7 @@
         c[field] = value;
         c.updatedAt = nowISO();
         saveState();
+        saveCompendiumRemote(c);
         render();
         return;
       }
@@ -2215,6 +2369,7 @@
         c.template = btn.dataset.template;
         c.updatedAt = nowISO();
         saveState();
+        saveCompendiumRemote(c);
         render();
         return;
       }
@@ -2228,6 +2383,7 @@
         c.updatedAt = nowISO();
         input.value = "";
         saveState();
+        saveCompendiumRemote(c);
         render();
         return;
       }
@@ -2238,6 +2394,7 @@
         c.categories = (c.categories || []).filter(x => x !== cat);
         c.updatedAt = nowISO();
         saveState();
+        saveCompendiumRemote(c);
         render();
         return;
       }
@@ -2247,6 +2404,7 @@
         const generated = generateStarterTitles(c.topic);
         c.starterTitles = generated;
         saveState();
+        saveCompendiumRemote(c);
         render();
         toast("Starter titles generated.", "ok");
         return;
@@ -2256,6 +2414,7 @@
         if (!c) return;
         c.starterTitles = [];
         saveState();
+        saveCompendiumRemote(c);
         render();
         return;
       }
@@ -2267,6 +2426,7 @@
         c.starterTitles = titles;
         c.updatedAt = nowISO();
         saveState();
+        saveCompendiumRemote(c);
         toast("Starter titles saved.", "ok");
         render();
         return;
@@ -2316,6 +2476,7 @@
         c.settings.studyMode = btn.dataset.mode;
         c.updatedAt = nowISO();
         saveState();
+        saveCompendiumRemote(c);
         render();
         return;
       }
@@ -2337,6 +2498,8 @@
         e.study = e.study || { intervalDays: 1, dueAt: nowISO(), lapses: 0, lastReviewedAt: null };
         e.study.dueAt = nowISO();
         saveState();
+        saveEntryRemote(c.id, e);
+        saveCompendiumRemote(c);
         render();
         return;
       }
@@ -2464,6 +2627,7 @@
         c[field] = el.value;
         c.updatedAt = nowISO();
         saveState();
+        saveCompendiumRemote(c);
         renderSidebar();
         renderTopBar();
         return;
