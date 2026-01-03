@@ -220,6 +220,15 @@ a { color: inherit; }
   border-color: var(--secondary);
   background: color-mix(in srgb, var(--primary) 75%, var(--secondary));
 }
+.btn--outline {
+  border-color: var(--primary);
+  background: var(--surface);
+  color: var(--primary);
+}
+.btn--outline:hover {
+  border-color: var(--secondary);
+  background: color-mix(in srgb, var(--surface) 75%, var(--primary));
+}
 .btn--danger {
   border-color: var(--border);
   background: var(--danger);
