@@ -179,7 +179,7 @@ export function initEntries({ user }) {
             <div class="card__text">${esc((e.description || "").slice(0, 240))}${(e.description || "").length > 240 ? "…" : ""}</div>
             <div class="card__meta">by ${esc(e.createdByEmail || e.createdByUid || "unknown")}</div>
             <div class="card__actions">
-              <button class="btn" data-act="edit" type="button" ${allowEdit ? "" : "disabled"}>Edit</button>
+              <button class="btn btn--secondary" data-act="edit" type="button" ${allowEdit ? "" : "disabled"}>Edit</button>
               <button class="btn btn--danger" data-act="del" type="button" ${allowEdit ? "" : "disabled"}>Delete</button>
             </div>
           </div>

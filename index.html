@@ -48,13 +48,13 @@
             <div class="panel__subtitle" id="compendiumCount">—</div>
           </div>
           <div class="hstack">
-            <button class="btn" id="btnRefreshPublic" type="button">
+            <button class="btn btn--outline-primary" id="btnRefreshPublic" type="button">
               <span class="ico" aria-hidden="true">
                 <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 6V3L8 7l4 4V8c2.76 0 5 2.24 5 5a5 5 0 0 1-9.9 1H5.02A7 7 0 0 0 19 13c0-3.87-3.13-7-7-7"/></svg>
               </span>
               Refresh
             </button>
-            <button class="btn btn--primary" id="btnNewCompendium" type="button">
+            <button class="btn btn--outline-primary" id="btnNewCompendium" type="button">
               <span class="ico" aria-hidden="true">
                 <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>
               </span>
@@ -112,8 +112,8 @@
             <div class="panel__subtitle" id="personalEditorSubtitle">—</div>
           </div>
           <div class="hstack">
-            <button class="btn" data-action="back-to-compendiums" type="button">Back to lists</button>
-            <button class="btn btn--primary" id="btnDeleteCompendium" type="button" disabled>
+            <button class="btn btn--secondary" data-action="back-to-compendiums" type="button">Back to lists</button>
+            <button class="btn btn--danger" id="btnDeleteCompendium" type="button" disabled>
               <span class="ico" aria-hidden="true">
                 <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M9 3h6l1 2h5v2H3V5h5zm1 6h2v10h-2zm4 0h2v10h-2z"/></svg>
               </span>
@@ -168,7 +168,7 @@
             <div class="form__row form__row--tight">
               <div class="subtle small">Type is locked once created (personal/public cannot be changed).</div>
               <div class="hstack hstack--end">
-                <button class="btn btn--primary" id="btnSavePersonalCompendium" type="button">
+              <button class="btn btn--secondary" id="btnSavePersonalCompendium" type="button">
                   <span class="ico" aria-hidden="true">
                     <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7zm0 18H5V5h11v4h4z"/></svg>
                   </span>
@@ -184,7 +184,7 @@
                 <div class="panel__title">Entries</div>
                 <div class="panel__subtitle" id="personalEntriesCount">—</div>
               </div>
-              <button class="btn btn--primary" id="btnAddPersonalEntry" type="button">
+            <button class="btn btn--secondary" id="btnAddPersonalEntry" type="button">
                 <span class="ico" aria-hidden="true">
                   <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>
                 </span>
@@ -204,8 +204,8 @@
             <div class="panel__subtitle" id="publicEditorSubtitle">—</div>
           </div>
           <div class="hstack">
-            <button class="btn" data-action="back-to-compendiums" type="button">Back to lists</button>
-            <button class="btn btn--primary" id="btnDeletePublicCompendium" type="button" disabled title="Owner only">
+            <button class="btn btn--secondary" data-action="back-to-compendiums" type="button">Back to lists</button>
+            <button class="btn btn--danger" id="btnDeletePublicCompendium" type="button" disabled title="Owner only">
               <span class="ico" aria-hidden="true">
                 <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M9 3h6l1 2h5v2H3V5h5zm1 6h2v10h-2zm4 0h2v10h-2z"/></svg>
               </span>
@@ -259,7 +259,7 @@
             <div class="form__row form__row--tight">
               <div class="subtle small" id="publicEditHint">—</div>
               <div class="hstack hstack--end">
-                <button class="btn btn--primary" id="btnSavePublicCompendium" type="button" disabled>
+                <button class="btn btn--secondary" id="btnSavePublicCompendium" type="button" disabled>
                   <span class="ico" aria-hidden="true">
                     <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7zm0 18H5V5h11v4h4z"/></svg>
                   </span>
@@ -284,7 +284,7 @@
                   <input class="input" id="editorEmailInput" type="email" placeholder="person@example.com" autocomplete="off" />
                 </label>
                 <div class="hstack hstack--end">
-                  <button class="btn btn--primary" id="btnAddEditor" type="button">Add</button>
+                  <button class="btn btn--secondary" id="btnAddEditor" type="button">Add</button>
                 </div>
               </div>
 
@@ -298,7 +298,7 @@
                 <div class="panel__title">Entries</div>
                 <div class="panel__subtitle" id="publicEntriesCount">—</div>
               </div>
-              <button class="btn btn--primary" id="btnAddPublicEntry" type="button">
+              <button class="btn btn--secondary" id="btnAddPublicEntry" type="button">
                 <span class="ico" aria-hidden="true">
                   <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>
                 </span>
@@ -393,8 +393,8 @@
       </div>
 
       <div class="modal__foot">
-        <button class="btn btn--danger" value="cancel" type="submit" formnovalidate>Cancel</button>
-        <button class="btn btn--primary" id="btnCreateComp" type="button">Create</button>
+        <button class="btn btn--secondary" value="cancel" type="submit" formnovalidate>Cancel</button>
+        <button class="btn btn--secondary" id="btnCreateComp" type="button">Create</button>
       </div>
     </form>
   </dialog>
@@ -446,8 +446,8 @@
       </div>
 
       <div class="modal__foot">
-          <button class="btn" value="cancel" type="submit" formnovalidate>Cancel</button>
-        <button class="btn btn--primary" id="btnSaveEntry" type="button">Save Entry</button>
+          <button class="btn btn--secondary" value="cancel" type="submit" formnovalidate>Cancel</button>
+          <button class="btn btn--secondary" id="btnSaveEntry" type="button">Save Entry</button>
       </div>
     </form>
   </dialog>
