@@ -891,6 +891,29 @@ a { color: inherit; }
   color: var(--muted);
 }
 
+.cp-card--no-cover {
+  color: var(--text);
+  background: var(--surface-muted);
+}
+
+.cp-card--no-cover::before,
+.cp-card--no-cover::after {
+  display: none;
+}
+
+.cp-card--no-cover .cp-title {
+  color: var(--text);
+  text-shadow: none;
+}
+
+.cp-card--no-cover .cp-copy {
+  text-shadow: none;
+}
+
+.cp-card--no-cover .cp-meta {
+  color: var(--muted);
+}
+
 .cp-list {
   display: grid;
   gap: 6px;

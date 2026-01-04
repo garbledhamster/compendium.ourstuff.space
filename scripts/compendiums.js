@@ -421,11 +421,12 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
     for (const c of items) {
       const isActive = selectedCompendium?.id === c.id && selectedCompendium?.doc?.visibility === c.visibility;
-      const cover = coverUrlFor(c);
+      const hasCover = Boolean(c.coverUrl);
+      const cover = hasCover ? coverUrlFor(c) : "";
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = `cp-card${viewMode === "list" ? " cp-card--list" : ""}${isActive ? " is-active" : ""}`;
-      if (viewMode !== "list") {
+      btn.className = `cp-card${viewMode === "list" ? " cp-card--list" : ""}${!hasCover && viewMode !== "list" ? " cp-card--no-cover" : ""}${isActive ? " is-active" : ""}`;
+      if (viewMode !== "list" && hasCover) {
         btn.style.setProperty("--cp-bg", `url("${cover}")`);
       }
 
