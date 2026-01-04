@@ -66,6 +66,7 @@ a { color: inherit; }
 
 .view--wide {
   width: 100%;
+  margin: 0;
 }
 
 .view--wide .reader-shell {
@@ -73,7 +74,7 @@ a { color: inherit; }
 }
 
 .reader-shell {
-  max-width: var(--max);
+  max-width: 1400px;
   margin: 0 auto;
   width: 100%;
   padding: 18px var(--pad) 44px;
@@ -645,7 +646,7 @@ a { color: inherit; }
   background: var(--surface);
 }
 
-.reader {
+.modal__card--reader .reader {
   display: grid;
   grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
   gap: 20px;
@@ -707,10 +708,10 @@ a { color: inherit; }
 }
 
 @media (max-width: 860px) {
-  .reader {
+  .modal__card--reader .reader {
     grid-template-columns: 1fr;
   }
-  .reader__media {
+  .modal__card--reader .reader__media {
     min-height: 180px;
   }
 }
@@ -1158,7 +1159,7 @@ a { color: inherit; }
 
 .reader__grid {
   display: grid;
-  grid-template-columns: minmax(240px, 360px) minmax(0, 1fr);
+  grid-template-columns: 1fr;
   gap: 18px;
   align-items: start;
 }
@@ -1257,10 +1258,6 @@ a { color: inherit; }
 }
 
 @media (max-width: 900px) {
-  .reader__grid {
-    grid-template-columns: 1fr;
-  }
-
   .reader__hero {
     min-height: 200px;
   }
