@@ -404,8 +404,7 @@ a { color: inherit; }
 }
 
 .field { display:grid; gap:6px; }
-#entryModal .field { gap: 8px; margin-top: 10px; }
-#entryModal .field:first-child { margin-top: 0; }
+#entryModal .field { gap: 12px; margin-top: 0; }
 #entryModal .form__row { grid-template-columns: 1fr; }
 #entryModal .form__row .hstack { width: 100%; }
 #entryImageUrlInput { flex: 1; }
@@ -578,6 +577,8 @@ a { color: inherit; }
   overflow-y: auto;
 }
 #entryModal .modal__body {
+  display: grid;
+  gap: 18px;
   scrollbar-width: none;
 }
 #entryModal .modal__body::-webkit-scrollbar {
