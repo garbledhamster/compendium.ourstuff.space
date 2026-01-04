@@ -2,8 +2,7 @@ import {
   listenEntries,
   createEntry,
   updateEntry,
-  deleteEntry,
-  uploadEntryImage
+  deleteEntry
 } from "./firebase.js";
 
 const $ = (s, r=document) => r.querySelector(s);
@@ -57,7 +56,6 @@ export function initEntries({ user }) {
     entryTags: $("#entryTags"),
     entrySources: $("#entrySources"),
     entryUrl: $("#entryImageUrl"),
-    entryFile: $("#entryImageFile"),
 
     previewWrap: $("#entryPreviewWrap"),
     previewImg: $("#entryPreviewImg"),
@@ -92,7 +90,6 @@ export function initEntries({ user }) {
   let readerEntry = null;
   let readerScope = null;
 
-  ui.entryFile.addEventListener("change", updatePreview);
   ui.entryUrl.addEventListener("input", updatePreview);
 
   ui.btnSave.addEventListener("click", save);
@@ -321,7 +318,6 @@ export function initEntries({ user }) {
     ui.entryTags.value = Array.isArray(entryData?.tags) ? entryData.tags.join(", ") : (entryData?.tags || "");
     ui.entrySources.value = Array.isArray(entryData?.sources) ? entryData.sources.join("\n") : (entryData?.sources || "");
     ui.entryUrl.value = entryData?.imageUrl || "";
-    ui.entryFile.value = "";
 
     updatePreview();
     ui.dlg.showModal?.();
@@ -334,13 +330,7 @@ export function initEntries({ user }) {
 
   function updatePreview() {
     const url = ui.entryUrl.value.trim();
-    const file = ui.entryFile.files?.[0] || null;
 
-    if (file) {
-      ui.previewImg.src = URL.createObjectURL(file);
-      ui.previewWrap.classList.remove("is-hidden");
-      return;
-    }
     if (url) {
       ui.previewImg.src = url;
       ui.previewWrap.classList.remove("is-hidden");
@@ -358,7 +348,6 @@ export function initEntries({ user }) {
     const tags = normalizeList(ui.entryTags.value);
     const sources = normalizeList(ui.entrySources.value);
     const url = ui.entryUrl.value.trim();
-    const file = ui.entryFile.files?.[0] || null;
 
     if (!title || !description) return showError("Title and description are required.");
 
@@ -366,11 +355,7 @@ export function initEntries({ user }) {
     if (editingId && !canEditEntry(user, active.compDoc, editingData)) return showError("You cannot edit this entry.");
 
     try {
-      let imageUrl = url || "";
-
-      if (file) {
-        imageUrl = await uploadEntryImage(active.compId, file);
-      }
+      const imageUrl = url || "";
 
       if (editingId) {
         await updateEntry(editingId, { title, description, imageUrl, tags, sources });
