@@ -65,9 +65,8 @@ a { color: inherit; }
 }
 
 .view--wide {
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
+  width: 100%;
+  margin: 0;
 }
 
 .view--wide .reader-shell {
@@ -647,7 +646,7 @@ a { color: inherit; }
   background: var(--surface);
 }
 
-.reader {
+.modal__card--reader .reader {
   display: grid;
   grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
   gap: 20px;
@@ -709,10 +708,10 @@ a { color: inherit; }
 }
 
 @media (max-width: 860px) {
-  .reader {
+  .modal__card--reader .reader {
     grid-template-columns: 1fr;
   }
-  .reader__media {
+  .modal__card--reader .reader__media {
     min-height: 180px;
   }
 }
