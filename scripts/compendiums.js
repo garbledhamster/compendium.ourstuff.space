@@ -9,6 +9,7 @@ import {
   addCompendiumEditor,
   removeCompendiumEditor
 } from "./firebase.js";
+import { renderMarkdown } from "./markdown.js";
 
 const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
@@ -619,7 +620,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     readerView.visibility.textContent = comp.visibility === "public" ? "Public compendium" : "Personal compendium";
     readerView.title.textContent = comp.name || "Untitled";
     readerView.topic.textContent = comp.topic ? `Topic: ${comp.topic}` : "No topic set";
-    readerView.description.textContent = (comp.description || "").trim() || "No description yet.";
+    readerView.description.innerHTML = renderMarkdown((comp.description || "").trim() || "No description yet.");
 
     const editable = canEditCompendium(user, comp);
     const owner = isOwner(user, comp);
@@ -669,12 +670,13 @@ export function initCompendiums({ user, onSelectCompendium }) {
         ? `<div class="card__sources"><span class="card__sources-label">Sources:</span> ${sources.map((source) => `<span class="card__source">${esc(source)}</span>`).join("")}</div>`
         : "";
 
+      const descriptionHtml = renderMarkdown(entry.description || "");
       card.innerHTML = `
         <div class="card__row">
           ${img}
           <div class="card__body">
             <div class="card__title">${esc(entry.title || "Untitled")}</div>
-            <div class="card__text reader-entry__text">${esc(entry.description || "")}</div>
+            <div class="card__text reader-entry__text markdown">${descriptionHtml}</div>
             ${tagList}
             ${sourceList}
             <div class="card__meta">by ${esc(entry.createdByEmail || entry.createdByUid || "unknown")}</div>
