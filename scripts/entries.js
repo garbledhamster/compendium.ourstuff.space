@@ -62,6 +62,9 @@ export function initEntries({ user }) {
 
     previewWrap: $("#entryPreviewWrap"),
     previewImg: $("#entryPreviewImg"),
+    previewIndexLabel: $("#entryPreviewIndex"),
+    btnPreviewPrev: $("#btnPreviewPrev"),
+    btnPreviewNext: $("#btnPreviewNext"),
 
     btnSave: $("#btnSaveEntry"),
 
@@ -102,6 +105,7 @@ export function initEntries({ user }) {
   let editingId = null;
   let editingData = null;
   let imageUrls = [];
+  let previewIndex = 0;
   let readerEntry = null;
   let readerScope = null;
 
@@ -113,6 +117,8 @@ export function initEntries({ user }) {
   });
   ui.btnAddEntryImageUrl.addEventListener("click", addImageUrlFromInput);
   ui.entryImageUrlsList.addEventListener("click", handleImageUrlListAction);
+  ui.btnPreviewPrev.addEventListener("click", () => changePreviewIndex(-1));
+  ui.btnPreviewNext.addEventListener("click", () => changePreviewIndex(1));
 
   ui.btnSave.addEventListener("click", save);
   ui.btnReaderEdit.addEventListener("click", () => {
@@ -357,6 +363,7 @@ export function initEntries({ user }) {
     ui.entryTags.value = Array.isArray(entryData?.tags) ? entryData.tags.join(", ") : (entryData?.tags || "");
     ui.entrySources.value = Array.isArray(entryData?.sources) ? entryData.sources.join("\n") : (entryData?.sources || "");
     imageUrls = getEntryImageUrls(entryData);
+    previewIndex = 0;
     ui.entryUrlInput.value = "";
 
     renderImageUrlList();
@@ -370,15 +377,22 @@ export function initEntries({ user }) {
   }
 
   function updatePreview() {
-    const primaryImageUrl = imageUrls[0] || "";
+    const hasImages = imageUrls.length > 0;
+    previewIndex = Math.max(0, Math.min(previewIndex, imageUrls.length - 1));
+    const primaryImageUrl = imageUrls[previewIndex] || "";
 
-    if (primaryImageUrl) {
+    if (primaryImageUrl && hasImages) {
       ui.previewImg.src = primaryImageUrl;
       ui.previewWrap.classList.remove("is-hidden");
-      return;
+    } else {
+      ui.previewWrap.classList.add("is-hidden");
+      ui.previewImg.removeAttribute("src");
     }
-    ui.previewWrap.classList.add("is-hidden");
-    ui.previewImg.removeAttribute("src");
+
+    ui.previewIndexLabel.textContent = hasImages ? `${previewIndex + 1}/${imageUrls.length}` : "0/0";
+    const disableNav = imageUrls.length < 2;
+    ui.btnPreviewPrev.disabled = disableNav;
+    ui.btnPreviewNext.disabled = disableNav;
   }
 
   async function save() {
@@ -451,6 +465,9 @@ export function initEntries({ user }) {
     const value = ui.entryUrlInput.value.trim();
     if (!value) return;
     imageUrls = [...imageUrls, value];
+    if (imageUrls.length === 1) {
+      previewIndex = 0;
+    }
     ui.entryUrlInput.value = "";
     renderImageUrlList();
     updatePreview();
@@ -478,13 +495,31 @@ export function initEntries({ user }) {
     const [item] = updated.splice(index, 1);
     updated.splice(nextIndex, 0, item);
     imageUrls = updated;
+    if (previewIndex === index) {
+      previewIndex = nextIndex;
+    } else if (previewIndex === nextIndex) {
+      previewIndex = index;
+    }
     renderImageUrlList();
     updatePreview();
   }
 
   function removeImageUrl(index) {
     imageUrls = imageUrls.filter((_, idx) => idx !== index);
+    if (previewIndex >= imageUrls.length) {
+      previewIndex = Math.max(0, imageUrls.length - 1);
+    }
     renderImageUrlList();
+    updatePreview();
+  }
+
+  function changePreviewIndex(delta) {
+    if (!imageUrls.length) return;
+    if (imageUrls.length === 1) {
+      previewIndex = 0;
+    } else {
+      previewIndex = (previewIndex + delta + imageUrls.length) % imageUrls.length;
+    }
     updatePreview();
   }
 
