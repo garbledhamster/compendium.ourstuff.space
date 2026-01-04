@@ -424,6 +424,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
       const hasCover = Boolean(c.coverUrl);
       const cover = hasCover ? coverUrlFor(c) : "";
       const btn = document.createElement("button");
+      const supportsHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
       btn.type = "button";
       btn.className = `cp-card${viewMode === "list" ? " cp-card--list" : ""}${!hasCover && viewMode !== "list" ? " cp-card--no-cover" : ""}${isActive ? " is-active" : ""}`;
       if (viewMode !== "list" && hasCover) {
@@ -455,7 +456,14 @@ export function initCompendiums({ user, onSelectCompendium }) {
         `;
       }
 
-      btn.addEventListener("click", () => selectCompendium(c, { navigate: true }));
+      btn.addEventListener("click", () => {
+        const canReveal = viewMode !== "list" && hasCover && !supportsHover;
+        if (canReveal && !btn.classList.contains("is-revealed")) {
+          btn.classList.add("is-revealed");
+          return;
+        }
+        selectCompendium(c, { navigate: true });
+      });
       root.appendChild(btn);
     }
   }
