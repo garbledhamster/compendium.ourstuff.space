@@ -55,7 +55,11 @@ export function initEntries({ user }) {
     entryDesc: $("#entryDesc"),
     entryTags: $("#entryTags"),
     entrySources: $("#entrySources"),
-    entryUrl: $("#entryImageUrl"),
+    entryUrlInput: $("#entryImageUrlInput"),
+    btnAddEntryImageUrl: $("#btnAddEntryImageUrl"),
+    entryImageUrlsList: $("#entryImageUrlsList"),
+    entryImageUrlsEmpty: $("#entryImageUrlsEmpty"),
+    entryFile: $("#entryImageFile"),
 
     previewWrap: $("#entryPreviewWrap"),
     previewImg: $("#entryPreviewImg"),
@@ -87,10 +91,19 @@ export function initEntries({ user }) {
 
   let editingId = null;
   let editingData = null;
+  let imageUrls = [];
   let readerEntry = null;
   let readerScope = null;
 
-  ui.entryUrl.addEventListener("input", updatePreview);
+  ui.entryFile.addEventListener("change", updatePreview);
+  ui.entryUrlInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      addImageUrlFromInput();
+    }
+  });
+  ui.btnAddEntryImageUrl.addEventListener("click", addImageUrlFromInput);
+  ui.entryImageUrlsList.addEventListener("click", handleImageUrlListAction);
 
   ui.btnSave.addEventListener("click", save);
   ui.btnReaderEdit.addEventListener("click", () => {
@@ -191,8 +204,9 @@ export function initEntries({ user }) {
       const card = document.createElement("div");
       card.className = "card";
 
-      const img = e.imageUrl
-        ? `<img class="thumb" src="${esc(e.imageUrl)}" alt="Entry image" loading="lazy" />`
+      const primaryImageUrl = getPrimaryImageUrl(e);
+      const img = primaryImageUrl
+        ? `<img class="thumb" src="${esc(primaryImageUrl)}" alt="Entry image" loading="lazy" />`
         : `<div class="thumb thumb--empty">No image</div>`;
 
       const allowEdit = canEditEntry(user, comp, e);
@@ -249,8 +263,9 @@ export function initEntries({ user }) {
     ui.readerMeta.textContent = `by ${esc(entryData?.createdByEmail || entryData?.createdByUid || "unknown")}`;
     ui.readerDesc.textContent = entryData?.description || "";
 
-    if (entryData?.imageUrl) {
-      ui.readerImage.src = entryData.imageUrl;
+    const primaryImageUrl = getPrimaryImageUrl(entryData);
+    if (primaryImageUrl) {
+      ui.readerImage.src = primaryImageUrl;
       ui.readerMedia.classList.remove("is-hidden");
     } else {
       ui.readerMedia.classList.add("is-hidden");
@@ -317,8 +332,11 @@ export function initEntries({ user }) {
     ui.entryDesc.value = entryData?.description || "";
     ui.entryTags.value = Array.isArray(entryData?.tags) ? entryData.tags.join(", ") : (entryData?.tags || "");
     ui.entrySources.value = Array.isArray(entryData?.sources) ? entryData.sources.join("\n") : (entryData?.sources || "");
-    ui.entryUrl.value = entryData?.imageUrl || "";
+    imageUrls = getEntryImageUrls(entryData);
+    ui.entryUrlInput.value = "";
+    ui.entryFile.value = "";
 
+    renderImageUrlList();
     updatePreview();
     ui.dlg.showModal?.();
   }
@@ -329,10 +347,16 @@ export function initEntries({ user }) {
   }
 
   function updatePreview() {
-    const url = ui.entryUrl.value.trim();
+    const file = ui.entryFile.files?.[0] || null;
+    const primaryImageUrl = imageUrls[0] || "";
 
-    if (url) {
-      ui.previewImg.src = url;
+    if (file) {
+      ui.previewImg.src = URL.createObjectURL(file);
+      ui.previewWrap.classList.remove("is-hidden");
+      return;
+    }
+    if (primaryImageUrl) {
+      ui.previewImg.src = primaryImageUrl;
       ui.previewWrap.classList.remove("is-hidden");
       return;
     }
@@ -347,7 +371,8 @@ export function initEntries({ user }) {
     const description = ui.entryDesc.value.trim();
     const tags = normalizeList(ui.entryTags.value);
     const sources = normalizeList(ui.entrySources.value);
-    const url = ui.entryUrl.value.trim();
+    const file = ui.entryFile.files?.[0] || null;
+    addImageUrlFromInput({ silent: true });
 
     if (!title || !description) return showError("Title and description are required.");
 
@@ -355,17 +380,24 @@ export function initEntries({ user }) {
     if (editingId && !canEditEntry(user, active.compDoc, editingData)) return showError("You cannot edit this entry.");
 
     try {
-      const imageUrl = url || "";
+      const imageUrlsToSave = [...imageUrls];
+
+      if (file) {
+        const uploadedUrl = await uploadEntryImage(active.compId, file);
+        if (uploadedUrl) {
+          imageUrlsToSave.unshift(uploadedUrl);
+        }
+      }
 
       if (editingId) {
-        await updateEntry(editingId, { title, description, imageUrl, tags, sources });
+        await updateEntry(editingId, { title, description, imageUrls: imageUrlsToSave, tags, sources });
         toast("Entry updated");
       } else {
         await createEntry({
           compendiumId: active.compId,
           title,
           description,
-          imageUrl,
+          imageUrls: imageUrlsToSave,
           tags,
           sources,
           createdByUid: user.uid,
@@ -385,6 +417,92 @@ export function initEntries({ user }) {
       .split(/[,\n]/)
       .map((item) => item.trim())
       .filter(Boolean);
+  }
+
+  function getEntryImageUrls(entryData) {
+    if (!entryData) return [];
+    const urls = Array.isArray(entryData.imageUrls) ? entryData.imageUrls : [];
+    if (urls.length) return urls.filter(Boolean);
+    if (entryData.imageUrl) return [entryData.imageUrl];
+    return [];
+  }
+
+  function getPrimaryImageUrl(entryData) {
+    const urls = getEntryImageUrls(entryData);
+    return urls[0] || "";
+  }
+
+  function addImageUrlFromInput({ silent = false } = {}) {
+    const value = ui.entryUrlInput.value.trim();
+    if (!value) return;
+    imageUrls = [...imageUrls, value];
+    ui.entryUrlInput.value = "";
+    renderImageUrlList();
+    updatePreview();
+    if (!silent) {
+      ui.entryUrlInput.focus();
+    }
+  }
+
+  function handleImageUrlListAction(event) {
+    const btn = event.target.closest("button[data-action]");
+    if (!btn) return;
+    const index = Number(btn.dataset.index);
+    if (Number.isNaN(index)) return;
+
+    const action = btn.dataset.action;
+    if (action === "move-up") moveImageUrl(index, -1);
+    if (action === "move-down") moveImageUrl(index, 1);
+    if (action === "delete") removeImageUrl(index);
+  }
+
+  function moveImageUrl(index, delta) {
+    const nextIndex = index + delta;
+    if (nextIndex < 0 || nextIndex >= imageUrls.length) return;
+    const updated = [...imageUrls];
+    const [item] = updated.splice(index, 1);
+    updated.splice(nextIndex, 0, item);
+    imageUrls = updated;
+    renderImageUrlList();
+    updatePreview();
+  }
+
+  function removeImageUrl(index) {
+    imageUrls = imageUrls.filter((_, idx) => idx !== index);
+    renderImageUrlList();
+    updatePreview();
+  }
+
+  function renderImageUrlList() {
+    ui.entryImageUrlsList.innerHTML = "";
+    ui.entryImageUrlsEmpty.classList.toggle("is-hidden", imageUrls.length > 0);
+
+    imageUrls.forEach((url, index) => {
+      const row = document.createElement("div");
+      row.className = "hstack";
+      row.setAttribute("role", "option");
+      row.setAttribute("aria-label", `Image URL ${index + 1}`);
+
+      const indexLabel = document.createElement("span");
+      indexLabel.className = "subtle small";
+      indexLabel.textContent = `${index + 1}.`;
+
+      const urlText = document.createElement("span");
+      urlText.textContent = url;
+
+      const controls = document.createElement("div");
+      controls.className = "hstack";
+      controls.innerHTML = `
+        <button class="btn btn--outline" data-action="move-up" data-index="${index}" type="button">Up</button>
+        <button class="btn btn--outline" data-action="move-down" data-index="${index}" type="button">Down</button>
+        <button class="btn btn--danger" data-action="delete" data-index="${index}" type="button">Delete</button>
+      `;
+
+      row.appendChild(indexLabel);
+      row.appendChild(urlText);
+      row.appendChild(controls);
+      ui.entryImageUrlsList.appendChild(row);
+    });
   }
 
   async function remove(entry) {

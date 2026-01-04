@@ -460,9 +460,20 @@
 
         <div class="form__row">
           <label class="field">
-            <span class="field__label">Image URL (optional)</span>
-            <input class="input" id="entryImageUrl" type="url" placeholder="https://..." />
-            <span class="field__hint">Paste a direct image URL for the entry preview.</span>
+            <span class="field__label">Image URLs (optional)</span>
+            <div class="hstack">
+              <input class="input" id="entryImageUrlInput" type="url" placeholder="https://..." />
+              <button class="btn btn--outline" id="btnAddEntryImageUrl" type="button">Add</button>
+            </div>
+            <div class="subtle small" id="entryImageUrlsEmpty">No image URLs added yet.</div>
+            <div class="entry-image-list" id="entryImageUrlsList" role="listbox" aria-label="Image URLs"></div>
+            <span class="field__hint">Add multiple URLs to create a list. The first image is used as the primary cover.</span>
+          </label>
+
+          <label class="field">
+            <span class="field__label">Upload Image (optional)</span>
+            <input class="file" id="entryImageFile" type="file" accept="image/*" />
+            <span class="field__hint">Stored in Firebase Storage; URL saved to Firestore.</span>
           </label>
         </div>
 

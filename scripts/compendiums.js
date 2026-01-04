@@ -16,6 +16,18 @@ const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
 function esc(s){ return (s ?? "").toString(); }
 function normEmail(e){ return (e || "").trim().toLowerCase(); }
 function isValidEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+function parseTags(raw){ return (raw || "").split(",").map(x => x.trim()).filter(Boolean).slice(0, 40); }
+function getEntryImageUrls(entry) {
+  if (!entry) return [];
+  const urls = Array.isArray(entry.imageUrls) ? entry.imageUrls : [];
+  if (urls.length) return urls.filter(Boolean);
+  if (entry.imageUrl) return [entry.imageUrl];
+  return [];
+}
+function getPrimaryImageUrl(entry) {
+  const urls = getEntryImageUrls(entry);
+  return urls[0] || "";
+}
 
 function toast(msg, kind="ok") {
   const el = document.createElement("div");
@@ -607,8 +619,9 @@ export function initCompendiums({ user, onSelectCompendium }) {
       const card = document.createElement("div");
       card.className = "card reader-entry";
 
-      const img = entry.imageUrl
-        ? `<img class="thumb" src="${esc(entry.imageUrl)}" alt="Entry image" loading="lazy" />`
+      const primaryImageUrl = getPrimaryImageUrl(entry);
+      const img = primaryImageUrl
+        ? `<img class="thumb" src="${esc(primaryImageUrl)}" alt="Entry image" loading="lazy" />`
         : `<div class="thumb thumb--empty">No image</div>`;
 
       const tags = Array.isArray(entry.tags) ? entry.tags : [];
