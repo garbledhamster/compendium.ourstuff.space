@@ -218,11 +218,16 @@ export function listenEntries(compendiumId, cb, onErr) {
   };
 
   primaryUnsubscribe = onSnapshot(primaryQuery, handleSnapshot, (err) => {
-    if (onErr) {
-      onErr(err);
-    }
+    const isIndexError = err?.code === "failed-precondition";
     if (!fallbackUnsubscribe) {
-      fallbackUnsubscribe = onSnapshot(fallbackQuery, handleSnapshot, onErr);
+      fallbackUnsubscribe = onSnapshot(fallbackQuery, handleSnapshot, (fallbackErr) => {
+        if (onErr) {
+          onErr(fallbackErr);
+        }
+      });
+    }
+    if (!isIndexError && onErr) {
+      onErr(err);
     }
   });
 
@@ -257,11 +262,20 @@ export function listenEntriesByUserAccess(uid, cb, onErr) {
   };
 
   primaryUnsubscribe = onSnapshot(primaryQuery, (snap) => handleSnapshot(snap), (err) => {
-    if (onErr) {
-      onErr(err);
-    }
+    const isIndexError = err?.code === "failed-precondition";
     if (!fallbackUnsubscribe) {
-      fallbackUnsubscribe = onSnapshot(fallbackQuery, (snap) => handleSnapshot(snap, { sort: true }), onErr);
+      fallbackUnsubscribe = onSnapshot(
+        fallbackQuery,
+        (snap) => handleSnapshot(snap, { sort: true }),
+        (fallbackErr) => {
+          if (onErr) {
+            onErr(fallbackErr);
+          }
+        }
+      );
+    }
+    if (!isIndexError && onErr) {
+      onErr(err);
     }
   });
 
