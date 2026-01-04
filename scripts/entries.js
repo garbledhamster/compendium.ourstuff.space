@@ -200,7 +200,7 @@ export function initEntries({ user }) {
       return;
     }
 
-    for (const e of entries) {
+    for (const [index, e] of entries.entries()) {
       const card = document.createElement("div");
       card.className = "card";
 
@@ -210,6 +210,10 @@ export function initEntries({ user }) {
         : `<div class="thumb thumb--empty">No image</div>`;
 
       const allowEdit = canEditEntry(user, comp, e);
+      const prevEntry = entries[index - 1];
+      const nextEntry = entries[index + 1];
+      const allowMoveUp = allowEdit && prevEntry && canEditEntry(user, comp, prevEntry);
+      const allowMoveDown = allowEdit && nextEntry && canEditEntry(user, comp, nextEntry);
       const tags = Array.isArray(e.tags) ? e.tags : [];
       const sources = Array.isArray(e.sources) ? e.sources : [];
       const tagList = tags.length
@@ -217,6 +221,12 @@ export function initEntries({ user }) {
         : "";
       const sourceList = sources.length
         ? `<div class="card__sources"><span class="card__sources-label">Sources:</span> ${sources.map((source) => `<span class="card__source">${esc(source)}</span>`).join("")}</div>`
+        : "";
+      const reorderActions = allowEdit
+        ? `
+          <button class="btn btn--outline" data-act="move-up" type="button" ${allowMoveUp ? "" : "disabled"}>Up</button>
+          <button class="btn btn--outline" data-act="move-down" type="button" ${allowMoveDown ? "" : "disabled"}>Down</button>
+        `
         : "";
       const editActions = allowEdit
         ? `
@@ -236,6 +246,7 @@ export function initEntries({ user }) {
             <div class="card__meta">by ${esc(e.createdByEmail || e.createdByUid || "unknown")}</div>
             <div class="card__actions">
               <button class="btn btn--secondary" data-act="read" type="button">Read</button>
+              ${reorderActions}
               ${editActions}
             </div>
           </div>
@@ -245,8 +256,12 @@ export function initEntries({ user }) {
       card.querySelector('[data-act="read"]').addEventListener("click", () => openReader(scope, e));
       const editBtn = card.querySelector('[data-act="edit"]');
       const delBtn = card.querySelector('[data-act="del"]');
+      const upBtn = card.querySelector('[data-act="move-up"]');
+      const downBtn = card.querySelector('[data-act="move-down"]');
       editBtn?.addEventListener("click", () => openModal(scope, e.id, e));
       delBtn?.addEventListener("click", () => remove(e));
+      upBtn?.addEventListener("click", () => reorderEntry(entries, index, -1));
+      downBtn?.addEventListener("click", () => reorderEntry(entries, index, 1));
 
       root.appendChild(card);
     }
@@ -432,6 +447,12 @@ export function initEntries({ user }) {
     return urls[0] || "";
   }
 
+  function getEntryOrderValue(entryData, index) {
+    if (typeof entryData?.order === "number") return entryData.order;
+    if (typeof entryData?.createdAt?.toMillis === "function") return entryData.createdAt.toMillis();
+    return Date.now() + index;
+  }
+
   function addImageUrlFromInput({ silent = false } = {}) {
     const value = ui.entryUrlInput.value.trim();
     if (!value) return;
@@ -516,6 +537,27 @@ export function initEntries({ user }) {
       toast("Deleted");
     } catch (e) {
       toast(e?.message || "Delete failed", "bad");
+    }
+  }
+
+  async function reorderEntry(entries, index, delta) {
+    const targetIndex = index + delta;
+    if (targetIndex < 0 || targetIndex >= entries.length) return;
+    const entry = entries[index];
+    const targetEntry = entries[targetIndex];
+    if (!canEditEntry(user, active.compDoc, entry) || !canEditEntry(user, active.compDoc, targetEntry)) {
+      toast("Not allowed", "bad");
+      return;
+    }
+    const entryOrder = getEntryOrderValue(entry, index);
+    const targetOrder = getEntryOrderValue(targetEntry, targetIndex);
+    try {
+      await Promise.all([
+        updateEntry(entry.id, { order: targetOrder }),
+        updateEntry(targetEntry.id, { order: entryOrder })
+      ]);
+    } catch (e) {
+      toast(e?.message || "Reorder failed", "bad");
     }
   }
 
