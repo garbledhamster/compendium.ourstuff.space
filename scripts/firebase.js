@@ -26,12 +26,6 @@ import {
   arrayRemove
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import {
-  getStorage,
-  ref as sRef,
-  uploadBytes,
-  getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 // --- Config ---
 const firebaseConfig = {
@@ -47,7 +41,6 @@ const firebaseConfig = {
 export const firebaseApp = initializeApp(firebaseConfig);
 export const auth = getAuth(firebaseApp);
 export const db = getFirestore(firebaseApp);
-export const storage = getStorage(firebaseApp);
 
 // --- Auth wrappers (as requested) ---
 export function watchAuth(cb) {
@@ -184,13 +177,4 @@ export async function updateEntry(entryId, updates) {
 
 export async function deleteEntry(entryId) {
   return deleteDoc(doc(db, "entries", entryId));
-}
-
-export async function uploadEntryImage(compendiumId, file) {
-  const safeName = (file?.name || "image").replace(/[^a-zA-Z0-9._-]+/g, "_");
-  const path = `entries/${compendiumId}/${Date.now()}_${safeName}`;
-  const r = sRef(storage, path);
-
-  await uploadBytes(r, file, { contentType: file.type || "image/*" });
-  return getDownloadURL(r);
 }

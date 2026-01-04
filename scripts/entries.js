@@ -2,8 +2,7 @@ import {
   listenEntries,
   createEntry,
   updateEntry,
-  deleteEntry,
-  uploadEntryImage
+  deleteEntry
 } from "./firebase.js";
 
 const $ = (s, r=document) => r.querySelector(s);
