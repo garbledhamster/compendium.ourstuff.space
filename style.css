@@ -711,6 +711,7 @@ a { color: inherit; }
   margin: 0 0 0.65rem;
   font-weight: 800;
   line-height: 1.25;
+  color: var(--text);
 }
 
 .markdown ul,
@@ -728,6 +729,10 @@ a { color: inherit; }
   text-decoration: underline;
 }
 
+.markdown a:hover {
+  color: var(--secondary);
+}
+
 .markdown code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 0.95em;
@@ -740,7 +745,7 @@ a { color: inherit; }
 .markdown pre {
   margin: 0 0 0.75rem;
   padding: 12px 14px;
-  background: var(--surface);
+  background: var(--surface-muted);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   overflow-x: auto;
@@ -750,6 +755,50 @@ a { color: inherit; }
   background: transparent;
   border: 0;
   padding: 0;
+}
+
+.markdown blockquote {
+  margin: 0 0 0.75rem;
+  padding: 10px 14px;
+  border-left: 3px solid var(--secondary);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.markdown hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 1rem 0;
+}
+
+.markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 0.75rem;
+  font-size: 0.95em;
+}
+
+.markdown th,
+.markdown td {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.markdown thead th {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.markdown tbody tr:nth-child(even) {
+  background: var(--surface-muted);
+}
+
+.markdown img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
 }
 .reader__section {
   display: grid;
