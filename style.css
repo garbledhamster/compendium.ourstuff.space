@@ -1170,6 +1170,7 @@ a { color: inherit; }
   border-radius: var(--radius);
   overflow: clip;
   min-height: 240px;
+  max-height: 45vh;
 }
 
 .reader__hero img {
@@ -1287,6 +1288,12 @@ a { color: inherit; }
   }
 
   .reader__grid {
+    grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
     gap: 24px;
+  }
+
+  .reader__hero {
+    min-height: 220px;
+    max-height: 35vh;
   }
 }
