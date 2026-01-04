@@ -42,6 +42,17 @@ export const firebaseApp = initializeApp(firebaseConfig);
 export const auth = getAuth(firebaseApp);
 export const db = getFirestore(firebaseApp);
 
+function getTimestampMs(value) {
+  if (!value) return 0;
+  if (typeof value.toMillis === "function") return value.toMillis();
+  if (typeof value.seconds === "number") return value.seconds * 1000;
+  return Number(value) || 0;
+}
+
+function sortByUpdatedAtDesc(items) {
+  return items.sort((a, b) => getTimestampMs(b.updatedAt) - getTimestampMs(a.updatedAt));
+}
+
 // --- Auth wrappers (as requested) ---
 export function watchAuth(cb) {
   return onAuthStateChanged(auth, (user) => cb(user || null));
@@ -70,32 +81,83 @@ export async function setUserUiSettings(uid, data) {
 
 // --- Compendiums ---
 export function listenPersonalCompendiums(uid, cb, onErr) {
-  const qy = query(
+  const primaryQuery = query(
     collection(db, "compendiums"),
     where("ownerUid", "==", uid),
     where("visibility", "==", "personal"),
     orderBy("updatedAt", "desc")
   );
+  const fallbackQuery = query(
+    collection(db, "compendiums"),
+    where("ownerUid", "==", uid),
+    where("visibility", "==", "personal")
+  );
 
-  return onSnapshot(qy, (snap) => {
+  let primaryUnsubscribe = null;
+  let fallbackUnsubscribe = null;
+
+  const handleSnapshot = (snap, { sort = false } = {}) => {
     const items = [];
     snap.forEach(d => items.push({ id: d.id, ...d.data() }));
-    cb(items);
-  }, onErr);
+    cb(sort ? sortByUpdatedAtDesc(items) : items);
+  };
+
+  primaryUnsubscribe = onSnapshot(primaryQuery, (snap) => handleSnapshot(snap), (err) => {
+    if (onErr) {
+      onErr(err);
+    }
+    if (!fallbackUnsubscribe) {
+      fallbackUnsubscribe = onSnapshot(fallbackQuery, (snap) => handleSnapshot(snap, { sort: true }), onErr);
+    }
+  });
+
+  return () => {
+    if (primaryUnsubscribe) {
+      primaryUnsubscribe();
+    }
+    if (fallbackUnsubscribe) {
+      fallbackUnsubscribe();
+    }
+  };
 }
 
 export function listenPublicCompendiums(cb, onErr) {
-  const qy = query(
+  const primaryQuery = query(
     collection(db, "compendiums"),
     where("visibility", "==", "public"),
     orderBy("updatedAt", "desc")
   );
+  const fallbackQuery = query(
+    collection(db, "compendiums"),
+    where("visibility", "==", "public")
+  );
 
-  return onSnapshot(qy, (snap) => {
+  let primaryUnsubscribe = null;
+  let fallbackUnsubscribe = null;
+
+  const handleSnapshot = (snap, { sort = false } = {}) => {
     const items = [];
     snap.forEach(d => items.push({ id: d.id, ...d.data() }));
-    cb(items);
-  }, onErr);
+    cb(sort ? sortByUpdatedAtDesc(items) : items);
+  };
+
+  primaryUnsubscribe = onSnapshot(primaryQuery, (snap) => handleSnapshot(snap), (err) => {
+    if (onErr) {
+      onErr(err);
+    }
+    if (!fallbackUnsubscribe) {
+      fallbackUnsubscribe = onSnapshot(fallbackQuery, (snap) => handleSnapshot(snap, { sort: true }), onErr);
+    }
+  });
+
+  return () => {
+    if (primaryUnsubscribe) {
+      primaryUnsubscribe();
+    }
+    if (fallbackUnsubscribe) {
+      fallbackUnsubscribe();
+    }
+  };
 }
 
 export async function createCompendium(payload) {
@@ -175,17 +237,42 @@ export function listenEntries(compendiumId, cb, onErr) {
 }
 
 export function listenEntriesByUserAccess(uid, cb, onErr) {
-  const qy = query(
+  const primaryQuery = query(
     collection(db, "entries"),
     where("createdByUid", "==", uid),
     orderBy("updatedAt", "desc")
   );
+  const fallbackQuery = query(
+    collection(db, "entries"),
+    where("createdByUid", "==", uid)
+  );
 
-  return onSnapshot(qy, (snap) => {
+  let primaryUnsubscribe = null;
+  let fallbackUnsubscribe = null;
+
+  const handleSnapshot = (snap, { sort = false } = {}) => {
     const items = [];
     snap.forEach(d => items.push({ id: d.id, ...d.data() }));
-    cb(items);
-  }, onErr);
+    cb(sort ? sortByUpdatedAtDesc(items) : items);
+  };
+
+  primaryUnsubscribe = onSnapshot(primaryQuery, (snap) => handleSnapshot(snap), (err) => {
+    if (onErr) {
+      onErr(err);
+    }
+    if (!fallbackUnsubscribe) {
+      fallbackUnsubscribe = onSnapshot(fallbackQuery, (snap) => handleSnapshot(snap, { sort: true }), onErr);
+    }
+  });
+
+  return () => {
+    if (primaryUnsubscribe) {
+      primaryUnsubscribe();
+    }
+    if (fallbackUnsubscribe) {
+      fallbackUnsubscribe();
+    }
+  };
 }
 
 export async function createEntry(payload) {
