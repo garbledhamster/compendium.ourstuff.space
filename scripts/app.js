@@ -64,10 +64,10 @@ function initEditorTabs() {
     window.location.href = "./login.html";
   });
 
-  // Themes (ONLY from themes.yaml)
+  // Themes (from themes.yaml)
   let themes = [];
   try {
-    themes = await loadThemesFromYaml({ allowedIds: ["monokai-dark", "monokai-light"] });
+    themes = await loadThemesFromYaml();
   } catch (e) {
     console.error(e);
     // UI will keep CSS defaults; settings will disable selector if themes are missing
