@@ -405,7 +405,7 @@ export function initEntries({ user }) {
     const sources = normalizeList(ui.entrySources.value);
     addImageUrlFromInput({ silent: true });
 
-    if (!title || !description) return showError("Title and description are required.");
+    if (!title || !description) return showError("Title and details are required.");
 
     if (!editingId && !canAddEntry(user, active.compDoc)) return showError("You cannot add entries here.");
     if (editingId && !canEditEntry(user, active.compDoc, editingData)) return showError("You cannot edit this entry.");
