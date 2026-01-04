@@ -153,6 +153,20 @@ export function listenEntries(compendiumId, cb, onErr) {
   }, onErr);
 }
 
+export function listenEntriesByUserAccess(uid, cb, onErr) {
+  const qy = query(
+    collection(db, "entries"),
+    where("createdByUid", "==", uid),
+    orderBy("updatedAt", "desc")
+  );
+
+  return onSnapshot(qy, (snap) => {
+    const items = [];
+    snap.forEach(d => items.push({ id: d.id, ...d.data() }));
+    cb(items);
+  }, onErr);
+}
+
 export async function createEntry(payload) {
   return addDoc(collection(db, "entries"), {
     ...payload,

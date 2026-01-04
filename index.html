@@ -210,9 +210,15 @@
             </section>
 
             <section class="editor-view" data-editor-view="links">
-              <div class="editor-empty">
-                <div class="editor-empty__title">Link map</div>
-                <div class="editor-empty__sub">Organize cross-links between entries and external resources.</div>
+              <div class="editor-links" id="personalEditorLinksList">
+                <div class="links-section">
+                  <div class="links-section__title">Compendiums</div>
+                  <ul class="links-list" id="personalLinksCompendiums"></ul>
+                </div>
+                <div class="links-section">
+                  <div class="links-section__title">Entries</div>
+                  <ul class="links-list" id="personalLinksEntries"></ul>
+                </div>
               </div>
             </section>
           </form>
@@ -346,9 +352,15 @@
             </section>
 
             <section class="editor-view" data-editor-view="links">
-              <div class="editor-empty">
-                <div class="editor-empty__title">Link network</div>
-                <div class="editor-empty__sub">Map connections between public entries and external references.</div>
+              <div class="editor-links" id="publicEditorLinksList">
+                <div class="links-section">
+                  <div class="links-section__title">Compendiums</div>
+                  <ul class="links-list" id="publicLinksCompendiums"></ul>
+                </div>
+                <div class="links-section">
+                  <div class="links-section__title">Entries</div>
+                  <ul class="links-list" id="publicLinksEntries"></ul>
+                </div>
               </div>
             </section>
           </form>
