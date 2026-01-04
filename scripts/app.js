@@ -10,6 +10,7 @@ const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
 const routeTabs = new Map([
   ["compendiums", "compendiums"],
   ["compendium-detail", "compendiums"],
+  ["compendium-reader", "compendiums"],
   ["settings", "settings"]
 ]);
 
