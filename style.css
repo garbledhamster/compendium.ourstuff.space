@@ -86,19 +86,20 @@ a { color: inherit; }
 
 .tabs { display:flex; gap:10px; }
 .tab {
-  border: 1px solid var(--border);
+  border: 1px solid var(--primary);
   background: var(--surface);
-  color: var(--text);
+  color: var(--primary);
   padding: 10px 12px;
   border-radius: var(--radius-pill);
   cursor: pointer;
   font-weight: 650;
   font-size: 13px;
-  transition: background .18s ease, border-color .18s ease;
+  transition: background .18s ease, border-color .18s ease, color .18s ease;
 }
 .tab:hover {
-  background: var(--surface-muted);
+  background: var(--surface);
   border-color: var(--secondary);
+  color: var(--secondary);
 }
 .tab.is-active {
   border-color: var(--primary);
@@ -194,9 +195,9 @@ a { color: inherit; }
 }
 
 .btn {
-  border: 1px solid var(--border);
-  background: var(--primary);
-  color: var(--text);
+  border: 1px solid var(--primary);
+  background: var(--surface);
+  color: var(--primary);
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -205,20 +206,23 @@ a { color: inherit; }
   display: inline-flex;
   gap: 8px;
   align-items: center;
-  transition: background .18s ease, border-color .18s ease;
+  transition: background .18s ease, border-color .18s ease, color .18s ease;
 }
 .btn:hover {
-  background: color-mix(in srgb, var(--primary) 75%, var(--secondary));
+  background: var(--surface);
   border-color: var(--secondary);
+  color: var(--secondary);
 }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
 .btn--primary {
-  border-color: var(--border);
-  background: var(--primary);
+  border-color: var(--primary);
+  background: var(--surface);
+  color: var(--primary);
 }
 .btn--primary:hover {
   border-color: var(--secondary);
-  background: color-mix(in srgb, var(--primary) 75%, var(--secondary));
+  background: var(--surface);
+  color: var(--secondary);
 }
 .btn--outline {
   border-color: var(--primary);
@@ -227,15 +231,18 @@ a { color: inherit; }
 }
 .btn--outline:hover {
   border-color: var(--secondary);
-  background: color-mix(in srgb, var(--surface) 75%, var(--primary));
+  background: var(--surface);
+  color: var(--secondary);
 }
 .btn--danger {
-  border-color: var(--border);
-  background: var(--danger);
+  border-color: var(--primary);
+  background: var(--surface);
+  color: var(--primary);
 }
 .btn--danger:hover {
   border-color: var(--secondary);
-  background: color-mix(in srgb, var(--danger) 75%, var(--secondary));
+  background: var(--surface);
+  color: var(--secondary);
 }
 .btn--full { width: 100%; justify-content: center; }
 
@@ -268,9 +275,9 @@ a { color: inherit; }
 }
 .file::file-selector-button,
 .file::-webkit-file-upload-button {
-  border: 1px solid var(--border);
+  border: 1px solid var(--primary);
   background: var(--surface);
-  color: var(--text);
+  color: var(--primary);
   border-radius: var(--radius-sm);
   padding: 6px 10px;
   margin-right: 10px;
@@ -280,7 +287,8 @@ a { color: inherit; }
 .file::file-selector-button:hover,
 .file::-webkit-file-upload-button:hover {
   border-color: var(--secondary);
-  background: var(--surface-muted);
+  background: var(--surface);
+  color: var(--secondary);
 }
 .input::placeholder,
 .textarea::placeholder {
@@ -395,16 +403,17 @@ a { color: inherit; }
   display:flex; justify-content:flex-end; gap:10px;
 }
 .iconbtn {
-  border: 1px solid var(--border);
-  background: var(--danger);
-  color: var(--text);
+  border: 1px solid var(--danger);
+  background: var(--surface);
+  color: var(--danger);
   width: 38px; height: 38px;
   border-radius: var(--radius-sm);
   cursor: pointer;
 }
 .iconbtn:hover {
-  background: color-mix(in srgb, var(--danger) 75%, var(--secondary));
-  border-color: var(--secondary);
+  background: var(--surface);
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 .preview {
@@ -488,16 +497,23 @@ a { color: inherit; }
   margin-bottom: 14px;
 }
 .seg__btn {
-  border:0;
-  background: var(--primary);
-  color: var(--text);
+  border: 1px solid var(--primary);
+  background: var(--surface);
+  color: var(--primary);
   padding: 10px 12px;
   cursor:pointer;
   font-weight: 850;
+  transition: color .18s ease, border-color .18s ease, background .18s ease;
 }
 .seg__btn.is-active {
-  color: var(--text);
-  background: color-mix(in srgb, var(--primary) 75%, var(--secondary));
+  color: var(--secondary);
+  border-color: var(--secondary);
+  background: var(--surface);
+}
+.seg__btn:hover {
+  color: var(--secondary);
+  border-color: var(--secondary);
+  background: var(--surface);
 }
 
 /* New: radio group + editor chips */
@@ -536,12 +552,12 @@ a { color: inherit; }
 .chip__x {
   border: 0;
   background: transparent;
-  color: var(--muted);
+  color: var(--danger);
   cursor: pointer;
   display: inline-flex;
   padding: 0;
 }
-.chip__x:hover { color: var(--text); }
+.chip__x:hover { color: var(--danger); }
 
 /* =========================================================
    Compendium picker cards (background image + hover reveal)
@@ -731,12 +747,17 @@ a { color: inherit; }
   justify-content: center;
   padding: 9px 12px;
   border-radius: var(--radius-sm);
-  background: var(--primary);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 1px solid var(--primary);
+  color: var(--primary);
   font-weight: 800;
   font-size: 12px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+}
+.cp-btn:hover {
+  border-color: var(--secondary);
+  color: var(--secondary);
 }
 
 @media (hover: hover) and (min-width: 600px) {
