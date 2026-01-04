@@ -789,13 +789,3 @@ a { color: inherit; }
     transition-delay: calc(var(--cp-d) / 8);
   }
 }
-
-.cover-preview {
-  height: 160px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--cover);
-  background-size: 100% 100%;
-  background-position: center;
-  background-repeat: no-repeat;
-}
