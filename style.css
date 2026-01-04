@@ -106,6 +106,45 @@ a { color: inherit; }
   background: var(--surface);
 }
 
+.editor-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 6px 0 18px;
+}
+.editor-tab {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+.editor-tab:hover {
+  border-color: var(--secondary);
+  color: var(--secondary);
+}
+.editor-tab.is-active {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.editor-view { display: none; gap: 14px; }
+.editor-view.is-active { display: grid; }
+.editor-empty {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  text-align: center;
+  background: var(--surface);
+}
+.editor-empty__title { font-weight: 800; }
+.editor-empty__sub { color: var(--muted); margin-top: 6px; }
+
 .userbox { text-align:right; }
 .userbox__name { font-weight: 750; font-size: 13px; }
 .userbox__meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
@@ -344,6 +383,36 @@ a { color: inherit; }
   line-height: 1.35;
 }
 .card__meta { margin-top: 10px; color: var(--muted); font-size: 12px; }
+.card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.card__tag {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+}
+.card__sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  align-items: center;
+}
+.card__sources-label { font-weight: 700; }
+.card__source {
+  padding: 3px 6px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
 .card__actions { display:flex; gap:10px; margin-top: 12px; }
 
 .thumb {

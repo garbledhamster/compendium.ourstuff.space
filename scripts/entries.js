@@ -54,6 +54,8 @@ export function initEntries({ user }) {
 
     entryTitle: $("#entryTitle"),
     entryDesc: $("#entryDesc"),
+    entryTags: $("#entryTags"),
+    entrySources: $("#entrySources"),
     entryUrl: $("#entryImageUrl"),
     entryFile: $("#entryImageFile"),
 
@@ -170,6 +172,14 @@ export function initEntries({ user }) {
         : `<div class="thumb thumb--empty">No image</div>`;
 
       const allowEdit = canEditEntry(user, comp, e);
+      const tags = Array.isArray(e.tags) ? e.tags : [];
+      const sources = Array.isArray(e.sources) ? e.sources : [];
+      const tagList = tags.length
+        ? `<div class="card__tags">${tags.map((tag) => `<span class="card__tag">${esc(tag)}</span>`).join("")}</div>`
+        : "";
+      const sourceList = sources.length
+        ? `<div class="card__sources"><span class="card__sources-label">Sources:</span> ${sources.map((source) => `<span class="card__source">${esc(source)}</span>`).join("")}</div>`
+        : "";
 
       card.innerHTML = `
         <div class="card__row">
@@ -177,6 +187,8 @@ export function initEntries({ user }) {
           <div class="card__body">
             <div class="card__title">${esc(e.title || "Untitled")}</div>
             <div class="card__text">${esc((e.description || "").slice(0, 240))}${(e.description || "").length > 240 ? "…" : ""}</div>
+            ${tagList}
+            ${sourceList}
             <div class="card__meta">by ${esc(e.createdByEmail || e.createdByUid || "unknown")}</div>
             <div class="card__actions">
               <button class="btn btn--secondary" data-act="edit" type="button" ${allowEdit ? "" : "disabled"}>Edit</button>
@@ -216,6 +228,8 @@ export function initEntries({ user }) {
 
     ui.entryTitle.value = entryData?.title || "";
     ui.entryDesc.value = entryData?.description || "";
+    ui.entryTags.value = Array.isArray(entryData?.tags) ? entryData.tags.join(", ") : (entryData?.tags || "");
+    ui.entrySources.value = Array.isArray(entryData?.sources) ? entryData.sources.join("\n") : (entryData?.sources || "");
     ui.entryUrl.value = entryData?.imageUrl || "";
     ui.entryFile.value = "";
 
@@ -251,6 +265,8 @@ export function initEntries({ user }) {
 
     const title = ui.entryTitle.value.trim();
     const description = ui.entryDesc.value.trim();
+    const tags = normalizeList(ui.entryTags.value);
+    const sources = normalizeList(ui.entrySources.value);
     const url = ui.entryUrl.value.trim();
     const file = ui.entryFile.files?.[0] || null;
 
@@ -267,7 +283,7 @@ export function initEntries({ user }) {
       }
 
       if (editingId) {
-        await updateEntry(editingId, { title, description, imageUrl });
+        await updateEntry(editingId, { title, description, imageUrl, tags, sources });
         toast("Entry updated");
       } else {
         await createEntry({
@@ -275,6 +291,8 @@ export function initEntries({ user }) {
           title,
           description,
           imageUrl,
+          tags,
+          sources,
           createdByUid: user.uid,
           createdByEmail: normEmail(user.email || "")
         });
@@ -285,6 +303,13 @@ export function initEntries({ user }) {
     } catch (e) {
       showError(e?.message || "Save failed");
     }
+  }
+
+  function normalizeList(value) {
+    return (value || "")
+      .split(/[,\n]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
   }
 
   async function remove(entry) {
