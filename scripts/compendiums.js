@@ -514,13 +514,20 @@ export function initCompendiums({ user, onSelectCompendium }) {
   function selectCompendium(comp, { navigate = false } = {}) {
     selectedCompendium = comp ? { id: comp.id, doc: comp } : null;
     if (comp?.visibility) selectedScope = comp.visibility;
-    showDetailPanel(selectedScope);
-    paintEditor(selectedScope);
     renderLinks();
     renderReader(comp);
 
     const scope = comp?.visibility || selectedScope;
     onSelectCompendium?.(scope, comp?.id || null, comp || null);
+
+    const editable = comp ? canEditCompendium(user, comp) : false;
+    if (comp && !editable) {
+      goToRoute("compendium-reader");
+      return;
+    }
+
+    showDetailPanel(selectedScope);
+    paintEditor(selectedScope);
 
     if (navigate) {
       goToRoute("compendium-detail");
@@ -540,7 +547,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
   function openReaderForScope(scope) {
     const { id: compId, doc: comp } = getSelectedForScope(scope);
     if (!compId || !comp) return;
-    renderReader(comp);
+    selectCompendium(comp, { navigate: false });
     goToRoute("compendium-reader");
   }
 
@@ -567,11 +574,14 @@ export function initCompendiums({ user, onSelectCompendium }) {
     readerView.description.textContent = (comp.description || "").trim() || "No description yet.";
 
     const editable = canEditCompendium(user, comp);
+    const owner = isOwner(user, comp);
     readerView.btnEdit.classList.toggle("is-hidden", !editable);
-    readerView.btnDelete.classList.toggle("is-hidden", !editable);
+    readerView.btnBackToDetail.classList.toggle("is-hidden", !editable);
+    readerView.btnDelete.classList.toggle("is-hidden", !owner);
     readerView.btnEdit.disabled = !editable;
-    readerView.btnDelete.disabled = !isOwner(user, comp);
-    readerView.btnDelete.title = isOwner(user, comp) ? "" : "Owner only";
+    readerView.btnBackToDetail.disabled = !editable;
+    readerView.btnDelete.disabled = !owner;
+    readerView.btnDelete.title = owner ? "" : "Owner only";
 
     readerEntriesUnsub = listenEntries(comp.id, (entries) => {
       renderReaderEntries(entries);
