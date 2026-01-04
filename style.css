@@ -554,6 +554,28 @@ a { color: inherit; }
   overflow-x: hidden;
   overflow-y: auto;
 }
+#entryModal .modal__body {
+  scrollbar-width: none;
+}
+#entryModal .modal__body::-webkit-scrollbar {
+  display: none;
+}
+.modal__card,
+.modal__body {
+  scrollbar-color: var(--primary) var(--secondary);
+}
+.modal__card::-webkit-scrollbar,
+.modal__body::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background: var(--secondary);
+}
+.modal__card::-webkit-scrollbar-thumb,
+.modal__body::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--secondary);
+}
 .modal__foot {
   padding: var(--pad) var(--pad-lg);
   border-top: 1px solid var(--border);
