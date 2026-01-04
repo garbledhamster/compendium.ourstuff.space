@@ -158,6 +158,19 @@
                 <textarea class="textarea" id="personalCompDesc" rows="4" placeholder="Shown on hover in the picker cards."></textarea>
               </label>
 
+              <div class="form__row">
+                <label class="field">
+                  <span class="field__label">Cover image URL</span>
+                  <input class="input" id="personalCompCover" type="url" placeholder="https://..." />
+                  <span class="field__hint">Leave blank to use the generated cover.</span>
+                </label>
+
+                <label class="field">
+                  <span class="field__label">Tags</span>
+                  <input class="input" id="personalCompTags" type="text" placeholder="comma-separated" />
+                </label>
+              </div>
+
               <div class="form__row form__row--tight">
                 <div class="subtle small">Type is locked once created (personal/public cannot be changed).</div>
                 <div class="hstack hstack--end">
@@ -243,6 +256,19 @@
                 <span class="field__label">Description</span>
                 <textarea class="textarea" id="publicCompDesc" rows="4" placeholder="Shown on hover in the picker cards."></textarea>
               </label>
+
+              <div class="form__row">
+                <label class="field">
+                  <span class="field__label">Cover image URL</span>
+                  <input class="input" id="publicCompCover" type="url" placeholder="https://..." />
+                  <span class="field__hint">Leave blank to use the generated cover.</span>
+                </label>
+
+                <label class="field">
+                  <span class="field__label">Tags</span>
+                  <input class="input" id="publicCompTags" type="text" placeholder="comma-separated" />
+                </label>
+              </div>
 
               <div class="form__row form__row--tight">
                 <div class="subtle small" id="publicEditHint">—</div>
