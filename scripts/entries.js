@@ -59,7 +59,6 @@ export function initEntries({ user }) {
     btnAddEntryImageUrl: $("#btnAddEntryImageUrl"),
     entryImageUrlsList: $("#entryImageUrlsList"),
     entryImageUrlsEmpty: $("#entryImageUrlsEmpty"),
-    entryFile: $("#entryImageFile"),
 
     previewWrap: $("#entryPreviewWrap"),
     previewImg: $("#entryPreviewImg"),
@@ -95,7 +94,6 @@ export function initEntries({ user }) {
   let readerEntry = null;
   let readerScope = null;
 
-  ui.entryFile.addEventListener("change", updatePreview);
   ui.entryUrlInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
@@ -349,7 +347,6 @@ export function initEntries({ user }) {
     ui.entrySources.value = Array.isArray(entryData?.sources) ? entryData.sources.join("\n") : (entryData?.sources || "");
     imageUrls = getEntryImageUrls(entryData);
     ui.entryUrlInput.value = "";
-    ui.entryFile.value = "";
 
     renderImageUrlList();
     updatePreview();
@@ -362,14 +359,8 @@ export function initEntries({ user }) {
   }
 
   function updatePreview() {
-    const file = ui.entryFile.files?.[0] || null;
     const primaryImageUrl = imageUrls[0] || "";
 
-    if (file) {
-      ui.previewImg.src = URL.createObjectURL(file);
-      ui.previewWrap.classList.remove("is-hidden");
-      return;
-    }
     if (primaryImageUrl) {
       ui.previewImg.src = primaryImageUrl;
       ui.previewWrap.classList.remove("is-hidden");
@@ -386,7 +377,6 @@ export function initEntries({ user }) {
     const description = ui.entryDesc.value.trim();
     const tags = normalizeList(ui.entryTags.value);
     const sources = normalizeList(ui.entrySources.value);
-    const file = ui.entryFile.files?.[0] || null;
     addImageUrlFromInput({ silent: true });
 
     if (!title || !description) return showError("Title and description are required.");
@@ -396,13 +386,6 @@ export function initEntries({ user }) {
 
     try {
       const imageUrlsToSave = [...imageUrls];
-
-      if (file) {
-        const uploadedUrl = await uploadEntryImage(active.compId, file);
-        if (uploadedUrl) {
-          imageUrlsToSave.unshift(uploadedUrl);
-        }
-      }
 
       if (editingId) {
         await updateEntry(editingId, { title, description, imageUrls: imageUrlsToSave, tags, sources });
