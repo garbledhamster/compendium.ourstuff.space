@@ -938,7 +938,7 @@ a { color: inherit; }
   text-shadow: none;
 }
 
-.cp-card.is-revealed .cp-content {
+.cp-card.is-revealed:not(.cp-card--list):not(.cp-card--no-cover) .cp-content {
   opacity: 1;
   transform: translateY(0);
 }
