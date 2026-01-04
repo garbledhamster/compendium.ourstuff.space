@@ -136,7 +136,8 @@ export function listenEntries(compendiumId, cb, onErr) {
   const qy = query(
     collection(db, "entries"),
     where("compendiumId", "==", compendiumId),
-    orderBy("updatedAt", "desc")
+    orderBy("order", "asc"),
+    orderBy("createdAt", "asc")
   );
 
   return onSnapshot(qy, (snap) => {
@@ -163,6 +164,7 @@ export function listenEntriesByUserAccess(uid, cb, onErr) {
 export async function createEntry(payload) {
   return addDoc(collection(db, "entries"), {
     ...payload,
+    order: typeof payload?.order === "number" ? payload.order : Date.now(),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   });
