@@ -1,6 +1,7 @@
 import {
   listenPersonalCompendiums,
   listenPublicCompendiums,
+  listenEntriesByUserAccess,
   createCompendium,
   updateCompendium,
   deleteCompendium,
@@ -49,6 +50,15 @@ function canEditCompendium(user, comp){
 }
 function canManageEditors(user, comp){
   return comp?.visibility === "public" && isOwner(user, comp);
+}
+
+function canAccessCompendium(user, comp) {
+  if (!comp) return false;
+  const visibility = comp.visibility;
+  const owner = isOwner(user, comp);
+  const editor = isEditor(user, comp);
+  const editable = canEditCompendium(user, comp);
+  return visibility === "public" || owner || editor || editable;
 }
 
 function fmtCount(n, label) {
@@ -123,12 +133,21 @@ export function initCompendiums({ user, onSelectCompendium }) {
     viewMode: $("#compendiumViewMode")
   };
 
+  const linksView = {
+    personalCompendiums: $("#personalLinksCompendiums"),
+    personalEntries: $("#personalLinksEntries"),
+    publicCompendiums: $("#publicLinksCompendiums"),
+    publicEntries: $("#publicLinksEntries")
+  };
+
   // --- State ---
   let personalUnsub = null;
   let publicUnsub = null;
+  let entriesUnsub = null;
 
   let personalItems = [];
   let publicItems = [];
+  let entryItems = [];
 
   let selectedCompendium = null;
   let selectedScope = "personal";
@@ -199,6 +218,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
   // --- Listen ---
   listenPersonal();
   listenPublic();
+  listenEntriesAccess();
 
   function listenPersonal() {
     personalUnsub?.();
@@ -206,6 +226,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
       personalItems = items.map(item => normalizeCompendium(item, "personal"));
       syncSelected();
       renderCombinedList();
+      renderLinks();
     }, (err) => {
       console.error(err);
       toast(err?.message || "Failed to load personal compendiums", "bad");
@@ -218,9 +239,21 @@ export function initCompendiums({ user, onSelectCompendium }) {
       publicItems = items.map(item => normalizeCompendium(item, "public"));
       syncSelected();
       renderCombinedList();
+      renderLinks();
     }, (err) => {
       console.error(err);
       toast(err?.message || "Failed to load public compendiums", "bad");
+    });
+  }
+
+  function listenEntriesAccess() {
+    entriesUnsub?.();
+    entriesUnsub = listenEntriesByUserAccess(user.uid, (items) => {
+      entryItems = items;
+      renderLinks();
+    }, (err) => {
+      console.error(err);
+      toast(err?.message || "Failed to load link entries", "bad");
     });
   }
 
@@ -258,6 +291,80 @@ export function initCompendiums({ user, onSelectCompendium }) {
     const filteredItems = filterCompendiums(allItems);
     listView.count.textContent = fmtCount(filteredItems.length, "compendium");
     renderPicker(listView.list, filteredItems, allItems.length, filterState.viewMode);
+  }
+
+  function renderLinks() {
+    const allCompendiums = [...personalItems, ...publicItems];
+    renderLinksForScope(linksView.personalCompendiums, linksView.personalEntries, allCompendiums);
+    renderLinksForScope(linksView.publicCompendiums, linksView.publicEntries, allCompendiums);
+  }
+
+  function renderLinksForScope(compendiumRoot, entryRoot, allCompendiums) {
+    if (!compendiumRoot || !entryRoot) return;
+
+    const byId = new Map(allCompendiums.map(item => [item.id, item]));
+    const sortedCompendiums = [...allCompendiums].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+    renderLinkList(compendiumRoot, sortedCompendiums, (comp) => {
+      const accessible = canAccessCompendium(user, comp);
+      return {
+        label: comp.name || "Untitled",
+        meta: comp.topic || (comp.visibility === "public" ? "Public compendium" : "Personal compendium"),
+        accessible,
+        active: selectedCompendium?.id === comp.id && selectedCompendium?.doc?.visibility === comp.visibility,
+        onClick: () => selectCompendium(comp, { navigate: true })
+      };
+    });
+
+    const sortedEntries = [...entryItems].sort((a, b) => entryTimestamp(b) - entryTimestamp(a));
+    renderLinkList(entryRoot, sortedEntries, (entry) => {
+      const comp = byId.get(entry.compendiumId);
+      const accessible = comp ? canAccessCompendium(user, comp) : false;
+      const compName = comp?.name || "Unknown compendium";
+      return {
+        label: entry.title || "Untitled entry",
+        meta: compName,
+        accessible,
+        active: false,
+        onClick: () => {
+          if (!comp) return;
+          selectCompendium(comp, { navigate: true });
+        }
+      };
+    });
+  }
+
+  function renderLinkList(root, items, build) {
+    root.innerHTML = "";
+
+    if (!items.length) {
+      const d = document.createElement("div");
+      d.className = "subtle";
+      d.textContent = "Nothing to show yet.";
+      root.appendChild(d);
+      return;
+    }
+
+    for (const item of items) {
+      const { label, meta, accessible, active, onClick } = build(item);
+      const li = document.createElement("li");
+      li.className = `links-item${accessible ? "" : " is-muted"}`;
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `links-link ${accessible ? "link--active" : "link--muted"}${active ? " is-active" : ""}`;
+      btn.textContent = label;
+      btn.disabled = !accessible;
+      btn.addEventListener("click", onClick);
+
+      const metaEl = document.createElement("div");
+      metaEl.className = "links-meta";
+      metaEl.textContent = meta;
+
+      li.appendChild(btn);
+      li.appendChild(metaEl);
+      root.appendChild(li);
+    }
   }
 
   function renderPicker(root, items, totalCount, viewMode) {
@@ -370,11 +477,24 @@ export function initCompendiums({ user, onSelectCompendium }) {
     return Number.isNaN(parsed) ? 0 : parsed;
   }
 
+  function entryTimestamp(item) {
+    const stamp = item.updatedAt ?? item.createdAt ?? item.updated_at ?? item.created_at;
+    if (!stamp) return 0;
+    if (typeof stamp?.toMillis === "function") return stamp.toMillis();
+    if (typeof stamp?.seconds === "number") return stamp.seconds * 1000;
+    if (stamp instanceof Date) return stamp.getTime();
+    const numeric = Number(stamp);
+    if (!Number.isNaN(numeric)) return numeric;
+    const parsed = Date.parse(stamp);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+
   function selectCompendium(comp, { navigate = false } = {}) {
     selectedCompendium = comp ? { id: comp.id, doc: comp } : null;
     if (comp?.visibility) selectedScope = comp.visibility;
     showDetailPanel(selectedScope);
     paintEditor(selectedScope);
+    renderLinks();
 
     const scope = comp?.visibility || selectedScope;
     onSelectCompendium?.(scope, comp?.id || null, comp || null);
