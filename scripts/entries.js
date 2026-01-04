@@ -4,6 +4,7 @@ import {
   updateEntry,
   deleteEntry
 } from "./firebase.js";
+import { renderMarkdown } from "./markdown.js";
 
 const $ = (s, r=document) => r.querySelector(s);
 function esc(s){ return (s ?? "").toString(); }
@@ -291,7 +292,7 @@ export function initEntries({ user }) {
     ui.readerTitle.textContent = entryData?.title || "Untitled";
     ui.readerSub.textContent = active.compDoc?.name || "—";
     ui.readerMeta.textContent = `by ${esc(entryData?.createdByEmail || entryData?.createdByUid || "unknown")}`;
-    ui.readerDesc.textContent = entryData?.description || "";
+    ui.readerDesc.innerHTML = renderMarkdown(entryData?.description || "");
 
     const primaryImageUrl = getPrimaryImageUrl(entryData);
     if (primaryImageUrl) {

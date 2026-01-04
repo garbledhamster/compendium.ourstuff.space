@@ -681,6 +681,76 @@ a { color: inherit; }
   color: var(--text);
   white-space: pre-wrap;
 }
+
+.reader__description.markdown {
+  white-space: normal;
+}
+
+.markdown {
+  white-space: normal;
+}
+
+.markdown > *:first-child {
+  margin-top: 0;
+}
+
+.markdown > *:last-child {
+  margin-bottom: 0;
+}
+
+.markdown p {
+  margin: 0 0 0.75rem;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  margin: 0 0 0.65rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.markdown ul,
+.markdown ol {
+  margin: 0 0 0.75rem 1.25rem;
+  padding: 0;
+}
+
+.markdown li {
+  margin: 0.25rem 0;
+}
+
+.markdown a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.markdown code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.95em;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+.markdown pre {
+  margin: 0 0 0.75rem;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+}
+
+.markdown pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
 .reader__section {
   display: grid;
   gap: 8px;
@@ -1257,6 +1327,10 @@ a { color: inherit; }
 .reader-entry__text {
   white-space: pre-wrap;
   line-height: 1.7;
+}
+
+.reader-entry__text.markdown {
+  white-space: normal;
 }
 
 @media (max-width: 900px) {
