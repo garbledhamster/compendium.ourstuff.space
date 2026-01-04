@@ -62,7 +62,21 @@ export function initEntries({ user }) {
     previewWrap: $("#entryPreviewWrap"),
     previewImg: $("#entryPreviewImg"),
 
-    btnSave: $("#btnSaveEntry")
+    btnSave: $("#btnSaveEntry"),
+
+    readerDlg: $("#entryReaderModal"),
+    readerTitle: $("#entryReaderTitle"),
+    readerSub: $("#entryReaderSub"),
+    readerMeta: $("#entryReaderMeta"),
+    readerDesc: $("#entryReaderDescription"),
+    readerMedia: $("#entryReaderMedia"),
+    readerImage: $("#entryReaderImage"),
+    readerTagsWrap: $("#entryReaderTagsWrap"),
+    readerTags: $("#entryReaderTags"),
+    readerSourcesWrap: $("#entryReaderSourcesWrap"),
+    readerSources: $("#entryReaderSources"),
+    btnReaderEdit: $("#btnReaderEdit"),
+    btnReaderDelete: $("#btnReaderDelete")
   };
 
   let active = {
@@ -75,11 +89,24 @@ export function initEntries({ user }) {
 
   let editingId = null;
   let editingData = null;
+  let readerEntry = null;
+  let readerScope = null;
 
   ui.entryFile.addEventListener("change", updatePreview);
   ui.entryUrl.addEventListener("input", updatePreview);
 
   ui.btnSave.addEventListener("click", save);
+  ui.btnReaderEdit.addEventListener("click", () => {
+    if (!readerEntry || !readerScope) return;
+    if (!canEditEntry(user, active.compDoc, readerEntry)) return;
+    ui.readerDlg.close?.();
+    openModal(readerScope, readerEntry.id, readerEntry);
+  });
+  ui.btnReaderDelete.addEventListener("click", async () => {
+    if (!readerEntry) return;
+    ui.readerDlg.close?.();
+    await remove(readerEntry);
+  });
 
   ui.btnAddPersonal.addEventListener("click", () => {
     if (!active.compDoc || active.scope !== "personal") return;
@@ -180,6 +207,12 @@ export function initEntries({ user }) {
       const sourceList = sources.length
         ? `<div class="card__sources"><span class="card__sources-label">Sources:</span> ${sources.map((source) => `<span class="card__source">${esc(source)}</span>`).join("")}</div>`
         : "";
+      const editActions = allowEdit
+        ? `
+          <button class="btn btn--secondary" data-act="edit" type="button">Edit</button>
+          <button class="btn btn--danger" data-act="del" type="button">Delete</button>
+        `
+        : "";
 
       card.innerHTML = `
         <div class="card__row">
@@ -191,18 +224,75 @@ export function initEntries({ user }) {
             ${sourceList}
             <div class="card__meta">by ${esc(e.createdByEmail || e.createdByUid || "unknown")}</div>
             <div class="card__actions">
-              <button class="btn btn--secondary" data-act="edit" type="button" ${allowEdit ? "" : "disabled"}>Edit</button>
-              <button class="btn btn--danger" data-act="del" type="button" ${allowEdit ? "" : "disabled"}>Delete</button>
+              <button class="btn btn--secondary" data-act="read" type="button">Read</button>
+              ${editActions}
             </div>
           </div>
         </div>
       `;
 
-      card.querySelector('[data-act="edit"]').addEventListener("click", () => openModal(scope, e.id, e));
-      card.querySelector('[data-act="del"]').addEventListener("click", () => remove(e));
+      card.querySelector('[data-act="read"]').addEventListener("click", () => openReader(scope, e));
+      const editBtn = card.querySelector('[data-act="edit"]');
+      const delBtn = card.querySelector('[data-act="del"]');
+      editBtn?.addEventListener("click", () => openModal(scope, e.id, e));
+      delBtn?.addEventListener("click", () => remove(e));
 
       root.appendChild(card);
     }
+  }
+
+  function openReader(scope, entryData) {
+    if (!active.compDoc || !entryData) return;
+
+    readerEntry = entryData;
+    readerScope = scope;
+
+    ui.readerTitle.textContent = entryData?.title || "Untitled";
+    ui.readerSub.textContent = active.compDoc?.name || "—";
+    ui.readerMeta.textContent = `by ${esc(entryData?.createdByEmail || entryData?.createdByUid || "unknown")}`;
+    ui.readerDesc.textContent = entryData?.description || "";
+
+    if (entryData?.imageUrl) {
+      ui.readerImage.src = entryData.imageUrl;
+      ui.readerMedia.classList.remove("is-hidden");
+    } else {
+      ui.readerMedia.classList.add("is-hidden");
+      ui.readerImage.removeAttribute("src");
+    }
+
+    const tags = Array.isArray(entryData?.tags) ? entryData.tags : [];
+    ui.readerTags.innerHTML = "";
+    if (tags.length) {
+      tags.forEach((tag) => {
+        const chip = document.createElement("span");
+        chip.className = "reader__tag";
+        chip.textContent = tag;
+        ui.readerTags.appendChild(chip);
+      });
+      ui.readerTagsWrap.classList.remove("is-hidden");
+    } else {
+      ui.readerTagsWrap.classList.add("is-hidden");
+    }
+
+    const sources = Array.isArray(entryData?.sources) ? entryData.sources : [];
+    ui.readerSources.innerHTML = "";
+    if (sources.length) {
+      sources.forEach((source) => {
+        const item = document.createElement("span");
+        item.className = "reader__source";
+        item.textContent = source;
+        ui.readerSources.appendChild(item);
+      });
+      ui.readerSourcesWrap.classList.remove("is-hidden");
+    } else {
+      ui.readerSourcesWrap.classList.add("is-hidden");
+    }
+
+    const allowEdit = canEditEntry(user, active.compDoc, entryData);
+    ui.btnReaderEdit.classList.toggle("is-hidden", !allowEdit);
+    ui.btnReaderDelete.classList.toggle("is-hidden", !allowEdit);
+
+    ui.readerDlg.showModal?.();
   }
 
   function openModal(scope, entryId, entryData) {
