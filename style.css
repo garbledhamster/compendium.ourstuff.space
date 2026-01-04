@@ -64,6 +64,15 @@ a { color: inherit; }
   padding: 18px var(--pad) 44px;
 }
 
+.view--wide {
+  width: 100%;
+}
+
+.reader-shell {
+  width: 100%;
+  padding: 18px var(--pad) 44px;
+}
+
 .grid2 {
   display: grid;
   grid-template-columns: 360px 1fr;
