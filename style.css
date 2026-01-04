@@ -68,6 +68,10 @@ a { color: inherit; }
   width: 100%;
 }
 
+.view--wide .reader-shell {
+  max-width: none;
+}
+
 .reader-shell {
   max-width: var(--max);
   margin: 0 auto;
