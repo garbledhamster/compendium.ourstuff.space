@@ -128,6 +128,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
   // Modal
   const modal = {
     dlg: $("#newCompModal"),
+    form: $("#newCompForm"),
     err: $("#newCompError"),
     name: $("#newCompName"),
     topic: $("#newCompTopic"),
@@ -200,7 +201,13 @@ export function initCompendiums({ user, onSelectCompendium }) {
     modal.dlg.showModal?.();
   });
 
-  modal.btnCreate.addEventListener("click", createFromModal);
+  modal.form.addEventListener("submit", (event) => {
+    if (event.submitter?.value === "cancel") {
+      return;
+    }
+    event.preventDefault();
+    createFromModal();
+  });
 
   personal.btnSave.addEventListener("click", () => saveCompendium("personal"));
   personal.btnDelete.addEventListener("click", () => removeCompendium("personal"));
