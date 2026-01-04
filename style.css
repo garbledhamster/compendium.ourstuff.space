@@ -65,7 +65,9 @@ a { color: inherit; }
 }
 
 .view--wide {
-  width: 100%;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
 }
 
 .view--wide .reader-shell {
@@ -73,8 +75,8 @@ a { color: inherit; }
 }
 
 .reader-shell {
-  max-width: var(--max);
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   width: 100%;
   padding: 18px var(--pad) 44px;
 }
