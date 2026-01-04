@@ -760,7 +760,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
         visibility: type,
         ownerUid: user.uid,
-        ownerEmail: normEmail(user.email || ""),
+        ownerEmail: user.email || "",
 
         editorEmails: type === "public" ? [] : []
       });
