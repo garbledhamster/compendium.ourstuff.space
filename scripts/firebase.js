@@ -133,18 +133,45 @@ export async function removeCompendiumEditor(compendiumId, email) {
 
 // --- Entries ---
 export function listenEntries(compendiumId, cb, onErr) {
-  const qy = query(
+  // Requires composite index: entries(compendiumId ASC, order ASC, createdAt ASC).
+  const primaryQuery = query(
     collection(db, "entries"),
     where("compendiumId", "==", compendiumId),
     orderBy("order", "asc"),
     orderBy("createdAt", "asc")
   );
+  const fallbackQuery = query(
+    collection(db, "entries"),
+    where("compendiumId", "==", compendiumId),
+    orderBy("createdAt", "asc")
+  );
 
-  return onSnapshot(qy, (snap) => {
+  let primaryUnsubscribe = null;
+  let fallbackUnsubscribe = null;
+
+  const handleSnapshot = (snap) => {
     const items = [];
     snap.forEach(d => items.push({ id: d.id, ...d.data() }));
     cb(items);
-  }, onErr);
+  };
+
+  primaryUnsubscribe = onSnapshot(primaryQuery, handleSnapshot, (err) => {
+    if (onErr) {
+      onErr(err);
+    }
+    if (!fallbackUnsubscribe) {
+      fallbackUnsubscribe = onSnapshot(fallbackQuery, handleSnapshot, onErr);
+    }
+  });
+
+  return () => {
+    if (primaryUnsubscribe) {
+      primaryUnsubscribe();
+    }
+    if (fallbackUnsubscribe) {
+      fallbackUnsubscribe();
+    }
+  };
 }
 
 export function listenEntriesByUserAccess(uid, cb, onErr) {
