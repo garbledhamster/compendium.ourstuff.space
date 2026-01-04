@@ -134,57 +134,87 @@
               <span class="subtle small" id="personalOwnerLine"></span>
             </div>
 
-            <div class="form__row">
-              <label class="field">
-                <span class="field__label">Compendium Name</span>
-                <input class="input" id="personalCompName" type="text" autocomplete="off" />
-              </label>
-
-              <label class="field">
-                <span class="field__label">Compendium Topic</span>
-                <input class="input" id="personalCompTopic" type="text" autocomplete="off" />
-              </label>
+            <div class="editor-tabs" data-editor-tabs>
+              <button class="editor-tab is-active" data-editor-tab="editor" type="button">Editor</button>
+              <button class="editor-tab" data-editor-tab="tags" type="button">Tags</button>
+              <button class="editor-tab" data-editor-tab="sources" type="button">Sources</button>
+              <button class="editor-tab" data-editor-tab="links" type="button">Links</button>
             </div>
 
-            <label class="field">
-              <span class="field__label">Description</span>
-              <textarea class="textarea" id="personalCompDesc" rows="4" placeholder="Shown on hover in the picker cards."></textarea>
-            </label>
+            <section class="editor-view is-active" data-editor-view="editor">
+              <div class="form__row">
+                <label class="field">
+                  <span class="field__label">Compendium Name</span>
+                  <input class="input" id="personalCompName" type="text" autocomplete="off" />
+                </label>
 
-            <label class="field">
-              <span class="field__label">Tags</span>
-              <input class="input" id="personalCompTags" type="text" placeholder="comma-separated" autocomplete="off" />
-              <span class="field__hint">Stored as an array in Firestore.</span>
-            </label>
+                <label class="field">
+                  <span class="field__label">Compendium Topic</span>
+                  <input class="input" id="personalCompTopic" type="text" autocomplete="off" />
+                </label>
+              </div>
 
-            <div class="form__row form__row--tight">
-              <div class="subtle small">Type is locked once created (personal/public cannot be changed).</div>
-              <div class="hstack hstack--end">
-              <button class="btn btn--secondary" id="btnSavePersonalCompendium" type="button">
+              <label class="field">
+                <span class="field__label">Description</span>
+                <textarea class="textarea" id="personalCompDesc" rows="4" placeholder="Shown on hover in the picker cards."></textarea>
+              </label>
+
+              <label class="field">
+                <span class="field__label">Tags</span>
+                <input class="input" id="personalCompTags" type="text" placeholder="comma-separated" autocomplete="off" />
+                <span class="field__hint">Stored as an array in Firestore.</span>
+              </label>
+
+              <div class="form__row form__row--tight">
+                <div class="subtle small">Type is locked once created (personal/public cannot be changed).</div>
+                <div class="hstack hstack--end">
+                <button class="btn btn--secondary" id="btnSavePersonalCompendium" type="button">
+                    <span class="ico" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7zm0 18H5V5h11v4h4z"/></svg>
+                    </span>
+                    Save
+                  </button>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="panel__head panel__head--flush">
+                <div>
+                  <div class="panel__title">Entries</div>
+                  <div class="panel__subtitle" id="personalEntriesCount">—</div>
+                </div>
+              <button class="btn btn--secondary" id="btnAddPersonalEntry" type="button">
                   <span class="ico" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7zm0 18H5V5h11v4h4z"/></svg>
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>
                   </span>
-                  Save
+                  Add Entry
                 </button>
               </div>
-            </div>
 
-            <div class="divider"></div>
+              <div class="cards" id="personalEntriesList"></div>
+            </section>
 
-            <div class="panel__head panel__head--flush">
-              <div>
-                <div class="panel__title">Entries</div>
-                <div class="panel__subtitle" id="personalEntriesCount">—</div>
+            <section class="editor-view" data-editor-view="tags">
+              <div class="editor-empty">
+                <div class="editor-empty__title">Tag index</div>
+                <div class="editor-empty__sub">Browse and curate tags for this compendium.</div>
               </div>
-            <button class="btn btn--secondary" id="btnAddPersonalEntry" type="button">
-                <span class="ico" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>
-                </span>
-                Add Entry
-              </button>
-            </div>
+            </section>
 
-            <div class="cards" id="personalEntriesList"></div>
+            <section class="editor-view" data-editor-view="sources">
+              <div class="editor-empty">
+                <div class="editor-empty__title">Source library</div>
+                <div class="editor-empty__sub">Collect citations, URLs, and references tied to entries.</div>
+              </div>
+            </section>
+
+            <section class="editor-view" data-editor-view="links">
+              <div class="editor-empty">
+                <div class="editor-empty__title">Link map</div>
+                <div class="editor-empty__sub">Organize cross-links between entries and external resources.</div>
+              </div>
+            </section>
           </form>
         </div>
       </section>
@@ -218,79 +248,109 @@
               <span class="subtle small" id="publicOwnerLine"></span>
             </div>
 
-            <div class="form__row">
-              <label class="field">
-                <span class="field__label">Compendium Name</span>
-                <input class="input" id="publicCompName" type="text" autocomplete="off" />
-              </label>
-
-              <label class="field">
-                <span class="field__label">Compendium Topic</span>
-                <input class="input" id="publicCompTopic" type="text" autocomplete="off" />
-              </label>
+            <div class="editor-tabs" data-editor-tabs>
+              <button class="editor-tab is-active" data-editor-tab="editor" type="button">Editor</button>
+              <button class="editor-tab" data-editor-tab="tags" type="button">Tags</button>
+              <button class="editor-tab" data-editor-tab="sources" type="button">Sources</button>
+              <button class="editor-tab" data-editor-tab="links" type="button">Links</button>
             </div>
 
-            <label class="field">
-              <span class="field__label">Description</span>
-              <textarea class="textarea" id="publicCompDesc" rows="4" placeholder="Shown on hover in the picker cards."></textarea>
-            </label>
-
-            <label class="field">
-              <span class="field__label">Tags</span>
-              <input class="input" id="publicCompTags" type="text" autocomplete="off" />
-            </label>
-
-            <div class="form__row form__row--tight">
-              <div class="subtle small" id="publicEditHint">—</div>
-              <div class="hstack hstack--end">
-                <button class="btn btn--secondary" id="btnSavePublicCompendium" type="button" disabled>
-                  <span class="ico" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7zm0 18H5V5h11v4h4z"/></svg>
-                  </span>
-                  Save
-                </button>
-              </div>
-            </div>
-
-            <div class="divider"></div>
-
-            <section class="is-hidden" id="editorsSection">
-              <div class="panel__head panel__head--flush">
-                <div>
-                  <div class="panel__title">Editors</div>
-                  <div class="panel__subtitle">Owner can add people (by email) who can edit this public compendium.</div>
-                </div>
-              </div>
-
+            <section class="editor-view is-active" data-editor-view="editor">
               <div class="form__row">
                 <label class="field">
-                  <span class="field__label">Add editor email</span>
-                  <input class="input" id="editorEmailInput" type="email" placeholder="person@example.com" autocomplete="off" />
+                  <span class="field__label">Compendium Name</span>
+                  <input class="input" id="publicCompName" type="text" autocomplete="off" />
                 </label>
+
+                <label class="field">
+                  <span class="field__label">Compendium Topic</span>
+                  <input class="input" id="publicCompTopic" type="text" autocomplete="off" />
+                </label>
+              </div>
+
+              <label class="field">
+                <span class="field__label">Description</span>
+                <textarea class="textarea" id="publicCompDesc" rows="4" placeholder="Shown on hover in the picker cards."></textarea>
+              </label>
+
+              <label class="field">
+                <span class="field__label">Tags</span>
+                <input class="input" id="publicCompTags" type="text" autocomplete="off" />
+              </label>
+
+              <div class="form__row form__row--tight">
+                <div class="subtle small" id="publicEditHint">—</div>
                 <div class="hstack hstack--end">
-                  <button class="btn btn--secondary" id="btnAddEditor" type="button">Add</button>
+                  <button class="btn btn--secondary" id="btnSavePublicCompendium" type="button" disabled>
+                    <span class="ico" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7zm0 18H5V5h11v4h4z"/></svg>
+                    </span>
+                    Save
+                  </button>
                 </div>
               </div>
 
-              <div class="chips" id="editorChips"></div>
-
               <div class="divider"></div>
+
+              <section class="is-hidden" id="editorsSection">
+                <div class="panel__head panel__head--flush">
+                  <div>
+                    <div class="panel__title">Editors</div>
+                    <div class="panel__subtitle">Owner can add people (by email) who can edit this public compendium.</div>
+                  </div>
+                </div>
+
+                <div class="form__row">
+                  <label class="field">
+                    <span class="field__label">Add editor email</span>
+                    <input class="input" id="editorEmailInput" type="email" placeholder="person@example.com" autocomplete="off" />
+                  </label>
+                  <div class="hstack hstack--end">
+                    <button class="btn btn--secondary" id="btnAddEditor" type="button">Add</button>
+                  </div>
+                </div>
+
+                <div class="chips" id="editorChips"></div>
+
+                <div class="divider"></div>
+              </section>
+
+              <div class="panel__head panel__head--flush">
+                <div>
+                  <div class="panel__title">Entries</div>
+                  <div class="panel__subtitle" id="publicEntriesCount">—</div>
+                </div>
+                <button class="btn btn--secondary" id="btnAddPublicEntry" type="button">
+                  <span class="ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>
+                  </span>
+                  Add Entry
+                </button>
+              </div>
+
+              <div class="cards" id="publicEntriesList"></div>
             </section>
 
-            <div class="panel__head panel__head--flush">
-              <div>
-                <div class="panel__title">Entries</div>
-                <div class="panel__subtitle" id="publicEntriesCount">—</div>
+            <section class="editor-view" data-editor-view="tags">
+              <div class="editor-empty">
+                <div class="editor-empty__title">Community tags</div>
+                <div class="editor-empty__sub">Track tags across public entries in this compendium.</div>
               </div>
-              <button class="btn btn--secondary" id="btnAddPublicEntry" type="button">
-                <span class="ico" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>
-                </span>
-                Add Entry
-              </button>
-            </div>
+            </section>
 
-            <div class="cards" id="publicEntriesList"></div>
+            <section class="editor-view" data-editor-view="sources">
+              <div class="editor-empty">
+                <div class="editor-empty__title">Shared sources</div>
+                <div class="editor-empty__sub">Centralize citations and source material for public entries.</div>
+              </div>
+            </section>
+
+            <section class="editor-view" data-editor-view="links">
+              <div class="editor-empty">
+                <div class="editor-empty__title">Link network</div>
+                <div class="editor-empty__sub">Map connections between public entries and external references.</div>
+              </div>
+            </section>
           </form>
         </div>
       </section>
@@ -400,6 +460,18 @@
           <span class="field__label">Description</span>
           <textarea class="textarea" id="entryDesc" rows="6" required></textarea>
         </label>
+
+        <div class="form__row">
+          <label class="field">
+            <span class="field__label">Tags</span>
+            <input class="input" id="entryTags" type="text" placeholder="comma-separated" />
+          </label>
+
+          <label class="field">
+            <span class="field__label">Sources</span>
+            <textarea class="textarea" id="entrySources" rows="3" placeholder="One per line or comma-separated"></textarea>
+          </label>
+        </div>
 
         <div class="form__row">
           <label class="field">

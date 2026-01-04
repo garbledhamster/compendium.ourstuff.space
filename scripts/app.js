@@ -23,8 +23,29 @@ function initTabs() {
   $$(".tab").forEach(b => b.addEventListener("click", () => setRoute(b.dataset.route)));
 }
 
+function initEditorTabs() {
+  document.querySelectorAll("[data-editor-tabs]").forEach((tabset) => {
+    const panel = tabset.closest(".panel");
+    if (!panel) return;
+    const tabs = Array.from(tabset.querySelectorAll("[data-editor-tab]"));
+    const views = Array.from(panel.querySelectorAll("[data-editor-view]"));
+
+    const setView = (viewName) => {
+      tabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.editorTab === viewName));
+      views.forEach((view) => view.classList.toggle("is-active", view.dataset.editorView === viewName));
+    };
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => setView(tab.dataset.editorTab));
+    });
+
+    setView("editor");
+  });
+}
+
 (async function main() {
   initTabs();
+  initEditorTabs();
 
   document.addEventListener("app:route", (event) => {
     if (event?.detail?.route) {
