@@ -1086,6 +1086,11 @@ a { color: inherit; }
   transform: translateY(0);
 }
 
+.cp-card.is-revealed .cp-content {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 @media (hover: hover) {
   .cp-card:hover,
   .cp-card:focus-within {
