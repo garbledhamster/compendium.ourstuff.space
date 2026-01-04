@@ -16,7 +16,6 @@ const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
 function esc(s){ return (s ?? "").toString(); }
 function normEmail(e){ return (e || "").trim().toLowerCase(); }
 function isValidEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
-function parseTags(raw){ return (raw || "").split(",").map(x => x.trim()).filter(Boolean).slice(0, 40); }
 
 function toast(msg, kind="ok") {
   const el = document.createElement("div");
@@ -84,7 +83,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
     name: $("#personalCompName"),
     topic: $("#personalCompTopic"),
     desc: $("#personalCompDesc"),
-    tags: $("#personalCompTags"),
 
     btnSave: $("#btnSavePersonalCompendium"),
     btnRead: $("#btnReadPersonalCompendium"),
@@ -103,7 +101,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
     name: $("#publicCompName"),
     topic: $("#publicCompTopic"),
     desc: $("#publicCompDesc"),
-    tags: $("#publicCompTags"),
 
     editHint: $("#publicEditHint"),
     btnSave: $("#btnSavePublicCompendium"),
@@ -123,7 +120,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
     name: $("#newCompName"),
     topic: $("#newCompTopic"),
     desc: $("#newCompDesc"),
-    tags: $("#newCompTags"),
     btnCreate: $("#btnCreateComp")
   };
 
@@ -151,7 +147,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
     title: $("#readerTitle"),
     topic: $("#readerTopic"),
     description: $("#readerDescription"),
-    tags: $("#readerTags"),
     entriesCount: $("#readerEntriesCount"),
     entriesList: $("#readerEntriesList"),
     btnBackToDetail: $("#btnReaderBackToDetail"),
@@ -189,7 +184,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
     modal.name.value = "";
     modal.topic.value = "";
     modal.desc.value = "";
-    modal.tags.value = "";
     // default radio already checked in HTML
     modal.dlg.showModal?.();
   });
@@ -443,9 +437,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
             </div>
             <p class="cp-copy">${esc(desc)}</p>
             <div class="cp-meta">${esc(topic)}</div>
-            <div class="cp-tags">
-              ${(c.tags || []).slice(0, 4).map(t => `<span class="cp-tag">${esc(t)}</span>`).join("")}
-            </div>
             <div class="cp-btn">Open details</div>
           </div>
         `;
@@ -478,8 +469,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     const haystack = [
       item.name,
       item.topic,
-      item.description,
-      ...(item.tags || [])
+      item.description
     ].filter(Boolean).join(" ").toLowerCase();
     return haystack.includes(query);
   }
@@ -575,22 +565,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
     readerView.title.textContent = comp.name || "Untitled";
     readerView.topic.textContent = comp.topic ? `Topic: ${comp.topic}` : "No topic set";
     readerView.description.textContent = (comp.description || "").trim() || "No description yet.";
-
-    const tags = Array.isArray(comp.tags) ? comp.tags : [];
-    readerView.tags.innerHTML = "";
-    if (!tags.length) {
-      const tag = document.createElement("span");
-      tag.className = "reader__tag reader__tag--muted";
-      tag.textContent = "No tags";
-      readerView.tags.appendChild(tag);
-    } else {
-      tags.forEach((tag) => {
-        const el = document.createElement("span");
-        el.className = "reader__tag";
-        el.textContent = tag;
-        readerView.tags.appendChild(el);
-      });
-    }
 
     const editable = canEditCompendium(user, comp);
     readerView.btnEdit.classList.toggle("is-hidden", !editable);
@@ -691,7 +665,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
     el.name.value = comp.name || "";
     el.topic.value = comp.topic || "";
     el.desc.value = comp.description || "";
-    el.tags.value = (comp.tags || []).join(", ");
 
     if (isPersonal) {
       el.btnDelete.disabled = !isOwner(user, comp);
@@ -702,13 +675,12 @@ export function initCompendiums({ user, onSelectCompendium }) {
       el.name.disabled = !editable;
       el.topic.disabled = !editable;
       el.desc.disabled = !editable;
-      el.tags.disabled = !editable;
 
       el.btnSave.disabled = !editable;
       el.btnDelete.disabled = !isOwner(user, comp);
 
       pub.editHint.textContent = editable
-        ? "You can edit title/topic/description/tags (type is locked)."
+        ? "You can edit title/topic/description (type is locked)."
         : "Read-only compendium details (you can still add entries).";
 
       if (canManageEditors(user, comp)) {
@@ -731,7 +703,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
     const name = modal.name.value.trim();
     const topic = modal.topic.value.trim();
     const description = modal.desc.value.trim();
-    const tags = parseTags(modal.tags.value);
 
     const type = $$('input[name="newCompType"]').find(x => x.checked)?.value || "personal";
     if (!name || !topic) return showModalError("Name and topic are required.");
@@ -744,7 +715,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
         name,
         topic,
         description,
-        tags,
 
         coverUrl: "",
         coverSeed: coverSeed || "",
@@ -783,7 +753,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
     const name = el.name.value.trim();
     const topic = el.topic.value.trim();
     const description = el.desc.value.trim();
-    const tags = parseTags(el.tags.value);
 
     if (!name || !topic) {
       toast("Name and topic required", "bad");
@@ -791,7 +760,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     }
 
     // Ensure a seed exists if coverUrl is blank (for older docs)
-    const updates = { name, topic, description, tags };
+    const updates = { name, topic, description };
     if (!comp.coverSeed) updates.coverSeed = stableSeed();
 
     try {

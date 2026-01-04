@@ -67,7 +67,7 @@
           <div class="compendium-controls">
             <label class="field">
               <span class="field__label">Search</span>
-              <input class="input" id="compendiumSearch" type="search" placeholder="Search by name, topic, tags, or description" autocomplete="off" />
+              <input class="input" id="compendiumSearch" type="search" placeholder="Search by name, topic, or description" autocomplete="off" />
             </label>
             <label class="field">
               <span class="field__label">Visibility</span>
@@ -140,14 +140,7 @@
               <span class="subtle small" id="personalOwnerLine"></span>
             </div>
 
-            <div class="editor-tabs" data-editor-tabs>
-              <button class="editor-tab is-active" data-editor-tab="editor" type="button">Editor</button>
-              <button class="editor-tab" data-editor-tab="tags" type="button">Tags</button>
-              <button class="editor-tab" data-editor-tab="sources" type="button">Sources</button>
-              <button class="editor-tab" data-editor-tab="links" type="button">Links</button>
-            </div>
-
-            <section class="editor-view is-active" data-editor-view="editor">
+            <section class="editor-view is-active">
               <div class="form__row">
                 <label class="field">
                   <span class="field__label">Compendium Name</span>
@@ -163,12 +156,6 @@
               <label class="field">
                 <span class="field__label">Description</span>
                 <textarea class="textarea" id="personalCompDesc" rows="4" placeholder="Shown on hover in the picker cards."></textarea>
-              </label>
-
-              <label class="field">
-                <span class="field__label">Tags</span>
-                <input class="input" id="personalCompTags" type="text" placeholder="comma-separated" autocomplete="off" />
-                <span class="field__hint">Stored as an array in Firestore.</span>
               </label>
 
               <div class="form__row form__row--tight">
@@ -199,33 +186,6 @@
               </div>
 
               <div class="cards" id="personalEntriesList"></div>
-            </section>
-
-            <section class="editor-view" data-editor-view="tags">
-              <div class="editor-empty">
-                <div class="editor-empty__title">Tag index</div>
-                <div class="editor-empty__sub">Browse and curate tags for this compendium.</div>
-              </div>
-            </section>
-
-            <section class="editor-view" data-editor-view="sources">
-              <div class="editor-empty">
-                <div class="editor-empty__title">Source library</div>
-                <div class="editor-empty__sub">Collect citations, URLs, and references tied to entries.</div>
-              </div>
-            </section>
-
-            <section class="editor-view" data-editor-view="links">
-              <div class="editor-links" id="personalEditorLinksList">
-                <div class="links-section">
-                  <div class="links-section__title">Compendiums</div>
-                  <ul class="links-list" id="personalLinksCompendiums"></ul>
-                </div>
-                <div class="links-section">
-                  <div class="links-section__title">Entries</div>
-                  <ul class="links-list" id="personalLinksEntries"></ul>
-                </div>
-              </div>
             </section>
           </form>
         </div>
@@ -266,14 +226,7 @@
               <span class="subtle small" id="publicOwnerLine"></span>
             </div>
 
-            <div class="editor-tabs" data-editor-tabs>
-              <button class="editor-tab is-active" data-editor-tab="editor" type="button">Editor</button>
-              <button class="editor-tab" data-editor-tab="tags" type="button">Tags</button>
-              <button class="editor-tab" data-editor-tab="sources" type="button">Sources</button>
-              <button class="editor-tab" data-editor-tab="links" type="button">Links</button>
-            </div>
-
-            <section class="editor-view is-active" data-editor-view="editor">
+            <section class="editor-view is-active">
               <div class="form__row">
                 <label class="field">
                   <span class="field__label">Compendium Name</span>
@@ -289,11 +242,6 @@
               <label class="field">
                 <span class="field__label">Description</span>
                 <textarea class="textarea" id="publicCompDesc" rows="4" placeholder="Shown on hover in the picker cards."></textarea>
-              </label>
-
-              <label class="field">
-                <span class="field__label">Tags</span>
-                <input class="input" id="publicCompTags" type="text" autocomplete="off" />
               </label>
 
               <div class="form__row form__row--tight">
@@ -348,33 +296,6 @@
 
               <div class="cards" id="publicEntriesList"></div>
             </section>
-
-            <section class="editor-view" data-editor-view="tags">
-              <div class="editor-empty">
-                <div class="editor-empty__title">Community tags</div>
-                <div class="editor-empty__sub">Track tags across public entries in this compendium.</div>
-              </div>
-            </section>
-
-            <section class="editor-view" data-editor-view="sources">
-              <div class="editor-empty">
-                <div class="editor-empty__title">Shared sources</div>
-                <div class="editor-empty__sub">Centralize citations and source material for public entries.</div>
-              </div>
-            </section>
-
-            <section class="editor-view" data-editor-view="links">
-              <div class="editor-links" id="publicEditorLinksList">
-                <div class="links-section">
-                  <div class="links-section__title">Compendiums</div>
-                  <ul class="links-list" id="publicLinksCompendiums"></ul>
-                </div>
-                <div class="links-section">
-                  <div class="links-section__title">Entries</div>
-                  <ul class="links-list" id="publicLinksEntries"></ul>
-                </div>
-              </div>
-            </section>
           </form>
         </div>
       </section>
@@ -409,7 +330,6 @@
               <h1 class="reader__title" id="readerTitle">—</h1>
               <div class="reader__topic" id="readerTopic">—</div>
               <p class="reader__description" id="readerDescription">—</p>
-              <div class="reader__tags" id="readerTags"></div>
             </div>
           </div>
 
@@ -476,11 +396,6 @@
         <label class="field">
           <span class="field__label">Description</span>
           <textarea class="textarea" id="newCompDesc" rows="4" placeholder="Shown on hover in the picker cards."></textarea>
-        </label>
-
-        <label class="field">
-          <span class="field__label">Tags</span>
-          <input class="input" id="newCompTags" type="text" placeholder="comma-separated" />
         </label>
 
         <div class="radioGroup">
@@ -554,6 +469,27 @@
         <div class="preview is-hidden" id="entryPreviewWrap">
           <div class="preview__label">Preview</div>
           <img id="entryPreviewImg" alt="Image preview" />
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="editor-links" id="entryEditorLinks">
+          <div class="links-section">
+            <div class="links-section__title">Personal compendiums</div>
+            <ul class="links-list" id="personalLinksCompendiums"></ul>
+          </div>
+          <div class="links-section">
+            <div class="links-section__title">Personal entries</div>
+            <ul class="links-list" id="personalLinksEntries"></ul>
+          </div>
+          <div class="links-section">
+            <div class="links-section__title">Public compendiums</div>
+            <ul class="links-list" id="publicLinksCompendiums"></ul>
+          </div>
+          <div class="links-section">
+            <div class="links-section__title">Public entries</div>
+            <ul class="links-list" id="publicLinksEntries"></ul>
+          </div>
         </div>
 
         <div class="notice is-hidden" id="entryError"></div>
