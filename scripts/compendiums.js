@@ -69,12 +69,10 @@ export function initCompendiums({ user, onSelectCompendium }) {
     subtitle: $("#personalEditorSubtitle"),
     ownerLine: $("#personalOwnerLine"),
     typePill: $("#personalTypePill"),
-    coverPreview: $("#personalCoverPreview"),
 
     name: $("#personalCompName"),
     topic: $("#personalCompTopic"),
     desc: $("#personalCompDesc"),
-    coverUrl: $("#personalCompCoverUrl"),
     tags: $("#personalCompTags"),
 
     btnSave: $("#btnSavePersonalCompendium"),
@@ -89,12 +87,10 @@ export function initCompendiums({ user, onSelectCompendium }) {
     subtitle: $("#publicEditorSubtitle"),
     ownerLine: $("#publicOwnerLine"),
     typePill: $("#publicTypePill"),
-    coverPreview: $("#publicCoverPreview"),
 
     name: $("#publicCompName"),
     topic: $("#publicCompTopic"),
     desc: $("#publicCompDesc"),
-    coverUrl: $("#publicCompCoverUrl"),
     tags: $("#publicCompTags"),
 
     editHint: $("#publicEditHint"),
@@ -114,7 +110,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
     name: $("#newCompName"),
     topic: $("#newCompTopic"),
     desc: $("#newCompDesc"),
-    coverUrl: $("#newCompCoverUrl"),
     tags: $("#newCompTags"),
     btnCreate: $("#btnCreateComp")
   };
@@ -155,7 +150,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
     modal.name.value = "";
     modal.topic.value = "";
     modal.desc.value = "";
-    modal.coverUrl.value = "";
     modal.tags.value = "";
     // default radio already checked in HTML
     modal.dlg.showModal?.();
@@ -177,14 +171,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
   });
 
   pub.btnAddEditor.addEventListener("click", () => addEditor());
-  pub.coverUrl.addEventListener("input", () => {
-    const { doc } = getSelectedForScope("public");
-    updateCoverPreview(pub.coverPreview, pub.coverUrl.value, doc);
-  });
-  personal.coverUrl.addEventListener("input", () => {
-    const { doc } = getSelectedForScope("personal");
-    updateCoverPreview(personal.coverPreview, personal.coverUrl.value, doc);
-  });
 
   $$('[data-action="back-to-compendiums"]').forEach((btn) => {
     btn.addEventListener("click", () => goToRoute("compendiums"));
@@ -443,10 +429,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     el.name.value = comp.name || "";
     el.topic.value = comp.topic || "";
     el.desc.value = comp.description || "";
-    el.coverUrl.value = comp.coverUrl || "";
     el.tags.value = (comp.tags || []).join(", ");
-
-    updateCoverPreview(el.coverPreview, el.coverUrl.value, comp);
 
     if (isPersonal) {
       el.btnDelete.disabled = !isOwner(user, comp);
@@ -457,14 +440,13 @@ export function initCompendiums({ user, onSelectCompendium }) {
       el.name.disabled = !editable;
       el.topic.disabled = !editable;
       el.desc.disabled = !editable;
-      el.coverUrl.disabled = !editable;
       el.tags.disabled = !editable;
 
       el.btnSave.disabled = !editable;
       el.btnDelete.disabled = !isOwner(user, comp);
 
       pub.editHint.textContent = editable
-        ? "You can edit title/topic/description/cover/tags (type is locked)."
+        ? "You can edit title/topic/description/tags (type is locked)."
         : "Read-only compendium details (you can still add entries).";
 
       if (canManageEditors(user, comp)) {
@@ -483,23 +465,17 @@ export function initCompendiums({ user, onSelectCompendium }) {
     return { id: selectedCompendium.id, doc: selectedCompendium.doc };
   }
 
-  function updateCoverPreview(previewEl, coverUrl, comp) {
-    const url = (coverUrl || "").trim() || coverUrlFor(comp);
-    previewEl.style.setProperty("--cover", `url("${url}")`);
-  }
-
   async function createFromModal() {
     const name = modal.name.value.trim();
     const topic = modal.topic.value.trim();
     const description = modal.desc.value.trim();
-    const coverUrl = modal.coverUrl.value.trim();
     const tags = parseTags(modal.tags.value);
 
     const type = $$('input[name="newCompType"]').find(x => x.checked)?.value || "personal";
     if (!name || !topic) return showModalError("Name and topic are required.");
     if (type !== "personal" && type !== "public") return showModalError("Invalid type.");
 
-    const coverSeed = coverUrl ? "" : stableSeed();
+    const coverSeed = stableSeed();
 
     try {
       await createCompendium({
@@ -508,7 +484,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
         description,
         tags,
 
-        coverUrl: coverUrl || "",
+        coverUrl: "",
         coverSeed: coverSeed || "",
 
         visibility: type,
@@ -545,7 +521,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
     const name = el.name.value.trim();
     const topic = el.topic.value.trim();
     const description = el.desc.value.trim();
-    const coverUrl = el.coverUrl.value.trim();
     const tags = parseTags(el.tags.value);
 
     if (!name || !topic) {
@@ -554,8 +529,8 @@ export function initCompendiums({ user, onSelectCompendium }) {
     }
 
     // Ensure a seed exists if coverUrl is blank (for older docs)
-    const updates = { name, topic, description, coverUrl: coverUrl || "", tags };
-    if (!coverUrl && !comp.coverSeed) updates.coverSeed = stableSeed();
+    const updates = { name, topic, description, tags };
+    if (!comp.coverSeed) updates.coverSeed = stableSeed();
 
     try {
       await updateCompendium(compId, updates);
