@@ -579,19 +579,24 @@ a { color: inherit; }
 }
 .modal__card,
 .modal__body {
-  scrollbar-color: var(--primary) var(--secondary);
+  scrollbar-color: var(--primary) var(--surface);
 }
 .modal__card::-webkit-scrollbar,
 .modal__body::-webkit-scrollbar {
   width: 10px;
   height: 10px;
-  background: var(--secondary);
+  background: var(--surface);
 }
 .modal__card::-webkit-scrollbar-thumb,
 .modal__body::-webkit-scrollbar-thumb {
   background: var(--primary);
   border-radius: var(--radius-pill);
-  border: 2px solid var(--secondary);
+  border: 2px solid var(--surface);
+}
+.modal__card::-webkit-scrollbar-button,
+.modal__body::-webkit-scrollbar-button {
+  background: var(--surface);
+  color: var(--primary);
 }
 .modal__foot {
   padding: var(--pad) var(--pad-lg);
