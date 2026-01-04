@@ -398,6 +398,8 @@ a { color: inherit; }
 }
 
 .field { display:grid; gap:6px; }
+#entryModal .field { gap: 8px; margin-top: 10px; }
+#entryModal .field:first-child { margin-top: 0; }
 .field__label { font-weight: 800; font-size: 13px; }
 .field__hint { color: var(--muted); font-size: 12px; }
 
