@@ -119,6 +119,9 @@ a { color: inherit; }
   cursor: pointer;
   font-weight: 650;
   font-size: 13px;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
   transition: background .18s ease, border-color .18s ease, color .18s ease;
 }
 .tab:hover {
@@ -131,6 +134,12 @@ a { color: inherit; }
   background: var(--surface);
   color: var(--secondary);
 }
+
+.ico {
+  display: inline-flex;
+  align-items: center;
+}
+.ico svg { display: block; }
 
 .editor-tabs {
   display: flex;
