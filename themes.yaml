@@ -1,5 +1,5 @@
-- id: monokai
-  label: Monokai
+- id: monokai-dark
+  label: Monokai (Dark)
   colors:
     primaryColor: "#a6e22e"
     secondaryColor: "#66d9ef"
@@ -12,3 +12,138 @@
     dangerColor: "#f92672"
     overlayColor: "#272822"
     overlayTextColor: "#f8f8f2"
+
+- id: monokai-light
+  label: Monokai (Light)
+  colors:
+    primaryColor: "#7a9f1f"
+    secondaryColor: "#2aa1b3"
+    backgroundColor: "#f8f8f2"
+    surfaceColor: "#f1f1ea"
+    surfaceMutedColor: "#e2e2d8"
+    borderColor: "#d6d6c8"
+    textColor: "#272822"
+    textMutedColor: "#5e5e55"
+    dangerColor: "#d61f4b"
+    overlayColor: "#272822"
+    overlayTextColor: "#f8f8f2"
+
+- id: dracula
+  label: Dracula
+  colors:
+    primaryColor: "#bd93f9"
+    secondaryColor: "#8be9fd"
+    backgroundColor: "#282a36"
+    surfaceColor: "#1f2029"
+    surfaceMutedColor: "#343746"
+    borderColor: "#44475a"
+    textColor: "#f8f8f2"
+    textMutedColor: "#a6a6b2"
+    dangerColor: "#ff5555"
+    overlayColor: "#282a36"
+    overlayTextColor: "#f8f8f2"
+
+- id: nord
+  label: Nord
+  colors:
+    primaryColor: "#88c0d0"
+    secondaryColor: "#81a1c1"
+    backgroundColor: "#2e3440"
+    surfaceColor: "#252a33"
+    surfaceMutedColor: "#3b4252"
+    borderColor: "#434c5e"
+    textColor: "#eceff4"
+    textMutedColor: "#b4bcc8"
+    dangerColor: "#bf616a"
+    overlayColor: "#2e3440"
+    overlayTextColor: "#eceff4"
+
+- id: gruvbox-dark
+  label: Gruvbox (Dark)
+  colors:
+    primaryColor: "#b8bb26"
+    secondaryColor: "#83a598"
+    backgroundColor: "#282828"
+    surfaceColor: "#1d2021"
+    surfaceMutedColor: "#32302f"
+    borderColor: "#3c3836"
+    textColor: "#ebdbb2"
+    textMutedColor: "#a89984"
+    dangerColor: "#fb4934"
+    overlayColor: "#282828"
+    overlayTextColor: "#ebdbb2"
+
+- id: gruvbox-light
+  label: Gruvbox (Light)
+  colors:
+    primaryColor: "#79740e"
+    secondaryColor: "#076678"
+    backgroundColor: "#fbf1c7"
+    surfaceColor: "#f2e5bc"
+    surfaceMutedColor: "#ebdbb2"
+    borderColor: "#d5c4a1"
+    textColor: "#3c3836"
+    textMutedColor: "#665c54"
+    dangerColor: "#cc241d"
+    overlayColor: "#3c3836"
+    overlayTextColor: "#fbf1c7"
+
+- id: solarized-dark
+  label: Solarized (Dark)
+  colors:
+    primaryColor: "#2aa198"
+    secondaryColor: "#268bd2"
+    backgroundColor: "#002b36"
+    surfaceColor: "#073642"
+    surfaceMutedColor: "#0f3f4a"
+    borderColor: "#09424f"
+    textColor: "#fdf6e3"
+    textMutedColor: "#93a1a1"
+    dangerColor: "#dc322f"
+    overlayColor: "#002b36"
+    overlayTextColor: "#fdf6e3"
+
+- id: solarized-light
+  label: Solarized (Light)
+  colors:
+    primaryColor: "#b58900"
+    secondaryColor: "#268bd2"
+    backgroundColor: "#fdf6e3"
+    surfaceColor: "#eee8d5"
+    surfaceMutedColor: "#e4ddc8"
+    borderColor: "#d5cdb4"
+    textColor: "#586e75"
+    textMutedColor: "#657b83"
+    dangerColor: "#dc322f"
+    overlayColor: "#586e75"
+    overlayTextColor: "#fdf6e3"
+
+- id: midnight
+  label: Midnight
+  colors:
+    primaryColor: "#5c7cfa"
+    secondaryColor: "#22b8cf"
+    backgroundColor: "#0f172a"
+    surfaceColor: "#111827"
+    surfaceMutedColor: "#1f2937"
+    borderColor: "#273449"
+    textColor: "#f8fafc"
+    textMutedColor: "#94a3b8"
+    dangerColor: "#f43f5e"
+    overlayColor: "#0f172a"
+    overlayTextColor: "#f8fafc"
+
+- id: dusk
+  label: Dusk
+  colors:
+    primaryColor: "#f97316"
+    secondaryColor: "#facc15"
+    backgroundColor: "#201a2b"
+    surfaceColor: "#191423"
+    surfaceMutedColor: "#2d2437"
+    borderColor: "#3a2f46"
+    textColor: "#fdf4ff"
+    textMutedColor: "#c2b5d4"
+    dangerColor: "#ef4444"
+    overlayColor: "#201a2b"
+    overlayTextColor: "#fdf4ff"
