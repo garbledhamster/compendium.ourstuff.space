@@ -301,8 +301,32 @@
       </section>
     </section>
 
-    <!-- COMPENDIUM READER -->
-    <section class="view" id="view-compendium-reader" data-view="compendium-reader">
+    <!-- SETTINGS -->
+    <section class="view" id="view-settings" data-view="settings">
+      <div class="panel">
+        <div class="panel__head">
+          <div>
+            <div class="panel__title">Settings</div>
+            <div class="panel__subtitle">Theme</div>
+          </div>
+        </div>
+
+        <div class="panel__body">
+          <div class="form">
+            <label class="field">
+              <span class="field__label">Theme</span>
+              <select class="select" id="themeSelect"></select>
+              <span class="field__hint">Loaded from themes.yaml. Monokai dark/light.</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- COMPENDIUM READER -->
+  <section class="view view--wide" id="view-compendium-reader" data-view="compendium-reader">
+    <div class="reader-shell">
       <div class="reader" id="readerView">
         <div class="empty" id="readerEmpty">
           <div class="empty__title">No compendium selected</div>
@@ -344,30 +368,8 @@
           </div>
         </div>
       </div>
-    </section>
-
-    <!-- SETTINGS -->
-    <section class="view" id="view-settings" data-view="settings">
-      <div class="panel">
-        <div class="panel__head">
-          <div>
-            <div class="panel__title">Settings</div>
-            <div class="panel__subtitle">Theme</div>
-          </div>
-        </div>
-
-        <div class="panel__body">
-          <div class="form">
-            <label class="field">
-              <span class="field__label">Theme</span>
-              <select class="select" id="themeSelect"></select>
-              <span class="field__hint">Loaded from themes.yaml. Monokai dark/light.</span>
-            </label>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
+    </div>
+  </section>
 
   <!-- NEW COMPENDIUM MODAL -->
   <dialog class="modal" id="newCompModal">
