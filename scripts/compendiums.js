@@ -99,6 +99,8 @@ export function initCompendiums({ user, onSelectCompendium }) {
     name: $("#personalCompName"),
     topic: $("#personalCompTopic"),
     desc: $("#personalCompDesc"),
+    cover: $("#personalCompCover"),
+    tags: $("#personalCompTags"),
 
     btnSave: $("#btnSavePersonalCompendium"),
     btnRead: $("#btnReadPersonalCompendium"),
@@ -117,6 +119,8 @@ export function initCompendiums({ user, onSelectCompendium }) {
     name: $("#publicCompName"),
     topic: $("#publicCompTopic"),
     desc: $("#publicCompDesc"),
+    cover: $("#publicCompCover"),
+    tags: $("#publicCompTags"),
 
     editHint: $("#publicEditHint"),
     btnSave: $("#btnSavePublicCompendium"),
@@ -720,16 +724,26 @@ export function initCompendiums({ user, onSelectCompendium }) {
     el.name.value = comp.name || "";
     el.topic.value = comp.topic || "";
     el.desc.value = comp.description || "";
+    el.cover.value = comp.coverUrl || "";
+    el.tags.value = Array.isArray(comp.tags) ? comp.tags.join(", ") : (comp.tags || "");
 
     if (isPersonal) {
+      const editable = canEditCompendium(user, comp);
+      el.name.disabled = !editable;
+      el.topic.disabled = !editable;
+      el.desc.disabled = !editable;
+      el.cover.disabled = !editable;
+      el.tags.disabled = !editable;
       el.btnDelete.disabled = !isOwner(user, comp);
-      el.btnSave.disabled = !canEditCompendium(user, comp);
+      el.btnSave.disabled = !editable;
     } else {
       const editable = canEditCompendium(user, comp);
 
       el.name.disabled = !editable;
       el.topic.disabled = !editable;
       el.desc.disabled = !editable;
+      el.cover.disabled = !editable;
+      el.tags.disabled = !editable;
 
       el.btnSave.disabled = !editable;
       el.btnDelete.disabled = !isOwner(user, comp);
@@ -809,6 +823,8 @@ export function initCompendiums({ user, onSelectCompendium }) {
     const name = el.name.value.trim();
     const topic = el.topic.value.trim();
     const description = el.desc.value.trim();
+    const coverUrl = el.cover.value.trim();
+    const tags = parseTags(el.tags.value);
 
     if (!name || !topic) {
       toast("Name and topic required", "bad");
@@ -816,7 +832,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     }
 
     // Ensure a seed exists if coverUrl is blank (for older docs)
-    const updates = { name, topic, description };
+    const updates = { name, topic, description, tags, coverUrl };
     if (!comp.coverSeed) updates.coverSeed = stableSeed();
 
     try {
