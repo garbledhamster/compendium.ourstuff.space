@@ -80,6 +80,17 @@ export function initEntries({ user }) {
     btnReaderDelete: $("#btnReaderDelete")
   };
 
+  const missing = Object.entries(ui)
+    .filter(([, el]) => !el)
+    .map(([key]) => key);
+
+  if (missing.length) {
+    console.warn("Entries UI is missing expected elements:", missing);
+    return {
+      setActiveCompendium() {}
+    };
+  }
+
   let active = {
     scope: null,
     compId: null,
