@@ -38,6 +38,10 @@ function toast(msg, kind="ok") {
   setTimeout(() => { el.classList.remove("is-on"); setTimeout(() => el.remove(), 220); }, 2200);
 }
 
+function isPermissionDenied(err) {
+  return err?.code === "permission-denied";
+}
+
 function stableSeed() {
   // Stable-enough random seed for covers (stored in doc)
   return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
@@ -285,6 +289,13 @@ export function initCompendiums({ user, onSelectCompendium }) {
       renderLinks();
     }, (err) => {
       console.error(err);
+      if (isPermissionDenied(err)) {
+        publicItems = [];
+        syncSelected();
+        renderCombinedList();
+        renderLinks();
+        return;
+      }
       toast(err?.message || "Failed to load public compendiums", "bad");
     });
   }
@@ -296,6 +307,11 @@ export function initCompendiums({ user, onSelectCompendium }) {
       renderLinks();
     }, (err) => {
       console.error(err);
+      if (isPermissionDenied(err)) {
+        entryItems = [];
+        renderLinks();
+        return;
+      }
       toast(err?.message || "Failed to load link entries", "bad");
     });
   }
