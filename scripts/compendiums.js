@@ -754,6 +754,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
         name,
         topic,
         description,
+        tags: [],
 
         coverUrl: "",
         coverSeed: coverSeed || "",
