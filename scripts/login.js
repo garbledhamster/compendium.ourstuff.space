@@ -15,7 +15,7 @@ async function initTheme() {
   } catch {}
 
   try {
-    const themes = await loadThemesFromYaml({ allowedIds: ["monokai-dark", "monokai-light"] });
+    const themes = await loadThemesFromYaml();
     const chosen = pickTheme(themes, themeId, "monokai-dark");
     if (chosen) applyTheme(chosen);
   } catch (err) {
