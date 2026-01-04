@@ -32,8 +32,8 @@ export function applyTheme(theme) {
   r.style.setProperty("--text", c.textColor);
   r.style.setProperty("--muted", c.textMutedColor);
   r.style.setProperty("--danger", c.dangerColor);
-  r.style.setProperty("--overlay", c.overlayColor);
-  r.style.setProperty("--overlay-text", c.overlayTextColor);
+  r.style.setProperty("--overlay", c.textColor);
+  r.style.setProperty("--overlay-text", c.backgroundColor);
 
   r.dataset.theme = theme.id;
 }
