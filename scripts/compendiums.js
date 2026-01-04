@@ -466,7 +466,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
         btn.innerHTML = `
           <div class="cp-list">
             <div class="cp-title">${esc(c.name || "Untitled")}</div>
-            <div class="cp-meta">${esc(topic) || "No topic"}</div>
+            <div class="cp-meta">${esc(topic) || "No description"}</div>
             <div class="cp-copy">${esc(desc)}</div>
           </div>
         `;
@@ -619,7 +619,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     readerView.cover.alt = `${comp.name || "Compendium"} cover`;
     readerView.visibility.textContent = comp.visibility === "public" ? "Public compendium" : "Personal compendium";
     readerView.title.textContent = comp.name || "Untitled";
-    readerView.topic.textContent = comp.topic ? `Topic: ${comp.topic}` : "No topic set";
+    readerView.topic.textContent = comp.topic ? `Description: ${comp.topic}` : "No description set";
     readerView.description.innerHTML = renderMarkdown((comp.description || "").trim() || "No description yet.");
 
     const editable = canEditCompendium(user, comp);
@@ -718,7 +718,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     el.form.classList.remove("is-hidden");
 
     el.title.textContent = comp.name || "Untitled";
-    el.subtitle.textContent = comp.topic ? `Topic: ${comp.topic}` : "—";
+    el.subtitle.textContent = comp.topic ? `Description: ${comp.topic}` : "—";
     el.ownerLine.textContent = `Owner: ${comp.ownerEmail || comp.ownerUid}`;
     el.btnRead.disabled = false;
 
@@ -751,7 +751,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
       el.btnDelete.disabled = !isOwner(user, comp);
 
       pub.editHint.textContent = editable
-        ? "You can edit title/topic/description (type is locked)."
+        ? "You can edit title/description fields (type is locked)."
         : "Read-only compendium details (you can still add entries).";
 
       if (canManageEditors(user, comp)) {
@@ -776,7 +776,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     const description = modal.desc.value.trim();
 
     const type = $$('input[name="newCompType"]').find(x => x.checked)?.value || "personal";
-    if (!name || !topic) return showModalError("Name and topic are required.");
+    if (!name || !topic) return showModalError("Name and description are required.");
     if (type !== "personal" && type !== "public") return showModalError("Invalid type.");
 
     const coverSeed = stableSeed();
@@ -829,7 +829,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     const tags = parseTags(el.tags.value);
 
     if (!name || !topic) {
-      toast("Name and topic required", "bad");
+      toast("Name and description required", "bad");
       return;
     }
 
