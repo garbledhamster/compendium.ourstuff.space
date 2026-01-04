@@ -1,6 +1,7 @@
 import {
   listenPersonalCompendiums,
   listenPublicCompendiums,
+  listenEntries,
   listenEntriesByUserAccess,
   createCompendium,
   updateCompendium,
@@ -86,6 +87,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     tags: $("#personalCompTags"),
 
     btnSave: $("#btnSavePersonalCompendium"),
+    btnRead: $("#btnReadPersonalCompendium"),
     btnDelete: $("#btnDeleteCompendium")
   };
 
@@ -105,6 +107,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
     editHint: $("#publicEditHint"),
     btnSave: $("#btnSavePublicCompendium"),
+    btnRead: $("#btnReadPublicCompendium"),
     btnDelete: $("#btnDeletePublicCompendium"),
 
     editorsSection: $("#editorsSection"),
@@ -140,10 +143,27 @@ export function initCompendiums({ user, onSelectCompendium }) {
     publicEntries: $("#publicLinksEntries")
   };
 
+  const readerView = {
+    empty: $("#readerEmpty"),
+    content: $("#readerContent"),
+    cover: $("#readerCover"),
+    visibility: $("#readerVisibility"),
+    title: $("#readerTitle"),
+    topic: $("#readerTopic"),
+    description: $("#readerDescription"),
+    tags: $("#readerTags"),
+    entriesCount: $("#readerEntriesCount"),
+    entriesList: $("#readerEntriesList"),
+    btnBackToDetail: $("#btnReaderBackToDetail"),
+    btnEdit: $("#btnReaderEditCompendium"),
+    btnDelete: $("#btnReaderDeleteCompendium")
+  };
+
   // --- State ---
   let personalUnsub = null;
   let publicUnsub = null;
   let entriesUnsub = null;
+  let readerEntriesUnsub = null;
 
   let personalItems = [];
   let publicItems = [];
@@ -182,6 +202,9 @@ export function initCompendiums({ user, onSelectCompendium }) {
   pub.btnSave.addEventListener("click", () => saveCompendium("public"));
   pub.btnDelete.addEventListener("click", () => removeCompendium("public"));
 
+  personal.btnRead.addEventListener("click", () => openReaderForScope("personal"));
+  pub.btnRead.addEventListener("click", () => openReaderForScope("public"));
+
   $("#btnRefreshPublic").addEventListener("click", () => {
     publicUnsub?.();
     publicUnsub = null;
@@ -193,6 +216,13 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
   $$('[data-action="back-to-compendiums"]').forEach((btn) => {
     btn.addEventListener("click", () => goToRoute("compendiums"));
+  });
+
+  readerView.btnBackToDetail.addEventListener("click", () => goToRoute("compendium-detail"));
+  readerView.btnEdit.addEventListener("click", () => goToRoute("compendium-detail"));
+  readerView.btnDelete.addEventListener("click", () => {
+    if (!selectedCompendium?.doc) return;
+    removeCompendium(selectedCompendium.doc.visibility);
   });
 
   listView.search.addEventListener("input", () => {
@@ -277,11 +307,13 @@ export function initCompendiums({ user, onSelectCompendium }) {
       selectedCompendium = { id: found.id, doc: found };
       showDetailPanel(scope);
       paintEditor(scope);
+      renderReader(found);
       onSelectCompendium?.(scope, found.id, found);
     } else {
       selectedCompendium = null;
       showDetailPanel(selectedScope);
       paintEditor(selectedScope);
+      renderReader(null);
       onSelectCompendium?.(selectedScope, null, null);
     }
   }
@@ -495,6 +527,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     showDetailPanel(selectedScope);
     paintEditor(selectedScope);
     renderLinks();
+    renderReader(comp);
 
     const scope = comp?.visibility || selectedScope;
     onSelectCompendium?.(scope, comp?.id || null, comp || null);
@@ -514,6 +547,112 @@ export function initCompendiums({ user, onSelectCompendium }) {
     }
   }
 
+  function openReaderForScope(scope) {
+    const { id: compId, doc: comp } = getSelectedForScope(scope);
+    if (!compId || !comp) return;
+    renderReader(comp);
+    goToRoute("compendium-reader");
+  }
+
+  function renderReader(comp) {
+    readerEntriesUnsub?.();
+    readerEntriesUnsub = null;
+
+    if (!comp) {
+      readerView.entriesList.innerHTML = "";
+      readerView.entriesCount.textContent = "—";
+      readerView.empty.classList.remove("is-hidden");
+      readerView.content.classList.add("is-hidden");
+      return;
+    }
+
+    readerView.empty.classList.add("is-hidden");
+    readerView.content.classList.remove("is-hidden");
+
+    readerView.cover.src = coverUrlFor(comp);
+    readerView.cover.alt = `${comp.name || "Compendium"} cover`;
+    readerView.visibility.textContent = comp.visibility === "public" ? "Public compendium" : "Personal compendium";
+    readerView.title.textContent = comp.name || "Untitled";
+    readerView.topic.textContent = comp.topic ? `Topic: ${comp.topic}` : "No topic set";
+    readerView.description.textContent = (comp.description || "").trim() || "No description yet.";
+
+    const tags = Array.isArray(comp.tags) ? comp.tags : [];
+    readerView.tags.innerHTML = "";
+    if (!tags.length) {
+      const tag = document.createElement("span");
+      tag.className = "reader__tag reader__tag--muted";
+      tag.textContent = "No tags";
+      readerView.tags.appendChild(tag);
+    } else {
+      tags.forEach((tag) => {
+        const el = document.createElement("span");
+        el.className = "reader__tag";
+        el.textContent = tag;
+        readerView.tags.appendChild(el);
+      });
+    }
+
+    const editable = canEditCompendium(user, comp);
+    readerView.btnEdit.classList.toggle("is-hidden", !editable);
+    readerView.btnDelete.classList.toggle("is-hidden", !editable);
+    readerView.btnEdit.disabled = !editable;
+    readerView.btnDelete.disabled = !isOwner(user, comp);
+    readerView.btnDelete.title = isOwner(user, comp) ? "" : "Owner only";
+
+    readerEntriesUnsub = listenEntries(comp.id, (entries) => {
+      renderReaderEntries(entries);
+    }, (err) => {
+      console.error(err);
+      toast(err?.message || "Failed to load entries", "bad");
+    });
+  }
+
+  function renderReaderEntries(entries) {
+    readerView.entriesList.innerHTML = "";
+    readerView.entriesCount.textContent = fmtCount(entries.length, "entry");
+
+    if (!entries.length) {
+      const empty = document.createElement("div");
+      empty.className = "subtle";
+      empty.textContent = "No entries yet.";
+      readerView.entriesList.appendChild(empty);
+      return;
+    }
+
+    for (const entry of entries) {
+      const card = document.createElement("div");
+      card.className = "card reader-entry";
+
+      const img = entry.imageUrl
+        ? `<img class="thumb" src="${esc(entry.imageUrl)}" alt="Entry image" loading="lazy" />`
+        : `<div class="thumb thumb--empty">No image</div>`;
+
+      const tags = Array.isArray(entry.tags) ? entry.tags : [];
+      const sources = Array.isArray(entry.sources) ? entry.sources : [];
+      const tagList = tags.length
+        ? `<div class="card__tags">${tags.map((tag) => `<span class="card__tag">${esc(tag)}</span>`).join("")}</div>`
+        : "";
+      const sourceList = sources.length
+        ? `<div class="card__sources"><span class="card__sources-label">Sources:</span> ${sources.map((source) => `<span class="card__source">${esc(source)}</span>`).join("")}</div>`
+        : "";
+
+      card.innerHTML = `
+        <div class="card__row">
+          ${img}
+          <div class="card__body">
+            <div class="card__title">${esc(entry.title || "Untitled")}</div>
+            <div class="card__text reader-entry__text">${esc(entry.description || "")}</div>
+            ${tagList}
+            ${sourceList}
+            <div class="card__meta">by ${esc(entry.createdByEmail || entry.createdByUid || "unknown")}</div>
+          </div>
+        </div>
+      `;
+
+      readerView.entriesList.appendChild(card);
+    }
+  }
+
   function paintEditor(scope) {
     const isPersonal = scope === "personal";
     const el = isPersonal ? personal : pub;
@@ -527,10 +666,12 @@ export function initCompendiums({ user, onSelectCompendium }) {
       if (isPersonal) {
         personal.title.textContent = "Select a compendium";
         personal.subtitle.textContent = "—";
+        personal.btnRead.disabled = true;
         personal.btnDelete.disabled = true;
       } else {
         pub.title.textContent = "Select a public compendium";
         pub.subtitle.textContent = "—";
+        pub.btnRead.disabled = true;
         pub.btnDelete.disabled = true;
         pub.btnSave.disabled = true;
         pub.editorsSection.classList.add("is-hidden");
@@ -544,6 +685,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     el.title.textContent = comp.name || "Untitled";
     el.subtitle.textContent = comp.topic ? `Topic: ${comp.topic}` : "—";
     el.ownerLine.textContent = `Owner: ${comp.ownerEmail || comp.ownerUid}`;
+    el.btnRead.disabled = false;
 
     // Fill fields
     el.name.value = comp.name || "";
