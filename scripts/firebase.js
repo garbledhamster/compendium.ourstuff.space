@@ -195,43 +195,37 @@ export async function removeCompendiumEditor(compendiumId, email) {
 
 // --- Entries ---
 export function listenEntries(compendiumId, cb, onErr) {
-  // Requires composite index: entries(compendiumId ASC, order ASC, createdAt ASC).
-  const primaryQuery = query(
-    collection(db, "entries"),
-    where("compendiumId", "==", compendiumId),
-    orderBy("order", "asc"),
-    orderBy("createdAt", "asc")
-  );
-  const fallbackQuery = query(
+  const entriesQuery = query(
     collection(db, "entries"),
     where("compendiumId", "==", compendiumId),
     orderBy("createdAt", "asc")
   );
 
-  let primaryUnsubscribe = null;
-  let fallbackUnsubscribe = null;
+  let unsubscribe = null;
 
   const handleSnapshot = (snap) => {
     const items = [];
     snap.forEach(d => items.push({ id: d.id, ...d.data() }));
+    items.sort((a, b) => {
+      const orderA = typeof a.order === "number" ? a.order : a.createdAt?.toMillis?.() ?? 0;
+      const orderB = typeof b.order === "number" ? b.order : b.createdAt?.toMillis?.() ?? 0;
+      if (orderA !== orderB) return orderA - orderB;
+      const createdA = a.createdAt?.toMillis?.() ?? 0;
+      const createdB = b.createdAt?.toMillis?.() ?? 0;
+      return createdA - createdB;
+    });
     cb(items);
   };
 
-  primaryUnsubscribe = onSnapshot(primaryQuery, handleSnapshot, (err) => {
+  unsubscribe = onSnapshot(entriesQuery, handleSnapshot, (err) => {
     if (onErr) {
       onErr(err);
-    }
-    if (!fallbackUnsubscribe) {
-      fallbackUnsubscribe = onSnapshot(fallbackQuery, handleSnapshot, onErr);
     }
   });
 
   return () => {
-    if (primaryUnsubscribe) {
-      primaryUnsubscribe();
-    }
-    if (fallbackUnsubscribe) {
-      fallbackUnsubscribe();
+    if (unsubscribe) {
+      unsubscribe();
     }
   };
 }
@@ -257,11 +251,20 @@ export function listenEntriesByUserAccess(uid, cb, onErr) {
   };
 
   primaryUnsubscribe = onSnapshot(primaryQuery, (snap) => handleSnapshot(snap), (err) => {
-    if (onErr) {
-      onErr(err);
-    }
+    const isIndexError = err?.code === "failed-precondition";
     if (!fallbackUnsubscribe) {
-      fallbackUnsubscribe = onSnapshot(fallbackQuery, (snap) => handleSnapshot(snap, { sort: true }), onErr);
+      fallbackUnsubscribe = onSnapshot(
+        fallbackQuery,
+        (snap) => handleSnapshot(snap, { sort: true }),
+        (fallbackErr) => {
+          if (onErr) {
+            onErr(fallbackErr);
+          }
+        }
+      );
+    }
+    if (!isIndexError && onErr) {
+      onErr(err);
     }
   });
 
