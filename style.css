@@ -404,6 +404,10 @@ a { color: inherit; }
 .field { display:grid; gap:6px; }
 #entryModal .field { gap: 8px; margin-top: 10px; }
 #entryModal .field:first-child { margin-top: 0; }
+#entryModal .form__row { grid-template-columns: 1fr; }
+#entryModal .form__row .hstack { width: 100%; }
+#entryImageUrlInput { flex: 1; }
+#entryModal .editor-links { width: 100%; }
 .field__label { font-weight: 800; font-size: 13px; }
 .field__hint { color: var(--muted); font-size: 12px; }
 
