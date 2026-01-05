@@ -27,6 +27,8 @@ function applyInlineFormatting(text) {
     return `@@INLINE${inlineBlocks.length - 1}@@`;
   });
 
+  output = renderInlineImages(output);
+
   output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, url) => {
     const safeUrl = sanitizeUrl(url);
     if (!safeUrl) {
@@ -40,6 +42,62 @@ function applyInlineFormatting(text) {
 
   output = output.replace(/@@INLINE(\d+)@@/g, (_, index) => inlineBlocks[Number(index)] ?? "");
   return output;
+}
+
+function renderInlineImages(text) {
+  let result = "";
+  let index = 0;
+
+  while (index < text.length) {
+    const start = text.indexOf("![", index);
+    if (start === -1) {
+      result += text.slice(index);
+      break;
+    }
+
+    result += text.slice(index, start);
+    const altStart = start + 2;
+    const altEnd = text.indexOf("](", altStart);
+    if (altEnd === -1) {
+      result += text.slice(start);
+      break;
+    }
+
+    const urlStart = altEnd + 2;
+    const urlEnd = text.indexOf(")", urlStart);
+    if (urlEnd === -1) {
+      result += text.slice(start);
+      break;
+    }
+
+    const altText = text.slice(altStart, altEnd);
+    const urlText = text.slice(urlStart, urlEnd);
+    const safeUrl = sanitizeUrl(urlText);
+    let alignment = null;
+    let suffixLength = 0;
+
+    if (text.startsWith("::left", urlEnd + 1)) {
+      alignment = "left";
+      suffixLength = "::left".length;
+    } else if (text.startsWith("::center", urlEnd + 1)) {
+      alignment = "center";
+      suffixLength = "::center".length;
+    } else if (text.startsWith("::right", urlEnd + 1)) {
+      alignment = "right";
+      suffixLength = "::right".length;
+    }
+
+    if (safeUrl) {
+      const className = alignment ? ` class="md-img md-img-${alignment}"` : "";
+      result += `<img src="${safeUrl}" alt="${altText}"${className} />`;
+    } else {
+      result += `![${altText}](${urlText})`;
+    }
+
+    index = urlEnd + 1 + suffixLength;
+  }
+
+  return result;
 }
 
 export function renderMarkdown(raw) {
