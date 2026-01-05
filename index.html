@@ -443,18 +443,15 @@
           <textarea class="textarea" id="newCompDesc" rows="4" placeholder="Shown on hover in the picker cards."></textarea>
         </label>
 
-        <div class="radioGroup">
-          <div class="radioTitle">Type</div>
-          <label class="radio">
-            <input type="radio" name="newCompType" value="personal" checked />
-            <span>Personal</span>
-            <span class="subtle small">Only you can edit metadata/entries.</span>
+        <div class="field">
+          <span class="field__label">Type</span>
+          <label class="switch">
+            <span class="switch__label">Personal</span>
+            <input id="newCompTypeToggle" type="checkbox" aria-label="Toggle compendium type" />
+            <span class="switch__ui" aria-hidden="true"></span>
+            <span class="switch__label">Public</span>
           </label>
-          <label class="radio">
-            <input type="radio" name="newCompType" value="public" />
-            <span>Public</span>
-            <span class="subtle small">Anyone logged-in can add entries; editing controlled by owner/editors.</span>
-          </label>
+          <span class="field__hint" id="newCompTypeHint">Personal compendium (only you can edit metadata/entries).</span>
         </div>
 
         <div class="notice is-hidden" id="newCompError"></div>

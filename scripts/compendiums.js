@@ -144,6 +144,8 @@ export function initCompendiums({ user, onSelectCompendium }) {
     name: $("#newCompName"),
     topic: $("#newCompTopic"),
     desc: $("#newCompDesc"),
+    typeToggle: $("#newCompTypeToggle"),
+    typeHint: $("#newCompTypeHint"),
     btnCreate: $("#btnCreateComp")
   };
 
@@ -196,6 +198,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     sort: "recent",
     viewMode: "book"
   };
+  let ignoreTypeConfirm = false;
 
   if (listView.viewMode) {
     filterState.viewMode = listView.viewMode.value || "book";
@@ -208,7 +211,12 @@ export function initCompendiums({ user, onSelectCompendium }) {
     modal.name.value = "";
     modal.topic.value = "";
     modal.desc.value = "";
-    // default radio already checked in HTML
+    if (modal.typeToggle) {
+      ignoreTypeConfirm = true;
+      modal.typeToggle.checked = false;
+      updateNewCompTypeHint();
+      ignoreTypeConfirm = false;
+    }
     modal.dlg.showModal?.();
   });
 
@@ -219,6 +227,27 @@ export function initCompendiums({ user, onSelectCompendium }) {
     event.preventDefault();
     createFromModal();
   });
+
+  if (modal.typeToggle) {
+    modal.typeToggle.addEventListener("change", () => {
+      if (ignoreTypeConfirm) {
+        updateNewCompTypeHint();
+        return;
+      }
+      const isPublic = modal.typeToggle.checked;
+      const ok = confirm(
+        isPublic
+          ? "Make this a public compendium?\n\nAnyone logged-in can add entries. Type cannot be changed later."
+          : "Make this a personal compendium?\n\nOnly you can access it. Type cannot be changed later."
+      );
+      if (!ok) {
+        ignoreTypeConfirm = true;
+        modal.typeToggle.checked = !isPublic;
+        ignoreTypeConfirm = false;
+      }
+      updateNewCompTypeHint();
+    });
+  }
 
   personal.btnSave.addEventListener("click", () => saveCompendium("personal"));
   personal.btnToggleVisibility.addEventListener("click", () => toggleCompendiumVisibility("personal"));
@@ -787,7 +816,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     const topic = modal.topic.value.trim();
     const description = modal.desc.value.trim();
 
-    const type = $$('input[name="newCompType"]').find(x => x.checked)?.value || "personal";
+    const type = modal.typeToggle?.checked ? "public" : "personal";
     if (!name || !topic) return showModalError("Name and description are required.");
     if (type !== "personal" && type !== "public") return showModalError("Invalid type.");
 
@@ -820,6 +849,13 @@ export function initCompendiums({ user, onSelectCompendium }) {
   function showModalError(msg) {
     modal.err.textContent = msg;
     modal.err.classList.remove("is-hidden");
+  }
+
+  function updateNewCompTypeHint() {
+    if (!modal.typeHint || !modal.typeToggle) return;
+    modal.typeHint.textContent = modal.typeToggle.checked
+      ? "Public compendium (any logged-in user can add entries; editing controlled by owner/editors)."
+      : "Personal compendium (only you can edit metadata/entries).";
   }
 
   async function saveCompendium(scope) {
