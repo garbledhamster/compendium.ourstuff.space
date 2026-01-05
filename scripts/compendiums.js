@@ -48,6 +48,13 @@ function stableSeed() {
   return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
 }
 
+function ensureOwnerFields(comp, user, updates) {
+  const next = { ...updates };
+  if (!comp?.ownerUid && user?.uid) next.ownerUid = user.uid;
+  if (!comp?.ownerEmail && user?.email) next.ownerEmail = user.email;
+  return next;
+}
+
 function coverUrlFor(comp) {
   if (comp?.coverUrl) return comp.coverUrl;
   const seed = comp?.coverSeed || comp?.id || "compendium";
@@ -882,7 +889,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     }
 
     // Ensure a seed exists if coverUrl is blank (for older docs)
-    const updates = { name, topic, description, tags, coverUrl };
+    const updates = ensureOwnerFields(comp, user, { name, topic, description, tags, coverUrl });
     if (!comp.coverSeed) updates.coverSeed = stableSeed();
 
     try {
@@ -931,7 +938,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
       : "Make this compendium private?\n\nOnly you can access it. Current editors will be removed.";
     if (!confirm(confirmCopy)) return;
 
-    const updates = { visibility: nextVisibility };
+    const updates = ensureOwnerFields(comp, user, { visibility: nextVisibility });
     if (nextVisibility === "personal") {
       updates.editorEmails = [];
     } else if (!Array.isArray(comp.editorEmails)) {
