@@ -70,11 +70,11 @@ a { color: inherit; }
 }
 
 .view--wide .reader-shell {
-  max-width: none;
+  max-width: var(--max);
 }
 
 .reader-shell {
-  max-width: 1400px;
+  max-width: var(--max);
   margin: 0 auto;
   width: 100%;
   padding: 18px var(--pad) 44px;
