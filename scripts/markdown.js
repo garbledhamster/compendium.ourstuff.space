@@ -166,6 +166,16 @@ export function renderMarkdown(raw) {
       continue;
     }
 
+    const splitIndex = line.indexOf("||");
+    if (splitIndex !== -1) {
+      closeParagraph();
+      closeList();
+      const leftText = line.slice(0, splitIndex).trimEnd();
+      const rightText = line.slice(splitIndex + 2).trimStart();
+      html += `<div class="md-line-split"><div class="md-line-left">${applyInlineFormatting(leftText)}</div><div class="md-line-right">${applyInlineFormatting(rightText)}</div></div>`;
+      continue;
+    }
+
     closeList();
     addParagraphLine(line);
   }
