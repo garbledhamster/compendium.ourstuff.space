@@ -240,14 +240,34 @@ export function initEntries({ user }) {
         : "";
       const reorderActions = allowEdit
         ? `
-          <button class="btn btn--outline" data-act="move-up" type="button" ${allowMoveUp ? "" : "disabled"}>Up</button>
-          <button class="btn btn--outline" data-act="move-down" type="button" ${allowMoveDown ? "" : "disabled"}>Down</button>
+          <button class="btn btn--outline" data-act="move-up" type="button" ${allowMoveUp ? "" : "disabled"}>
+            <span class="ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="m12 5l-6 6h4v6h4v-6h4z"/></svg>
+            </span>
+            Up
+          </button>
+          <button class="btn btn--outline" data-act="move-down" type="button" ${allowMoveDown ? "" : "disabled"}>
+            <span class="ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="m12 19l6-6h-4V7h-4v6H6z"/></svg>
+            </span>
+            Down
+          </button>
         `
         : "";
       const editActions = allowEdit
         ? `
-          <button class="btn btn--secondary" data-act="edit" type="button">Edit</button>
-          <button class="btn btn--danger" data-act="del" type="button">Delete</button>
+          <button class="btn btn--secondary" data-act="edit" type="button">
+            <span class="ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="m4 15.5l8.8-8.8l2.5 2.5L6.5 18H4zM14.8 6.2l1.5-1.5a1 1 0 0 1 1.4 0l1.1 1.1a1 1 0 0 1 0 1.4l-1.5 1.5z"/></svg>
+            </span>
+            Edit
+          </button>
+          <button class="btn btn--danger" data-act="del" type="button">
+            <span class="ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M9 3h6l1 2h5v2H3V5h5zm1 6h2v10h-2zm4 0h2v10h-2z"/></svg>
+            </span>
+            Delete
+          </button>
         `
         : "";
 
@@ -261,7 +281,12 @@ export function initEntries({ user }) {
             ${sourceList}
             <div class="card__meta">by ${esc(e.createdByEmail || e.createdByUid || "unknown")}</div>
             <div class="card__actions">
-              <button class="btn btn--secondary" data-act="read" type="button">Read</button>
+              <button class="btn btn--secondary" data-act="read" type="button">
+                <span class="ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M4 5h12a2 2 0 0 1 2 2v11h-2V7H4zm4 4h12a2 2 0 0 1 2 2v10H8a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2m0 2v8h12v-8z"/></svg>
+                </span>
+                Read
+              </button>
               ${reorderActions}
               ${editActions}
             </div>
