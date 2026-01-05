@@ -532,7 +532,22 @@ a { color: inherit; }
   border: 1px solid var(--border);
   background: var(--surface);
 }
-.card__actions { display:flex; gap:10px; margin-top: 12px; }
+.card__actions {
+  display:flex;
+  gap:10px;
+  margin-top: 12px;
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+}
+.card:hover .card__actions,
+.card:focus-within .card__actions,
+.card:active .card__actions {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
 
 .thumb {
   width:100%; height:100%;
