@@ -104,6 +104,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     tags: $("#personalCompTags"),
 
     btnSave: $("#btnSavePersonalCompendium"),
+    btnToggleVisibility: $("#btnTogglePersonalVisibility"),
     btnRead: $("#btnReadPersonalCompendium"),
     btnDelete: $("#btnDeleteCompendium")
   };
@@ -125,6 +126,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
     editHint: $("#publicEditHint"),
     btnSave: $("#btnSavePublicCompendium"),
+    btnToggleVisibility: $("#btnTogglePublicVisibility"),
     btnRead: $("#btnReadPublicCompendium"),
     btnDelete: $("#btnDeletePublicCompendium"),
 
@@ -219,9 +221,11 @@ export function initCompendiums({ user, onSelectCompendium }) {
   });
 
   personal.btnSave.addEventListener("click", () => saveCompendium("personal"));
+  personal.btnToggleVisibility.addEventListener("click", () => toggleCompendiumVisibility("personal"));
   personal.btnDelete.addEventListener("click", () => removeCompendium("personal"));
 
   pub.btnSave.addEventListener("click", () => saveCompendium("public"));
+  pub.btnToggleVisibility.addEventListener("click", () => toggleCompendiumVisibility("public"));
   pub.btnDelete.addEventListener("click", () => removeCompendium("public"));
 
   personal.btnRead.addEventListener("click", () => openReaderForScope("personal"));
@@ -703,12 +707,14 @@ export function initCompendiums({ user, onSelectCompendium }) {
         personal.subtitle.textContent = "—";
         personal.btnRead.disabled = true;
         personal.btnDelete.disabled = true;
+        personal.btnToggleVisibility.disabled = true;
       } else {
         pub.title.textContent = "Select a public compendium";
         pub.subtitle.textContent = "—";
         pub.btnRead.disabled = true;
         pub.btnDelete.disabled = true;
         pub.btnSave.disabled = true;
+        pub.btnToggleVisibility.disabled = true;
         pub.editorsSection.classList.add("is-hidden");
       }
       return;
@@ -731,15 +737,19 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
     if (isPersonal) {
       const editable = canEditCompendium(user, comp);
+      const owner = isOwner(user, comp);
       el.name.disabled = !editable;
       el.topic.disabled = !editable;
       el.desc.disabled = !editable;
       el.cover.disabled = !editable;
       el.tags.disabled = !editable;
-      el.btnDelete.disabled = !isOwner(user, comp);
+      el.btnDelete.disabled = !owner;
       el.btnSave.disabled = !editable;
+      el.btnToggleVisibility.disabled = !owner;
+      el.btnToggleVisibility.textContent = "Make public";
     } else {
       const editable = canEditCompendium(user, comp);
+      const owner = isOwner(user, comp);
 
       el.name.disabled = !editable;
       el.topic.disabled = !editable;
@@ -748,10 +758,12 @@ export function initCompendiums({ user, onSelectCompendium }) {
       el.tags.disabled = !editable;
 
       el.btnSave.disabled = !editable;
-      el.btnDelete.disabled = !isOwner(user, comp);
+      el.btnDelete.disabled = !owner;
+      el.btnToggleVisibility.disabled = !owner;
+      el.btnToggleVisibility.textContent = "Make private";
 
       pub.editHint.textContent = editable
-        ? "You can edit title/description fields (type is locked)."
+        ? "You can edit title/description fields. Use the toggle to change visibility."
         : "Read-only compendium details (you can still add entries).";
 
       if (canManageEditors(user, comp)) {
@@ -865,6 +877,37 @@ export function initCompendiums({ user, onSelectCompendium }) {
       selectCompendium(null, { navigate: false });
     } catch (e) {
       toast(e?.message || "Delete failed", "bad");
+    }
+  }
+
+  async function toggleCompendiumVisibility(scope) {
+    const { id: compId, doc: comp } = getSelectedForScope(scope);
+    if (!compId || !comp) return;
+
+    if (!isOwner(user, comp)) {
+      toast("Owner only", "bad");
+      return;
+    }
+
+    const nextVisibility = comp.visibility === "public" ? "personal" : "public";
+    const confirmCopy = nextVisibility === "public"
+      ? "Make this compendium public?\n\nAnyone can view it. You can add editors after switching."
+      : "Make this compendium private?\n\nOnly you can access it. Current editors will be removed.";
+    if (!confirm(confirmCopy)) return;
+
+    const updates = { visibility: nextVisibility };
+    if (nextVisibility === "personal") {
+      updates.editorEmails = [];
+    } else if (!Array.isArray(comp.editorEmails)) {
+      updates.editorEmails = [];
+    }
+
+    try {
+      await updateCompendium(compId, updates);
+      selectedScope = nextVisibility;
+      toast("Visibility updated");
+    } catch (e) {
+      toast(e?.message || "Visibility update failed", "bad");
     }
   }
 
