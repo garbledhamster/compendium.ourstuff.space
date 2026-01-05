@@ -113,6 +113,7 @@ export function renderMarkdown(raw) {
   let html = "";
   let inParagraph = false;
   let inList = false;
+  let listType = null;
 
   const closeParagraph = () => {
     if (inParagraph) {
@@ -123,9 +124,20 @@ export function renderMarkdown(raw) {
 
   const closeList = () => {
     if (inList) {
-      html += "</ul>";
+      html += `</${listType ?? "ul"}>`;
       inList = false;
+      listType = null;
     }
+  };
+
+  const renderListItem = (content) => {
+    const splitIndex = content.indexOf("||");
+    if (splitIndex === -1) {
+      return `<li>${applyInlineFormatting(content)}</li>`;
+    }
+    const leftText = content.slice(0, splitIndex).trimEnd();
+    const rightText = content.slice(splitIndex + 2).trimStart();
+    return `<li><div class="md-line-split"><div class="md-line-left">${applyInlineFormatting(leftText)}</div><div class="md-line-right">${applyInlineFormatting(rightText)}</div></div></li>`;
   };
 
   const addParagraphLine = (line) => {
@@ -158,11 +170,26 @@ export function renderMarkdown(raw) {
     const listMatch = line.match(/^[-*]\s+(.*)$/);
     if (listMatch) {
       closeParagraph();
-      if (!inList) {
+      if (!inList || listType !== "ul") {
+        closeList();
         html += "<ul>";
         inList = true;
+        listType = "ul";
       }
-      html += `<li>${applyInlineFormatting(listMatch[1])}</li>`;
+      html += renderListItem(listMatch[1]);
+      continue;
+    }
+
+    const orderedMatch = line.match(/^\d+\.\s+(.*)$/);
+    if (orderedMatch) {
+      closeParagraph();
+      if (!inList || listType !== "ol") {
+        closeList();
+        html += "<ol>";
+        inList = true;
+        listType = "ol";
+      }
+      html += renderListItem(orderedMatch[1]);
       continue;
     }
 
