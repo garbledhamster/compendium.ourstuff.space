@@ -73,7 +73,7 @@ function renderInlineImages(text) {
     const altText = text.slice(altStart, altEnd);
     const urlText = text.slice(urlStart, urlEnd);
     const safeUrl = sanitizeUrl(urlText);
-    let alignment = null;
+    let alignment = "left";
     let suffixLength = 0;
 
     if (text.startsWith("::left", urlEnd + 1)) {
@@ -88,8 +88,12 @@ function renderInlineImages(text) {
     }
 
     if (safeUrl) {
-      const className = alignment ? ` class="md-img md-img-${alignment}"` : "";
-      result += `<img src="${safeUrl}" alt="${altText}"${className} />`;
+      const alignmentStyle = alignment === "center"
+        ? "margin-left:auto; margin-right:auto;"
+        : alignment === "right"
+          ? "margin-left:auto; margin-right:0;"
+          : "margin-left:0; margin-right:auto;";
+      result += `<img src="${safeUrl}" alt="${altText}" style="display:block; ${alignmentStyle}" />`;
     } else {
       result += `![${altText}](${urlText})`;
     }
@@ -130,14 +134,29 @@ export function renderMarkdown(raw) {
     }
   };
 
+  const splitColumns = (content) => {
+    const parts = content.split("||");
+    if (parts.length === 1) return null;
+    const columns = parts.slice(0, 3);
+    if (parts.length > 3) {
+      columns[2] = [columns[2], ...parts.slice(3)].join("||");
+    }
+    return columns.map((part) => part.trim());
+  };
+
+  const renderColumns = (columns) => {
+    const columnHtml = columns
+      .map((column) => `<div class="md-column">${applyInlineFormatting(column)}</div>`)
+      .join("");
+    return `<div class="md-columns" style="--md-cols: ${columns.length};">${columnHtml}</div>`;
+  };
+
   const renderListItem = (content) => {
-    const splitIndex = content.indexOf("||");
-    if (splitIndex === -1) {
+    const columns = splitColumns(content);
+    if (!columns) {
       return `<li>${applyInlineFormatting(content)}</li>`;
     }
-    const leftText = content.slice(0, splitIndex).trimEnd();
-    const rightText = content.slice(splitIndex + 2).trimStart();
-    return `<li><div class="md-line-split"><div class="md-line-left">${applyInlineFormatting(leftText)}</div><div class="md-line-right">${applyInlineFormatting(rightText)}</div></div></li>`;
+    return `<li>${renderColumns(columns)}</li>`;
   };
 
   const addParagraphLine = (line) => {
@@ -193,13 +212,11 @@ export function renderMarkdown(raw) {
       continue;
     }
 
-    const splitIndex = line.indexOf("||");
-    if (splitIndex !== -1) {
+    const columns = splitColumns(line);
+    if (columns) {
       closeParagraph();
       closeList();
-      const leftText = line.slice(0, splitIndex).trimEnd();
-      const rightText = line.slice(splitIndex + 2).trimStart();
-      html += `<div class="md-line-split"><div class="md-line-left">${applyInlineFormatting(leftText)}</div><div class="md-line-right">${applyInlineFormatting(rightText)}</div></div>`;
+      html += renderColumns(columns);
       continue;
     }
 
