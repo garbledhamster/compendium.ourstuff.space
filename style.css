@@ -721,7 +721,7 @@ a { color: inherit; }
   margin: 0 0 0.65rem;
   font-weight: 800;
   line-height: 1.25;
-  color: var(--text);
+  color: var(--primary);
 }
 
 .markdown ul,
@@ -770,9 +770,9 @@ a { color: inherit; }
 .markdown blockquote {
   margin: 0 0 0.75rem;
   padding: 10px 14px;
-  border-left: 3px solid var(--secondary);
-  background: var(--surface);
-  color: var(--text);
+  border-left: 3px solid var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+  color: var(--danger);
 }
 
 .markdown hr {
@@ -790,7 +790,7 @@ a { color: inherit; }
 
 .markdown th,
 .markdown td {
-  border: 1px solid var(--border);
+  border: 1px solid var(--secondary);
   padding: 8px 10px;
   text-align: left;
 }
@@ -809,6 +809,11 @@ a { color: inherit; }
   height: auto;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
+}
+
+.markdown strong,
+.markdown b {
+  color: var(--secondary);
 }
 .reader__section {
   display: grid;
