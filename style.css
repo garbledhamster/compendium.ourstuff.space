@@ -1260,6 +1260,7 @@ b {
   align-items: flex-start;
   text-align: left;
   gap: 0.5rem;
+  flex: 1;
 }
 
 .cp-media {
@@ -1345,6 +1346,27 @@ b {
   margin: 0;
   font-size: 12px;
   color: var(--secondary);
+}
+
+.cp-card:not(.cp-card--list) .cp-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.cp-card:not(.cp-card--list) .cp-meta {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+
+.cp-card:not(.cp-card--list) .cp-copy {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
 
 .cp-tags {
