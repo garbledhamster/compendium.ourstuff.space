@@ -1403,6 +1403,9 @@ b {
   transform: translateY(6px);
   transition: opacity 0.2s ease, transform 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
+.cp-card:not(.cp-card--list) .cp-btn {
+  align-self: center;
+}
 .cp-card:hover .cp-btn,
 .cp-card:focus-visible .cp-btn,
 .cp-card:focus-within .cp-btn {
