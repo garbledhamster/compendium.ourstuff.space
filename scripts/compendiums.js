@@ -510,12 +510,8 @@ export function initCompendiums({ user, onSelectCompendium }) {
       const hasCover = Boolean(c.coverUrl);
       const cover = hasCover ? coverUrlFor(c) : "";
       const btn = document.createElement("button");
-      const supportsHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
       btn.type = "button";
       btn.className = `cp-card${viewMode === "list" ? " cp-card--list" : ""}${!hasCover && viewMode !== "list" ? " cp-card--no-cover" : ""}${isActive ? " is-active" : ""}`;
-      if (viewMode !== "list" && hasCover) {
-        btn.style.setProperty("--cp-bg", `url("${cover}")`);
-      }
 
       const desc = (c.description || "").trim() || "No description yet.";
       const topic = (c.topic || "").trim();
@@ -529,7 +525,11 @@ export function initCompendiums({ user, onSelectCompendium }) {
           </div>
         `;
       } else {
+        const coverMarkup = hasCover
+          ? `<div class="cp-media"><img src="${esc(cover)}" alt="${esc(c.name || "Compendium")} cover" loading="lazy" /></div>`
+          : `<div class="cp-media cp-media--empty"><span>No cover</span></div>`;
         btn.innerHTML = `
+          ${coverMarkup}
           <div class="cp-content">
             <div class="cp-top">
               <h2 class="cp-title">${esc(c.name || "Untitled")}</h2>
@@ -543,11 +543,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
       }
 
       btn.addEventListener("click", () => {
-        const canReveal = viewMode !== "list" && hasCover && !supportsHover;
-        if (canReveal && !btn.classList.contains("is-revealed")) {
-          btn.classList.add("is-revealed");
-          return;
-        }
         selectCompendium(c, { navigate: true });
       });
       root.appendChild(btn);
