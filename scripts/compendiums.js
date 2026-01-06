@@ -542,8 +542,8 @@ export function initCompendiums({ user, onSelectCompendium }) {
               <h2 class="cp-title">${esc(c.name || "Untitled")}</h2>
               <div class="cp-pill">${c.visibility === "public" ? "Public" : "Personal"}</div>
             </div>
-            <p class="cp-copy">${esc(desc)}</p>
             <div class="cp-meta">${esc(topic)}</div>
+            <p class="cp-copy">${esc(desc)}</p>
             <div class="cp-btn">Open Compendium</div>
           </div>
         `;
