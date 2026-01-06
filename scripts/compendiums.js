@@ -156,6 +156,13 @@ export function initCompendiums({ user, onSelectCompendium }) {
     btnCreate: $("#btnCreateComp")
   };
 
+  const visibilityConfirm = {
+    dlg: $("#visibilityConfirmModal"),
+    title: $("#visibilityConfirmTitle"),
+    copy: $("#visibilityConfirmCopy"),
+    detail: $("#visibilityConfirmDetail")
+  };
+
   const listView = {
     list: $("#compendiumList"),
     count: $("#compendiumCount"),
@@ -933,10 +940,8 @@ export function initCompendiums({ user, onSelectCompendium }) {
     }
 
     const nextVisibility = comp.visibility === "public" ? "personal" : "public";
-    const confirmCopy = nextVisibility === "public"
-      ? "Make this compendium public?\n\nAnyone can view it. You can add editors after switching."
-      : "Make this compendium private?\n\nOnly you can access it. Current editors will be removed.";
-    if (!confirm(confirmCopy)) return;
+    const confirmed = await confirmVisibilityChange(nextVisibility);
+    if (!confirmed) return;
 
     const updates = ensureOwnerFields(comp, user, { visibility: nextVisibility });
     if (nextVisibility === "personal") {
@@ -952,6 +957,32 @@ export function initCompendiums({ user, onSelectCompendium }) {
     } catch (e) {
       toast(e?.message || "Visibility update failed", "bad");
     }
+  }
+
+  function confirmVisibilityChange(nextVisibility) {
+    if (!visibilityConfirm.dlg?.showModal) {
+      return Promise.resolve(true);
+    }
+
+    visibilityConfirm.title.textContent = nextVisibility === "public"
+      ? "Make compendium public?"
+      : "Make compendium private?";
+    visibilityConfirm.copy.textContent = nextVisibility === "public"
+      ? "Anyone can view it."
+      : "Only you can access it.";
+    visibilityConfirm.detail.textContent = nextVisibility === "public"
+      ? "You can add editors after switching."
+      : "Current editors will be removed.";
+
+    return new Promise((resolve) => {
+      const handleClose = () => {
+        visibilityConfirm.dlg.removeEventListener("close", handleClose);
+        resolve(visibilityConfirm.dlg.returnValue === "confirm");
+      };
+
+      visibilityConfirm.dlg.addEventListener("close", handleClose);
+      visibilityConfirm.dlg.showModal();
+    });
   }
 
   function renderEditorChips(comp) {
