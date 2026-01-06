@@ -87,6 +87,13 @@ export function initEntries({ user }) {
     imageImg: $("#imageModalImg")
   };
 
+  const deleteConfirm = {
+    dlg: $("#deleteConfirmModal"),
+    title: $("#deleteConfirmTitle"),
+    copy: $("#deleteConfirmCopy"),
+    detail: $("#deleteConfirmDetail")
+  };
+
   const missing = Object.entries(ui)
     .filter(([, el]) => !el)
     .map(([key]) => key);
@@ -638,7 +645,10 @@ export function initEntries({ user }) {
   async function remove(entry) {
     if (!canEditEntry(user, active.compDoc, entry)) return toast("Not allowed", "bad");
 
-    const ok = confirm("Delete this entry?");
+    const ok = await confirmDelete({
+      title: "Delete this entry?",
+      copy: "This will remove it from the compendium."
+    });
     if (!ok) return;
 
     try {
@@ -647,6 +657,29 @@ export function initEntries({ user }) {
     } catch (e) {
       toast(e?.message || "Delete failed", "bad");
     }
+  }
+
+  function confirmDelete({ title, copy, detail }) {
+    const fallbackMessage = [title, copy, detail].filter(Boolean).join("\n\n");
+    if (!deleteConfirm.dlg?.showModal) {
+      return Promise.resolve(confirm(fallbackMessage || "Delete?"));
+    }
+
+    deleteConfirm.title.textContent = title || "Delete";
+    deleteConfirm.copy.textContent = copy || "";
+    deleteConfirm.detail.textContent = detail || "";
+    deleteConfirm.copy.classList.toggle("is-hidden", !copy);
+    deleteConfirm.detail.classList.toggle("is-hidden", !detail);
+
+    return new Promise((resolve) => {
+      const handleClose = () => {
+        deleteConfirm.dlg.removeEventListener("close", handleClose);
+        resolve(deleteConfirm.dlg.returnValue === "confirm");
+      };
+
+      deleteConfirm.dlg.addEventListener("close", handleClose);
+      deleteConfirm.dlg.showModal();
+    });
   }
 
   async function reorderEntry(entries, index, delta) {

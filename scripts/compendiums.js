@@ -174,6 +174,13 @@ export function initCompendiums({ user, onSelectCompendium }) {
     detail: $("#visibilityConfirmDetail")
   };
 
+  const deleteConfirm = {
+    dlg: $("#deleteConfirmModal"),
+    title: $("#deleteConfirmTitle"),
+    copy: $("#deleteConfirmCopy"),
+    detail: $("#deleteConfirmDetail")
+  };
+
   const listView = {
     list: $("#compendiumList"),
     count: $("#compendiumCount"),
@@ -976,7 +983,11 @@ export function initCompendiums({ user, onSelectCompendium }) {
       return;
     }
 
-    const ok = confirm("Delete this compendium?\n\nNote: entries remain unless you delete them separately.");
+    const ok = await confirmDelete({
+      title: "Delete this compendium?",
+      copy: "This will remove the compendium.",
+      detail: "Entries remain unless you delete them separately."
+    });
     if (!ok) return;
 
     try {
@@ -1041,6 +1052,29 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
       visibilityConfirm.dlg.addEventListener("close", handleClose);
       visibilityConfirm.dlg.showModal();
+    });
+  }
+
+  function confirmDelete({ title, copy, detail }) {
+    const fallbackMessage = [title, copy, detail].filter(Boolean).join("\n\n");
+    if (!deleteConfirm.dlg?.showModal) {
+      return Promise.resolve(confirm(fallbackMessage || "Delete?"));
+    }
+
+    deleteConfirm.title.textContent = title || "Delete";
+    deleteConfirm.copy.textContent = copy || "";
+    deleteConfirm.detail.textContent = detail || "";
+    deleteConfirm.copy.classList.toggle("is-hidden", !copy);
+    deleteConfirm.detail.classList.toggle("is-hidden", !detail);
+
+    return new Promise((resolve) => {
+      const handleClose = () => {
+        deleteConfirm.dlg.removeEventListener("close", handleClose);
+        resolve(deleteConfirm.dlg.returnValue === "confirm");
+      };
+
+      deleteConfirm.dlg.addEventListener("close", handleClose);
+      deleteConfirm.dlg.showModal();
     });
   }
 
