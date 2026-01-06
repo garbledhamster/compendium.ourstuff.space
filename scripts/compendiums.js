@@ -544,7 +544,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
             </div>
             <p class="cp-copy">${esc(desc)}</p>
             <div class="cp-meta">${esc(topic)}</div>
-            <div class="cp-btn">Open details</div>
+            <div class="cp-btn">Open Compendium</div>
           </div>
         `;
       }
