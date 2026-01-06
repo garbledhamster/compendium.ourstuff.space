@@ -585,6 +585,21 @@
     </form>
   </dialog>
 
+  <dialog class="modal modal--image" id="imageModal">
+    <form method="dialog" class="modal__card modal__card--image">
+      <div class="modal__head">
+        <div>
+          <div class="modal__title">Image preview</div>
+          <div class="modal__sub">Full-size entry image</div>
+        </div>
+        <button class="btn btn--outline" type="submit">Close</button>
+      </div>
+      <div class="modal__body image-viewer">
+        <img class="image-viewer__img" id="imageModalImg" alt="Entry image preview" />
+      </div>
+    </form>
+  </dialog>
+
   <!-- JS: all logic moved into /scripts -->
   <script type="module" src="./scripts/app.js"></script>
 </body>

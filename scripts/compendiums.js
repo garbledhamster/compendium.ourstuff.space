@@ -143,6 +143,17 @@ export function initCompendiums({ user, onSelectCompendium }) {
     editorChips: $("#editorChips")
   };
 
+  const imageViewer = {
+    dlg: $("#imageModal"),
+    img: $("#imageModalImg")
+  };
+
+  function openImageViewer(url) {
+    if (!url || !imageViewer.dlg || !imageViewer.img) return;
+    imageViewer.img.src = url;
+    imageViewer.dlg.showModal?.();
+  }
+
   // Modal
   const modal = {
     dlg: $("#newCompModal"),
@@ -696,10 +707,19 @@ export function initCompendiums({ user, onSelectCompendium }) {
       const card = document.createElement("div");
       card.className = "card reader-entry";
 
-      const primaryImageUrl = getPrimaryImageUrl(entry);
-      const img = primaryImageUrl
-        ? `<img class="thumb" src="${esc(primaryImageUrl)}" alt="Entry image" loading="lazy" />`
-        : `<div class="thumb thumb--empty">No image</div>`;
+      const imageList = getEntryImageUrls(entry);
+      const hasImages = imageList.length > 0;
+      const initialImage = hasImages ? imageList[0] : "";
+      const img = hasImages
+        ? `<button class="thumb__image" type="button" data-thumb-action="expand" aria-label="View full image"><img class="thumb" src="${esc(initialImage)}" alt="Entry image" loading="lazy" /></button>`
+        : `<div class="thumb__image" aria-disabled="true"><div class="thumb--empty">No image</div></div>`;
+      const navDisabled = imageList.length < 2;
+      const nav = `
+        <div class="thumb__nav">
+          <button class="thumb__btn" data-thumb-action="prev" type="button" ${navDisabled ? "disabled" : ""} aria-label="Previous image">&lt;</button>
+          <button class="thumb__btn" data-thumb-action="next" type="button" ${navDisabled ? "disabled" : ""} aria-label="Next image">&gt;</button>
+        </div>
+      `;
 
       const tags = Array.isArray(entry.tags) ? entry.tags : [];
       const sources = Array.isArray(entry.sources) ? entry.sources : [];
@@ -713,7 +733,10 @@ export function initCompendiums({ user, onSelectCompendium }) {
       const descriptionHtml = renderMarkdown(entry.description || "");
       card.innerHTML = `
         <div class="card__row">
-          ${img}
+          <div class="thumb-cell">
+            ${img}
+            ${nav}
+          </div>
           <div class="card__body">
             <div class="card__title">${esc(entry.title || "Untitled")}</div>
             <div class="card__text reader-entry__text markdown">${descriptionHtml}</div>
@@ -723,6 +746,40 @@ export function initCompendiums({ user, onSelectCompendium }) {
           </div>
         </div>
       `;
+
+      const thumbImg = card.querySelector(".thumb");
+      const expandBtn = card.querySelector('[data-thumb-action="expand"]');
+      const prevBtn = card.querySelector('[data-thumb-action="prev"]');
+      const nextBtn = card.querySelector('[data-thumb-action="next"]');
+
+      let imageIndex = 0;
+      const updateThumb = () => {
+        if (!thumbImg || !imageList.length) return;
+        imageIndex = (imageIndex + imageList.length) % imageList.length;
+        thumbImg.src = imageList[imageIndex];
+        thumbImg.alt = `Entry image ${imageIndex + 1} of ${imageList.length}`;
+      };
+
+      prevBtn?.addEventListener("click", () => {
+        if (!imageList.length) return;
+        imageIndex -= 1;
+        updateThumb();
+      });
+
+      nextBtn?.addEventListener("click", () => {
+        if (!imageList.length) return;
+        imageIndex += 1;
+        updateThumb();
+      });
+
+      expandBtn?.addEventListener("click", () => {
+        if (!imageList.length) return;
+        openImageViewer(imageList[imageIndex]);
+      });
+
+      if (imageList.length) {
+        updateThumb();
+      }
 
       readerView.entriesList.appendChild(card);
     }

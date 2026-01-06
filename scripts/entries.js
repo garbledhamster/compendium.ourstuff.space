@@ -81,7 +81,10 @@ export function initEntries({ user }) {
     readerSourcesWrap: $("#entryReaderSourcesWrap"),
     readerSources: $("#entryReaderSources"),
     btnReaderEdit: $("#btnReaderEdit"),
-    btnReaderDelete: $("#btnReaderDelete")
+    btnReaderDelete: $("#btnReaderDelete"),
+
+    imageDlg: $("#imageModal"),
+    imageImg: $("#imageModalImg")
   };
 
   const missing = Object.entries(ui)
@@ -133,6 +136,12 @@ export function initEntries({ user }) {
     ui.readerDlg.close?.();
     await remove(readerEntry);
   });
+
+  function openImageViewer(url) {
+    if (!url || !ui.imageDlg || !ui.imageImg) return;
+    ui.imageImg.src = url;
+    ui.imageDlg.showModal?.();
+  }
 
   ui.btnAddPersonal.addEventListener("click", () => {
     if (!active.compDoc || active.scope !== "personal") return;
@@ -220,10 +229,19 @@ export function initEntries({ user }) {
       const card = document.createElement("div");
       card.className = "card";
 
-      const primaryImageUrl = getPrimaryImageUrl(e);
-      const img = primaryImageUrl
-        ? `<img class="thumb" src="${esc(primaryImageUrl)}" alt="Entry image" loading="lazy" />`
-        : `<div class="thumb thumb--empty">No image</div>`;
+      const imageList = getEntryImageUrls(e);
+      const hasImages = imageList.length > 0;
+      const initialImage = hasImages ? imageList[0] : "";
+      const img = hasImages
+        ? `<button class="thumb__image" type="button" data-thumb-action="expand" aria-label="View full image"><img class="thumb" src="${esc(initialImage)}" alt="Entry image" loading="lazy" /></button>`
+        : `<div class="thumb__image" aria-disabled="true"><div class="thumb--empty">No image</div></div>`;
+      const navDisabled = imageList.length < 2;
+      const nav = `
+        <div class="thumb__nav">
+          <button class="thumb__btn" data-thumb-action="prev" type="button" ${navDisabled ? "disabled" : ""} aria-label="Previous image">&lt;</button>
+          <button class="thumb__btn" data-thumb-action="next" type="button" ${navDisabled ? "disabled" : ""} aria-label="Next image">&gt;</button>
+        </div>
+      `;
 
       const allowEdit = canEditEntry(user, comp, e);
       const prevEntry = entries[index - 1];
@@ -273,7 +291,10 @@ export function initEntries({ user }) {
 
       card.innerHTML = `
         <div class="card__row">
-          ${img}
+          <div class="thumb-cell">
+            ${img}
+            ${nav}
+          </div>
           <div class="card__body">
             <div class="card__title">${esc(e.title || "Untitled")}</div>
             <div class="card__text">${esc((e.description || "").slice(0, 240))}${(e.description || "").length > 240 ? "…" : ""}</div>
@@ -299,6 +320,39 @@ export function initEntries({ user }) {
       const delBtn = card.querySelector('[data-act="del"]');
       const upBtn = card.querySelector('[data-act="move-up"]');
       const downBtn = card.querySelector('[data-act="move-down"]');
+      const thumbImg = card.querySelector(".thumb");
+      const expandBtn = card.querySelector('[data-thumb-action="expand"]');
+      const prevBtn = card.querySelector('[data-thumb-action="prev"]');
+      const nextBtn = card.querySelector('[data-thumb-action="next"]');
+
+      let imageIndex = 0;
+      const updateThumb = () => {
+        if (!thumbImg || !imageList.length) return;
+        imageIndex = (imageIndex + imageList.length) % imageList.length;
+        thumbImg.src = imageList[imageIndex];
+        thumbImg.alt = `Entry image ${imageIndex + 1} of ${imageList.length}`;
+      };
+
+      prevBtn?.addEventListener("click", () => {
+        if (!imageList.length) return;
+        imageIndex -= 1;
+        updateThumb();
+      });
+
+      nextBtn?.addEventListener("click", () => {
+        if (!imageList.length) return;
+        imageIndex += 1;
+        updateThumb();
+      });
+
+      expandBtn?.addEventListener("click", () => {
+        if (!imageList.length) return;
+        openImageViewer(imageList[imageIndex]);
+      });
+
+      if (imageList.length) {
+        updateThumb();
+      }
       editBtn?.addEventListener("click", () => openModal(scope, e.id, e));
       delBtn?.addEventListener("click", () => remove(e));
       upBtn?.addEventListener("click", () => reorderEntry(entries, index, -1));
