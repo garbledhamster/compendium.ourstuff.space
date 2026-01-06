@@ -604,6 +604,8 @@ a { color: inherit; }
 .modal__body {
   padding: var(--pad-lg);
   max-width: 100%;
+  display: grid;
+  gap: 16px;
   overflow-x: hidden;
   overflow-y: auto;
 }
