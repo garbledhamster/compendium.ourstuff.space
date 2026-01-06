@@ -650,6 +650,9 @@ a { color: inherit; }
   color: var(--danger);
   width: 38px; height: 38px;
   border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 .iconbtn:hover {
