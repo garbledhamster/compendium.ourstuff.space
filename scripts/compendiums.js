@@ -719,14 +719,24 @@ export function initCompendiums({ user, onSelectCompendium }) {
       const initialImage = hasImages ? imageList[0] : "";
       const img = hasImages
         ? `<button class="thumb__image" type="button" data-thumb-action="expand" aria-label="View full image"><img class="thumb" src="${esc(initialImage)}" alt="Entry image" loading="lazy" /></button>`
-        : `<div class="thumb__image" aria-disabled="true"><div class="thumb--empty">No image</div></div>`;
+        : "";
       const navDisabled = imageList.length < 2;
-      const nav = `
+      const nav = hasImages
+        ? `
         <div class="thumb__nav">
           <button class="thumb__btn" data-thumb-action="prev" type="button" ${navDisabled ? "disabled" : ""} aria-label="Previous image">&lt;</button>
           <button class="thumb__btn" data-thumb-action="next" type="button" ${navDisabled ? "disabled" : ""} aria-label="Next image">&gt;</button>
         </div>
-      `;
+      `
+        : "";
+      const thumbCell = hasImages
+        ? `
+          <div class="thumb-cell">
+            ${img}
+            ${nav}
+          </div>
+        `
+        : "";
 
       const tags = Array.isArray(entry.tags) ? entry.tags : [];
       const sources = Array.isArray(entry.sources) ? entry.sources : [];
@@ -740,10 +750,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
       const descriptionHtml = renderMarkdown(entry.description || "");
       card.innerHTML = `
         <div class="card__row">
-          <div class="thumb-cell">
-            ${img}
-            ${nav}
-          </div>
+          ${thumbCell}
           <div class="card__body">
             <div class="card__title">${esc(entry.title || "Untitled")}</div>
             <div class="card__text reader-entry__text markdown">${descriptionHtml}</div>
