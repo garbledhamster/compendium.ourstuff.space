@@ -312,11 +312,11 @@
                 <div class="form__row">
                   <label class="field">
                     <span class="field__label">Add editor email</span>
-                    <input class="input" id="editorEmailInput" type="email" placeholder="person@example.com" autocomplete="off" />
+                    <div class="input-group">
+                      <input class="input" id="editorEmailInput" type="email" placeholder="person@example.com" autocomplete="off" />
+                      <button class="btn btn--secondary" id="btnAddEditor" type="button">Add</button>
+                    </div>
                   </label>
-                  <div class="hstack hstack--end">
-                    <button class="btn btn--secondary" id="btnAddEditor" type="button">Add</button>
-                  </div>
                 </div>
 
                 <div class="chips" id="editorChips"></div>
