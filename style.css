@@ -422,6 +422,20 @@ a { color: inherit; }
 #entryModal .field { gap: 12px; margin-top: 0; }
 #entryModal .form__row { grid-template-columns: 1fr; }
 #entryModal .form__row .hstack { width: 100%; }
+#editorEmailInput { flex: 1; }
+.input-group {
+  display: flex;
+  align-items: stretch;
+}
+.input-group .input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.input-group .btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 0;
+}
 #entryImageUrlInput { flex: 1; }
 #entryModal .editor-links { width: 100%; }
 .field__label { font-weight: 800; font-size: 13px; }
