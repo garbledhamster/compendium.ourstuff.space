@@ -437,6 +437,9 @@ a { color: inherit; }
   border-bottom-left-radius: 0;
   border-left: 0;
 }
+.input-group:has(.btn:hover) .input {
+  border-color: var(--secondary);
+}
 #entryImageUrlInput { flex: 1; }
 #entryModal .editor-links { width: 100%; }
 .field__label { font-weight: 800; font-size: 13px; }
