@@ -165,6 +165,30 @@ export async function updateEntriesByUserDisplayName(uid, displayName) {
   }
 }
 
+export async function updateCompendiumsByOwnerDisplayName(uid, displayName) {
+  const compendiumsQuery = query(
+    collection(db, "compendiums"),
+    where("ownerUid", "==", uid)
+  );
+  const snap = await getDocs(compendiumsQuery);
+  const updates = [];
+  snap.forEach((docSnap) => updates.push(docSnap));
+
+  const value = displayName ? displayName.trim() : "";
+  const chunkSize = 450;
+  for (let i = 0; i < updates.length; i += chunkSize) {
+    const batch = writeBatch(db);
+    updates.slice(i, i + chunkSize).forEach((docSnap) => {
+      batch.update(docSnap.ref, {
+        ownerName: value ? value : deleteField(),
+        ownerEmail: deleteField(),
+        updatedAt: serverTimestamp()
+      });
+    });
+    await batch.commit();
+  }
+}
+
 // --- Settings ---
 export async function getUserUiSettings(uid) {
   const snap = await getDoc(doc(db, `users/${uid}/settings/ui`));

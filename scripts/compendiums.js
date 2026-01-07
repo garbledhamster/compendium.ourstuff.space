@@ -7,7 +7,8 @@ import {
   updateCompendium,
   deleteCompendium,
   addCompendiumEditor,
-  removeCompendiumEditor
+  removeCompendiumEditor,
+  updateCompendiumsByOwnerDisplayName
 } from "./firebase.js";
 import { renderMarkdown } from "./markdown.js";
 
@@ -54,10 +55,13 @@ function stableSeed() {
   return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
 }
 
-function ensureOwnerFields(comp, user, updates) {
+function ensureOwnerFields(comp, user, ownerName, updates) {
   const next = { ...updates };
+  const isOwnerUser = (comp?.ownerUid && comp.ownerUid === user.uid) || (!comp?.ownerUid && user?.uid);
   if (!comp?.ownerUid && user?.uid) next.ownerUid = user.uid;
-  if (!comp?.ownerEmail && user?.email) next.ownerEmail = user.email;
+  if (isOwnerUser && ownerName && comp?.ownerName !== ownerName) {
+    next.ownerName = ownerName;
+  }
   return next;
 }
 
@@ -95,7 +99,7 @@ function fmtCount(n, label) {
   return `${n} ${label}${n === 1 ? "" : "s"}`;
 }
 
-export function initCompendiums({ user, onSelectCompendium }) {
+export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
   const goToRoute = (route) => {
     document.dispatchEvent(new CustomEvent("app:route", { detail: { route } }));
   };
@@ -237,6 +241,18 @@ export function initCompendiums({ user, onSelectCompendium }) {
     viewMode: "book"
   };
   let ignoreTypeConfirm = false;
+  let currentOwnerName = ownerName || "";
+
+  async function syncOwnerDisplayName(nextName) {
+    currentOwnerName = nextName || "";
+    if (!currentOwnerName) return;
+    try {
+      await updateCompendiumsByOwnerDisplayName(user.uid, currentOwnerName);
+    } catch (err) {
+      console.error(err);
+      toast(err?.message || "Failed to update owner display name", "bad");
+    }
+  }
 
   if (listView.viewMode) {
     filterState.viewMode = listView.viewMode.value || "book";
@@ -339,6 +355,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
   });
 
   // --- Listen ---
+  syncOwnerDisplayName(currentOwnerName);
   listenPersonal();
   listenPublic();
   listenEntriesAccess();
@@ -843,7 +860,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
     el.title.textContent = comp.name || "Untitled";
     el.subtitle.textContent = comp.topic ? `Subtitle: ${comp.topic}` : "—";
-    el.ownerLine.textContent = `Owner: ${comp.ownerEmail || comp.ownerUid}`;
+    el.ownerLine.textContent = `Owner: ${comp.ownerName || comp.ownerUid}`;
     el.btnRead.disabled = false;
 
     // Fill fields
@@ -923,7 +940,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
         visibility: type,
         ownerUid: user.uid,
-        ownerEmail: user.email || "",
+        ownerName: currentOwnerName || "",
 
         editorEmails: type === "public" ? [] : []
       });
@@ -971,7 +988,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     }
 
     // Ensure a seed exists if coverUrl is blank (for older docs)
-    const updates = ensureOwnerFields(comp, user, { name, topic, description, tags, coverUrl });
+    const updates = ensureOwnerFields(comp, user, currentOwnerName, { name, topic, description, tags, coverUrl });
     if (!comp.coverSeed) updates.coverSeed = stableSeed();
 
     try {
@@ -1022,7 +1039,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     const confirmed = await confirmVisibilityChange(nextVisibility);
     if (!confirmed) return;
 
-    const updates = ensureOwnerFields(comp, user, { visibility: nextVisibility });
+    const updates = ensureOwnerFields(comp, user, currentOwnerName, { visibility: nextVisibility });
     if (nextVisibility === "personal") {
       updates.editorEmails = [];
     } else if (!Array.isArray(comp.editorEmails)) {
@@ -1156,6 +1173,9 @@ export function initCompendiums({ user, onSelectCompendium }) {
   return {
     getSelected(scope) {
       return getSelectedForScope(scope);
+    },
+    setOwnerName(nextName) {
+      syncOwnerDisplayName(nextName);
     }
   };
 }
