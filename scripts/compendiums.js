@@ -18,6 +18,12 @@ function esc(s){ return (s ?? "").toString(); }
 function normEmail(e){ return (e || "").trim().toLowerCase(); }
 function isValidEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 function parseTags(raw){ return (raw || "").split(",").map(x => x.trim()).filter(Boolean).slice(0, 40); }
+function getByline(entry) {
+  return entry?.createdByName
+    || entry?.createdByEmail
+    || entry?.createdByUid
+    || "unknown";
+}
 function getEntryImageUrls(entry) {
   if (!entry) return [];
   const urls = Array.isArray(entry.imageUrls) ? entry.imageUrls : [];
@@ -761,7 +767,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
             <div class="card__text reader-entry__text markdown">${descriptionHtml}</div>
             ${tagList}
             ${sourceList}
-            <div class="card__meta">by ${esc(entry.createdByEmail || entry.createdByUid || "unknown")}</div>
+            <div class="card__meta">by ${esc(getByline(entry))}</div>
           </div>
         </div>
       `;
