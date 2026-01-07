@@ -89,7 +89,7 @@ function fmtCount(n, label) {
   return `${n} ${label}${n === 1 ? "" : "s"}`;
 }
 
-export function initCompendiums({ user, onSelectCompendium }) {
+export function initCompendiums({ user, onSelectCompendium, postName = "" }) {
   const goToRoute = (route) => {
     document.dispatchEvent(new CustomEvent("app:route", { detail: { route } }));
   };
@@ -217,6 +217,14 @@ export function initCompendiums({ user, onSelectCompendium }) {
   let publicUnsub = null;
   let entriesUnsub = null;
   let readerEntriesUnsub = null;
+  let createdByName = postName.trim();
+
+  const getEntryByline = (entry) => {
+    const entryName = (entry?.createdByName || "").trim();
+    if (entryName) return entryName;
+    if (entry?.createdByUid === user.uid && createdByName) return createdByName;
+    return "Anonymous";
+  };
 
   let personalItems = [];
   let publicItems = [];
@@ -761,7 +769,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
             <div class="card__text reader-entry__text markdown">${descriptionHtml}</div>
             ${tagList}
             ${sourceList}
-            <div class="card__meta">by ${esc(entry.createdByEmail || entry.createdByUid || "unknown")}</div>
+            <div class="card__meta">by ${esc(getEntryByline(entry))}</div>
           </div>
         </div>
       `;
@@ -1150,6 +1158,9 @@ export function initCompendiums({ user, onSelectCompendium }) {
   return {
     getSelected(scope) {
       return getSelectedForScope(scope);
+    },
+    setPostName(nextName) {
+      createdByName = (nextName || "").trim();
     }
   };
 }
