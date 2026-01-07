@@ -1430,6 +1430,8 @@ b {
 .reader__content {
   display: grid;
   gap: 16px;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .reader__toolbar {
@@ -1516,6 +1518,12 @@ b {
 .reader__entries {
   display: grid;
   gap: 12px;
+  width: 100%;
+  justify-items: stretch;
+}
+
+.reader__entries .cards {
+  width: 100%;
 }
 
 .reader__entries-head {
@@ -1543,6 +1551,14 @@ b {
 
 .reader-entry__text.markdown {
   white-space: normal;
+}
+
+.reader-entry--no-media .card__row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.reader-entry--no-media .card__body {
+  grid-column: 1 / -1;
 }
 
 @media (max-width: 900px) {
