@@ -69,11 +69,11 @@ export function logout() {
 
 // --- Profile ---
 export async function getUserProfile(uid) {
-  const snap = await getDoc(doc(db, `users/${uid}/profile`));
+  const snap = await getDoc(doc(db, `users/${uid}/profile/data`));
   return snap.exists() ? snap.data() : null;
 }
 export async function setUserProfile(uid, data) {
-  await setDoc(doc(db, `users/${uid}/profile`), {
+  await setDoc(doc(db, `users/${uid}/profile/data`), {
     ...data,
     updatedAt: serverTimestamp()
   }, { merge: true });
