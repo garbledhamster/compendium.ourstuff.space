@@ -122,7 +122,7 @@ $("#authForm").addEventListener("submit", async (e) => {
     return showError("Passwords must match to create an account.");
   }
   if (mode === "create" && !postName) {
-    return showError("Please provide the name you want to use for your posts.");
+    return showError("Please provide the display name you want to use.");
   }
 
   setBusy(true);

@@ -123,9 +123,7 @@ export function initEntries({ user, postName = "" }) {
 
   const getByline = (entry) =>
     entry?.createdByName
-      || entry?.createdByEmail
-      || entry?.createdByUid
-      || "unknown";
+      || "Anonymous";
 
   ui.entryUrlInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
@@ -518,7 +516,6 @@ export function initEntries({ user, postName = "" }) {
           tags,
           sources,
           createdByUid: user.uid,
-          createdByEmail: normEmail(user.email || ""),
           createdByName: createdByName || undefined
         });
         toast("Entry created");

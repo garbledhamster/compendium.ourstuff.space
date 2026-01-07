@@ -100,16 +100,16 @@ export async function initSettings({
     postNameSaveEl.addEventListener("click", async () => {
       const nextName = postNameInputEl.value.trim();
       if (!nextName) {
-        setHint("Post name is required.", "is-bad");
+        setHint("Display name is required.", "is-bad");
         return;
       }
       try {
         await setUserProfile(user.uid, { displayName: nextName });
         postName = nextName;
-        setHint("Post name saved.", "is-good");
+        setHint("Display name saved.", "is-good");
         if (onProfileChange) onProfileChange(nextName);
       } catch {
-        setHint("Unable to save post name.", "is-bad");
+        setHint("Unable to save display name.", "is-bad");
       }
     });
   }
