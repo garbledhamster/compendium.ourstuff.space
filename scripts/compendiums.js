@@ -719,6 +719,9 @@ export function initCompendiums({ user, onSelectCompendium }) {
       const imageList = getEntryImageUrls(entry);
       const hasImages = imageList.length > 0;
       const initialImage = hasImages ? imageList[0] : "";
+      if (!hasImages) {
+        card.classList.add("reader-entry--no-media");
+      }
       const img = hasImages
         ? `<button class="thumb__image" type="button" data-thumb-action="expand" aria-label="View full image"><img class="thumb" src="${esc(initialImage)}" alt="Entry image" loading="lazy" /></button>`
         : "";

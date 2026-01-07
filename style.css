@@ -1553,6 +1553,14 @@ b {
   white-space: normal;
 }
 
+.reader-entry--no-media .card__row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.reader-entry--no-media .card__body {
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 900px) {
   .reader__hero {
     min-height: 200px;
