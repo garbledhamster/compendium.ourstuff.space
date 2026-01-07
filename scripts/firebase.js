@@ -67,6 +67,18 @@ export function logout() {
   return signOut(auth);
 }
 
+// --- Profile ---
+export async function getUserProfile(uid) {
+  const snap = await getDoc(doc(db, `users/${uid}/profile`));
+  return snap.exists() ? snap.data() : null;
+}
+export async function setUserProfile(uid, data) {
+  await setDoc(doc(db, `users/${uid}/profile`), {
+    ...data,
+    updatedAt: serverTimestamp()
+  }, { merge: true });
+}
+
 // --- Settings ---
 export async function getUserUiSettings(uid) {
   const snap = await getDoc(doc(db, `users/${uid}/settings/ui`));

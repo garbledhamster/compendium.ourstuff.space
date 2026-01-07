@@ -1,4 +1,5 @@
 import { redirectIfAuthed, createAccount, signIn } from "./authentication.js";
+import { setUserProfile } from "./firebase.js";
 import { loadThemesFromYaml, applyTheme, pickTheme } from "./themes.js";
 
 const THEME_STORAGE_KEY = "compendium.themeId";
@@ -31,6 +32,8 @@ const showPw = $("#showPw");
 const confirmField = $("#confirmField");
 const confirmPassword = $("#confirmPassword");
 const matchHint = $("#matchHint");
+const postNameField = $("#postNameField");
+const postNameInput = $("#postName");
 
 let mode = "signin";
 
@@ -41,8 +44,11 @@ function setMode(next) {
   submitBtn.textContent = mode === "signin" ? "Sign In" : "Create Account";
   confirmField.classList.toggle("is-hidden", mode !== "create");
   confirmPassword.required = mode === "create";
+  postNameField.classList.toggle("is-hidden", mode !== "create");
+  postNameInput.required = mode === "create";
   if (mode !== "create") {
     confirmPassword.value = "";
+    postNameInput.value = "";
   }
   matchHint.classList.add("is-hidden");
   matchHint.classList.remove("is-good", "is-bad");
@@ -108,17 +114,24 @@ $("#authForm").addEventListener("submit", async (e) => {
   const email = $("#email").value.trim();
   const password = $("#password").value;
   const confirmValue = confirmPassword.value;
+  const postName = postNameInput.value.trim();
 
   if (!email || !password) return showError("Email and password are required.");
   if (mode === "create" && password !== confirmValue) {
     updateMatchHint();
     return showError("Passwords must match to create an account.");
   }
+  if (mode === "create" && !postName) {
+    return showError("Please provide the name you want to use for your posts.");
+  }
 
   setBusy(true);
   try {
     if (mode === "create") {
-      await createAccount(email, password);
+      const cred = await createAccount(email, password);
+      if (cred?.user) {
+        await setUserProfile(cred.user.uid, { displayName: postName });
+      }
     } else {
       await signIn(email, password);
     }

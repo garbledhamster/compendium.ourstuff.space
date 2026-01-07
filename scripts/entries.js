@@ -37,7 +37,7 @@ function canEditEntry(user, comp, entry){
   return false;
 }
 
-export function initEntries({ user }) {
+export function initEntries({ user, postName = "" }) {
   const ui = {
     personalCount: $("#personalEntriesCount"),
     publicCount: $("#publicEntriesCount"),
@@ -119,6 +119,13 @@ export function initEntries({ user }) {
   let previewIndex = 0;
   let readerEntry = null;
   let readerScope = null;
+  let createdByName = postName.trim();
+
+  const getByline = (entry) =>
+    entry?.createdByName
+      || entry?.createdByEmail
+      || entry?.createdByUid
+      || "unknown";
 
   ui.entryUrlInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
@@ -307,7 +314,7 @@ export function initEntries({ user }) {
             <div class="card__text">${esc((e.description || "").slice(0, 240))}${(e.description || "").length > 240 ? "…" : ""}</div>
             ${tagList}
             ${sourceList}
-            <div class="card__meta">by ${esc(e.createdByEmail || e.createdByUid || "unknown")}</div>
+            <div class="card__meta">by ${esc(getByline(e))}</div>
             <div class="card__actions">
               <button class="btn btn--secondary" data-act="read" type="button">
                 <span class="ico" aria-hidden="true">
@@ -377,7 +384,7 @@ export function initEntries({ user }) {
 
     ui.readerTitle.textContent = entryData?.title || "Untitled";
     ui.readerSub.textContent = active.compDoc?.name || "—";
-    ui.readerMeta.textContent = `by ${esc(entryData?.createdByEmail || entryData?.createdByUid || "unknown")}`;
+    ui.readerMeta.textContent = `by ${esc(getByline(entryData))}`;
     ui.readerDesc.innerHTML = renderMarkdown(entryData?.description || "");
 
     const primaryImageUrl = getPrimaryImageUrl(entryData);
@@ -511,7 +518,8 @@ export function initEntries({ user }) {
           tags,
           sources,
           createdByUid: user.uid,
-          createdByEmail: normEmail(user.email || "")
+          createdByEmail: normEmail(user.email || ""),
+          createdByName: createdByName || undefined
         });
         toast("Entry created");
       }
@@ -703,5 +711,10 @@ export function initEntries({ user }) {
     }
   }
 
-  return { setActiveCompendium };
+  return {
+    setActiveCompendium,
+    setPostName(nextName) {
+      createdByName = (nextName || "").trim();
+    }
+  };
 }
