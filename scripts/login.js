@@ -1,5 +1,5 @@
 import { redirectIfAuthed, createAccount, signIn } from "./authentication.js";
-import { claimDisplayName } from "./firebase.js";
+import { setUserProfile } from "./firebase.js";
 import { loadThemesFromYaml, applyTheme, pickTheme } from "./themes.js";
 
 const THEME_STORAGE_KEY = "compendium.themeId";
@@ -34,7 +34,6 @@ const confirmPassword = $("#confirmPassword");
 const matchHint = $("#matchHint");
 const postNameField = $("#postNameField");
 const postNameInput = $("#postName");
-const RESERVED_NAME = "anonymous";
 
 let mode = "signin";
 
@@ -125,20 +124,13 @@ $("#authForm").addEventListener("submit", async (e) => {
   if (mode === "create" && !postName) {
     return showError("Please provide the display name you want to use.");
   }
-  if (mode === "create" && postName.toLowerCase() === RESERVED_NAME) {
-    return showError("Anonymous is reserved and cannot be used.");
-  }
 
   setBusy(true);
   try {
     if (mode === "create") {
       const cred = await createAccount(email, password);
       if (cred?.user) {
-        await claimDisplayName({
-          uid: cred.user.uid,
-          displayName: postName,
-          previousDisplayName: ""
-        });
+        await setUserProfile(cred.user.uid, { displayName: postName });
       }
     } else {
       await signIn(email, password);

@@ -17,15 +17,11 @@ import {
   updateDoc,
   deleteDoc,
   getDoc,
-  getDocs,
   onSnapshot,
   query,
   where,
   orderBy,
   serverTimestamp,
-  runTransaction,
-  writeBatch,
-  deleteField,
   arrayUnion,
   arrayRemove
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -45,10 +41,6 @@ const firebaseConfig = {
 export const firebaseApp = initializeApp(firebaseConfig);
 export const auth = getAuth(firebaseApp);
 export const db = getFirestore(firebaseApp);
-
-function normalizeDisplayName(value) {
-  return (value || "").trim().toLowerCase();
-}
 
 function getTimestampMs(value) {
   if (!value) return 0;
@@ -85,84 +77,6 @@ export async function setUserProfile(uid, data) {
     ...data,
     updatedAt: serverTimestamp()
   }, { merge: true });
-}
-
-export async function claimDisplayName({ uid, displayName, previousDisplayName }) {
-  const normalized = normalizeDisplayName(displayName);
-  if (!normalized) {
-    throw new Error("Display name is required.");
-  }
-
-  const profileRef = doc(db, `users/${uid}/settings/usersettings`);
-  const nameRef = doc(db, "displayNames", normalized);
-  const prevNormalized = normalizeDisplayName(previousDisplayName);
-  const prevRef = prevNormalized ? doc(db, "displayNames", prevNormalized) : null;
-
-  await runTransaction(db, async (transaction) => {
-    const nameSnap = await transaction.get(nameRef);
-    if (nameSnap.exists() && nameSnap.data()?.uid !== uid) {
-      throw new Error("Display name is already taken.");
-    }
-
-    if (prevRef && prevNormalized && prevNormalized !== normalized) {
-      const prevSnap = await transaction.get(prevRef);
-      if (prevSnap.exists() && prevSnap.data()?.uid === uid) {
-        transaction.delete(prevRef);
-      }
-    }
-
-    transaction.set(nameRef, {
-      uid,
-      displayName,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
-    transaction.set(profileRef, {
-      displayName,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
-  });
-}
-
-export async function clearDisplayName({ uid, previousDisplayName }) {
-  const prevNormalized = normalizeDisplayName(previousDisplayName);
-  const profileRef = doc(db, `users/${uid}/settings/usersettings`);
-  const prevRef = prevNormalized ? doc(db, "displayNames", prevNormalized) : null;
-
-  await runTransaction(db, async (transaction) => {
-    if (prevRef) {
-      const prevSnap = await transaction.get(prevRef);
-      if (prevSnap.exists() && prevSnap.data()?.uid === uid) {
-        transaction.delete(prevRef);
-      }
-    }
-    transaction.set(profileRef, {
-      displayName: deleteField(),
-      updatedAt: serverTimestamp()
-    }, { merge: true });
-  });
-}
-
-export async function updateEntriesByUserDisplayName(uid, displayName) {
-  const entriesQuery = query(
-    collection(db, "entries"),
-    where("createdByUid", "==", uid)
-  );
-  const snap = await getDocs(entriesQuery);
-  const updates = [];
-  snap.forEach((docSnap) => updates.push(docSnap));
-
-  const value = displayName ? displayName.trim() : "";
-  const chunkSize = 450;
-  for (let i = 0; i < updates.length; i += chunkSize) {
-    const batch = writeBatch(db);
-    updates.slice(i, i + chunkSize).forEach((docSnap) => {
-      batch.update(docSnap.ref, {
-        createdByName: value ? value : deleteField(),
-        updatedAt: serverTimestamp()
-      });
-    });
-    await batch.commit();
-  }
 }
 
 // --- Settings ---

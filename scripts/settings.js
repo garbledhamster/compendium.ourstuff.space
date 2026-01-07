@@ -2,18 +2,11 @@ import {
   getUserUiSettings,
   setUserUiSettings,
   getUserProfile,
-  claimDisplayName,
-  clearDisplayName,
-  updateEntriesByUserDisplayName
+  setUserProfile
 } from "./firebase.js";
 import { applyTheme, pickTheme } from "./themes.js";
 
 const THEME_STORAGE_KEY = "compendium.themeId";
-const RESERVED_NAME = "anonymous";
-
-function normalizeDisplayName(value) {
-  return (value || "").trim().toLowerCase();
-}
 
 export async function initSettings({
   user,
@@ -106,37 +99,17 @@ export async function initSettings({
 
     postNameSaveEl.addEventListener("click", async () => {
       const nextName = postNameInputEl.value.trim();
+      if (!nextName) {
+        setHint("Display name is required.", "is-bad");
+        return;
+      }
       try {
-        const normalizedNext = normalizeDisplayName(nextName);
-        if (!normalizedNext) {
-          if (postName) {
-            await clearDisplayName({ uid: user.uid, previousDisplayName: postName });
-            await updateEntriesByUserDisplayName(user.uid, "");
-            postName = "";
-            setHint("Display name cleared.", "is-good");
-            if (onProfileChange) onProfileChange("");
-          } else {
-            setHint("Display name already cleared.", "is-good");
-          }
-          return;
-        }
-
-        if (normalizedNext === RESERVED_NAME) {
-          setHint("Anonymous is reserved and cannot be used.", "is-bad");
-          return;
-        }
-
-        await claimDisplayName({
-          uid: user.uid,
-          displayName: nextName,
-          previousDisplayName: postName
-        });
-        await updateEntriesByUserDisplayName(user.uid, nextName);
+        await setUserProfile(user.uid, { displayName: nextName });
         postName = nextName;
         setHint("Display name saved.", "is-good");
         if (onProfileChange) onProfileChange(nextName);
-      } catch (err) {
-        setHint(err?.message || "Unable to save display name.", "is-bad");
+      } catch {
+        setHint("Unable to save display name.", "is-bad");
       }
     });
   }
