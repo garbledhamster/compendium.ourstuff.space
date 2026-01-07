@@ -353,6 +353,16 @@
         <div class="panel__body">
           <div class="form">
             <label class="field">
+              <span class="field__label">Display name</span>
+              <div class="hstack">
+                <input class="input" id="postNameSetting" type="text" autocomplete="nickname" />
+                <button class="btn btn--secondary" id="postNameSave" type="button">Save</button>
+              </div>
+              <span class="field__hint">This is the name others will see.</span>
+              <span class="field__hint match-hint is-hidden" id="postNameHint"></span>
+            </label>
+
+            <label class="field">
               <span class="field__label">Theme</span>
               <select class="select" id="themeSelect"></select>
               <span class="field__hint">Loaded from themes.yaml. Monokai dark/light.</span>

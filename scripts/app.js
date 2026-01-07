@@ -73,13 +73,18 @@ function initEditorTabs() {
     // UI will keep CSS defaults; settings will disable selector if themes are missing
   }
 
-  await initSettings({
+  let entries = null;
+  const settingsState = await initSettings({
     user,
     themes,
-    themeSelectEl: $("#themeSelect")
+    themeSelectEl: $("#themeSelect"),
+    postNameInputEl: $("#postNameSetting"),
+    postNameSaveEl: $("#postNameSave"),
+    postNameHintEl: $("#postNameHint"),
+    onProfileChange: (nextName) => entries?.setPostName(nextName)
   });
 
-  const entries = initEntries({ user });
+  entries = initEntries({ user, postName: settingsState.postName });
 
   initCompendiums({
     user,
