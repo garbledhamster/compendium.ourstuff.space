@@ -74,6 +74,7 @@ export function initEntries({ user, postName = "" }) {
     readerSub: $("#entryReaderSub"),
     readerMeta: $("#entryReaderMeta"),
     readerDesc: $("#entryReaderDescription"),
+    reader: $("#entryReader"),
     readerMedia: $("#entryReaderMedia"),
     readerImage: $("#entryReaderImage"),
     readerTagsWrap: $("#entryReaderTagsWrap"),
@@ -389,9 +390,11 @@ export function initEntries({ user, postName = "" }) {
     if (primaryImageUrl) {
       ui.readerImage.src = primaryImageUrl;
       ui.readerMedia.classList.remove("is-hidden");
+      ui.reader.classList.remove("reader--no-media");
     } else {
       ui.readerMedia.classList.add("is-hidden");
       ui.readerImage.removeAttribute("src");
+      ui.reader.classList.add("reader--no-media");
     }
 
     const tags = Array.isArray(entryData?.tags) ? entryData.tags : [];
