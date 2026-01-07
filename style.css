@@ -783,6 +783,9 @@ a { color: inherit; }
   grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
   gap: 20px;
 }
+.modal__card--reader .reader--no-media {
+  grid-template-columns: minmax(0, 1fr);
+}
 .reader__media {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
