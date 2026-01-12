@@ -174,7 +174,7 @@ a { color: inherit; }
   border-color: var(--primary);
   color: var(--primary);
 }
-.editor-view { display: none; gap: 14px; }
+.editor-view { display: none; gap: 14px; min-width: 0; }
 .editor-view.is-active { display: grid; }
 .editor-empty {
   border: 1px dashed var(--border);
@@ -259,6 +259,7 @@ a { color: inherit; }
   background: var(--surface);
   border-radius: var(--radius);
   overflow: clip;
+  min-width: 0;
 }
 .panel__head {
   padding: var(--pad) var(--pad-lg);
@@ -268,11 +269,15 @@ a { color: inherit; }
   gap:14px;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
+  min-width: 0;
 }
 .panel__head--flush { padding: 0 0 14px; border-bottom:0; background:none; }
 .panel__title { font-weight: 800; color: var(--primary); }
 .panel__subtitle { color: var(--secondary); font-size: 12.5px; margin-top: 3px; }
-.panel__body { padding: var(--pad-lg); }
+.panel__body {
+  padding: var(--pad-lg);
+  min-width: 0;
+}
 .panel__foot { padding: 0 var(--pad-lg) var(--pad-lg); }
 
 .subtle { color: var(--muted); }
@@ -411,6 +416,7 @@ a { color: inherit; }
   display:grid;
   grid-template-columns: 1fr 1fr;
   gap:14px;
+  min-width: 0;
 }
 .form__row--tight { grid-template-columns: 1fr auto; align-items:center; }
 @media (max-width: 720px) {
@@ -418,7 +424,7 @@ a { color: inherit; }
   .form__row--tight { grid-template-columns: 1fr; }
 }
 
-.field { display:grid; gap:6px; }
+.field { display:grid; gap:6px; min-width: 0; }
 #entryModal .field { gap: 12px; margin-top: 0; }
 #entryModal .form__row { grid-template-columns: 1fr; }
 #entryModal .form__row .hstack { width: 100%; }
