@@ -262,15 +262,15 @@ export function renderMarkdown(raw) {
       continue;
     }
 
-    const quoteMatch = line.match(/^>\s?(.*)$/);
+    const quoteMatch = line.match(/^(&gt;|>)\s?(.*)$/);
     if (quoteMatch) {
       closeParagraph();
       closeList();
       closeTable();
-      const quoteLines = [quoteMatch[1]];
-      while (lines[index + 1] && /^>\s?/.test(lines[index + 1])) {
+      const quoteLines = [quoteMatch[2]];
+      while (lines[index + 1] && /^(&gt;|>)\s?/.test(lines[index + 1])) {
         index += 1;
-        quoteLines.push(lines[index].replace(/^>\s?/, ""));
+        quoteLines.push(lines[index].replace(/^(&gt;|>)\s?/, ""));
       }
       const quoteContent = quoteLines.map((value) => applyInlineFormatting(value)).join("<br />");
       html += `<blockquote>${quoteContent}</blockquote>`;
