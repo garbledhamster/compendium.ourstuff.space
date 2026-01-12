@@ -118,6 +118,31 @@ export function renderMarkdown(raw) {
   let inParagraph = false;
   let inList = false;
   let listType = null;
+  let inTable = false;
+  let tableAlignments = [];
+
+  const splitTableRow = (row) => {
+    const trimmedRow = row.trim();
+    const withoutEdges = trimmedRow.startsWith("|") ? trimmedRow.slice(1) : trimmedRow;
+    const normalized = withoutEdges.endsWith("|") ? withoutEdges.slice(0, -1) : withoutEdges;
+    return normalized.split("|").map((cell) => cell.trim());
+  };
+
+  const isTableSeparator = (row) => {
+    const trimmedRow = row.trim();
+    if (!trimmedRow.includes("-")) return false;
+    return /^(\|?\s*:?-{3,}:?\s*\|)+\s*:?-{3,}:?\s*\|?$/.test(trimmedRow);
+  };
+
+  const parseTableAlignments = (row) =>
+    splitTableRow(row).map((cell) => {
+      const left = cell.startsWith(":");
+      const right = cell.endsWith(":");
+      if (left && right) return "center";
+      if (right) return "right";
+      if (left) return "left";
+      return "left";
+    });
 
   const closeParagraph = () => {
     if (inParagraph) {
@@ -131,6 +156,14 @@ export function renderMarkdown(raw) {
       html += `</${listType ?? "ul"}>`;
       inList = false;
       listType = null;
+    }
+  };
+
+  const closeTable = () => {
+    if (inTable) {
+      html += "</tbody></table>";
+      inTable = false;
+      tableAlignments = [];
     }
   };
 
@@ -169,26 +202,85 @@ export function renderMarkdown(raw) {
     html += applyInlineFormatting(line);
   };
 
-  for (const line of lines) {
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
     const trimmed = line.trim();
     if (!trimmed) {
       closeParagraph();
       closeList();
+      closeTable();
       continue;
+    }
+
+    const tableHeader = splitTableRow(line);
+    const nextLine = lines[index + 1] ?? "";
+    if (tableHeader.length > 1 && isTableSeparator(nextLine)) {
+      closeParagraph();
+      closeList();
+      closeTable();
+      tableAlignments = parseTableAlignments(nextLine);
+      html += "<table><thead><tr>";
+      tableHeader.forEach((cell, cellIndex) => {
+        const align = tableAlignments[cellIndex] ?? "left";
+        html += `<th style="text-align:${align};">${applyInlineFormatting(cell)}</th>`;
+      });
+      html += "</tr></thead><tbody>";
+      inTable = true;
+      index += 1;
+      continue;
+    }
+
+    if (inTable && trimmed.includes("|")) {
+      const rowCells = splitTableRow(line);
+      if (rowCells.length > 1) {
+        html += "<tr>";
+        rowCells.forEach((cell, cellIndex) => {
+          const align = tableAlignments[cellIndex] ?? "left";
+          html += `<td style="text-align:${align};">${applyInlineFormatting(cell)}</td>`;
+        });
+        html += "</tr>";
+        continue;
+      }
+      closeTable();
     }
 
     const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
     if (headingMatch) {
       closeParagraph();
       closeList();
+      closeTable();
       const level = headingMatch[1].length;
       html += `<h${level}>${applyInlineFormatting(headingMatch[2])}</h${level}>`;
+      continue;
+    }
+
+    if (/^(\*{3,}|-{3,}|_{3,})$/.test(trimmed)) {
+      closeParagraph();
+      closeList();
+      closeTable();
+      html += "<hr />";
+      continue;
+    }
+
+    const quoteMatch = line.match(/^>\s?(.*)$/);
+    if (quoteMatch) {
+      closeParagraph();
+      closeList();
+      closeTable();
+      const quoteLines = [quoteMatch[1]];
+      while (lines[index + 1] && /^>\s?/.test(lines[index + 1])) {
+        index += 1;
+        quoteLines.push(lines[index].replace(/^>\s?/, ""));
+      }
+      const quoteContent = quoteLines.map((value) => applyInlineFormatting(value)).join("<br />");
+      html += `<blockquote>${quoteContent}</blockquote>`;
       continue;
     }
 
     const listMatch = line.match(/^[-*]\s+(.*)$/);
     if (listMatch) {
       closeParagraph();
+      closeTable();
       if (!inList || listType !== "ul") {
         closeList();
         html += "<ul>";
@@ -202,6 +294,7 @@ export function renderMarkdown(raw) {
     const orderedMatch = line.match(/^\d+\.\s+(.*)$/);
     if (orderedMatch) {
       closeParagraph();
+      closeTable();
       if (!inList || listType !== "ol") {
         closeList();
         html += "<ol>";
@@ -216,16 +309,19 @@ export function renderMarkdown(raw) {
     if (columns) {
       closeParagraph();
       closeList();
+      closeTable();
       html += renderColumns(columns);
       continue;
     }
 
     closeList();
+    closeTable();
     addParagraphLine(line);
   }
 
   closeParagraph();
   closeList();
+  closeTable();
 
   html = html.replace(/@@BLOCK(\d+)@@/g, (_, index) => blocks[Number(index)] ?? "");
   return html;
