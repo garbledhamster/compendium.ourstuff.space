@@ -900,14 +900,15 @@ b {
 .markdown blockquote {
   margin: 0 0 0.75rem;
   padding: 10px 14px;
-  border-left: 3px solid var(--danger);
-  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
-  color: var(--danger);
+  border-left: 3px solid var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  color: var(--text);
 }
 
 .markdown hr {
   border: 0;
-  border-top: 1px solid var(--border);
+  height: 1px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
   margin: 1rem 0;
 }
 
@@ -920,14 +921,14 @@ b {
 
 .markdown th,
 .markdown td {
-  border: 1px solid var(--secondary);
+  border: 1px solid var(--border);
   padding: 8px 10px;
   text-align: left;
 }
 
 .markdown thead th {
-  background: var(--surface);
-  color: var(--text);
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface));
+  color: var(--secondary);
 }
 
 .markdown tbody tr:nth-child(even) {
