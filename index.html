@@ -189,7 +189,8 @@
 
                 <label class="field">
                   <span class="field__label">Tags</span>
-                  <input class="input" id="personalCompTags" type="text" placeholder="comma-separated" />
+                  <div id="personalCompTags"></div>
+                  <span class="field__hint">Type a tag and press Enter to add it.</span>
                 </label>
               </div>
 
@@ -287,7 +288,8 @@
 
                 <label class="field">
                   <span class="field__label">Tags</span>
-                  <input class="input" id="publicCompTags" type="text" placeholder="comma-separated" />
+                  <div id="publicCompTags"></div>
+                  <span class="field__hint">Type a tag and press Enter to add it.</span>
                 </label>
               </div>
 
@@ -546,12 +548,14 @@
         <div class="form__row">
           <label class="field">
             <span class="field__label">Tags</span>
-            <input class="input" id="entryTags" type="text" placeholder="comma-separated" />
+            <div id="entryTags"></div>
+            <span class="field__hint">Type a tag and press Enter to add it.</span>
           </label>
 
           <label class="field">
             <span class="field__label">Sources</span>
-            <textarea class="textarea" id="entrySources" rows="3" placeholder="One per line or comma-separated"></textarea>
+            <div id="entrySources"></div>
+            <span class="field__hint">Type a source and press Enter to add it.</span>
           </label>
         </div>
 
