@@ -437,6 +437,7 @@ a { color: inherit; }
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
   border-right: 0;
+  border-color: var(--primary);
 }
 .input-group .btn {
   border-top-left-radius: 0;
