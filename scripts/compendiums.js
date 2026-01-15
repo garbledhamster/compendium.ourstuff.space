@@ -11,6 +11,7 @@ import {
   updateCompendiumsByOwnerDisplayName
 } from "./firebase.js";
 import { renderMarkdown } from "./markdown.js";
+import { PillInput } from "./pill-input.js";
 
 const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
@@ -242,6 +243,19 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
   };
   let ignoreTypeConfirm = false;
   let currentOwnerName = ownerName || "";
+
+  // Initialize PillInput components for tags
+  const personalTagsInput = new PillInput(personal.tags, {
+    placeholder: "Type a tag and press Enter...",
+    emptyMessage: "No tags yet.",
+    maxLength: 20
+  });
+  
+  const publicTagsInput = new PillInput(pub.tags, {
+    placeholder: "Type a tag and press Enter...",
+    emptyMessage: "No tags yet.",
+    maxLength: 20
+  });
 
   async function syncOwnerDisplayName(nextName) {
     currentOwnerName = nextName || "";
@@ -868,7 +882,14 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
     el.topic.value = comp.topic || "";
     el.desc.value = comp.description || "";
     el.cover.value = comp.coverUrl || "";
-    el.tags.value = Array.isArray(comp.tags) ? comp.tags.join(", ") : (comp.tags || "");
+    
+    // Set tags using PillInput
+    const tags = Array.isArray(comp.tags) ? comp.tags : [];
+    if (isPersonal) {
+      personalTagsInput.setItems(tags);
+    } else {
+      publicTagsInput.setItems(tags);
+    }
 
     if (isPersonal) {
       const editable = canEditCompendium(user, comp);
@@ -980,7 +1001,7 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
     const topic = el.topic.value.trim();
     const description = el.desc.value.trim();
     const coverUrl = el.cover.value.trim();
-    const tags = parseTags(el.tags.value);
+    const tags = isPersonal ? personalTagsInput.getItems() : publicTagsInput.getItems();
 
     if (!name || !topic) {
       toast("Topic and subtitle required", "bad");

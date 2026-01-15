@@ -5,6 +5,7 @@ import {
   deleteEntry
 } from "./firebase.js";
 import { renderMarkdown } from "./markdown.js";
+import { PillInput } from "./pill-input.js";
 
 const $ = (s, r=document) => r.querySelector(s);
 function esc(s){ return (s ?? "").toString(); }
@@ -121,6 +122,19 @@ export function initEntries({ user, postName = "" }) {
   let readerEntry = null;
   let readerScope = null;
   let createdByName = postName.trim();
+
+  // Initialize PillInput components for tags and sources
+  const entryTagsInput = new PillInput(ui.entryTags, {
+    placeholder: "Type a tag and press Enter...",
+    emptyMessage: "No tags yet.",
+    maxLength: 20
+  });
+  
+  const entrySourcesInput = new PillInput(ui.entrySources, {
+    placeholder: "Type a source and press Enter...",
+    emptyMessage: "No sources yet.",
+    maxLength: 20
+  });
 
   const getByline = (entry) =>
     entry?.createdByName
@@ -455,8 +469,13 @@ export function initEntries({ user, postName = "" }) {
 
     ui.entryTitle.value = entryData?.title || "";
     ui.entryDesc.value = entryData?.description || "";
-    ui.entryTags.value = Array.isArray(entryData?.tags) ? entryData.tags.join(", ") : (entryData?.tags || "");
-    ui.entrySources.value = Array.isArray(entryData?.sources) ? entryData.sources.join("\n") : (entryData?.sources || "");
+    
+    // Set tags and sources using PillInput
+    const tags = Array.isArray(entryData?.tags) ? entryData.tags : [];
+    const sources = Array.isArray(entryData?.sources) ? entryData.sources : [];
+    entryTagsInput.setItems(tags);
+    entrySourcesInput.setItems(sources);
+    
     imageUrls = getEntryImageUrls(entryData);
     previewIndex = 0;
     ui.entryUrlInput.value = "";
@@ -495,8 +514,8 @@ export function initEntries({ user, postName = "" }) {
 
     const title = ui.entryTitle.value.trim();
     const description = ui.entryDesc.value.trim();
-    const tags = normalizeList(ui.entryTags.value);
-    const sources = normalizeList(ui.entrySources.value);
+    const tags = entryTagsInput.getItems();
+    const sources = entrySourcesInput.getItems();
     addImageUrlFromInput({ silent: true });
 
     if (!title || !description) return showError("Title and details are required.");
