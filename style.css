@@ -701,6 +701,12 @@ a { color: inherit; }
 #entryModal .modal__body::-webkit-scrollbar {
   display: none;
 }
+#entryModal .modal__card {
+  scrollbar-width: none;
+}
+#entryModal .modal__card::-webkit-scrollbar {
+  display: none;
+}
 .modal__card,
 .modal__body {
   scrollbar-color: var(--primary) var(--surface);
