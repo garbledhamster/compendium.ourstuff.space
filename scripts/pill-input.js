@@ -8,9 +8,6 @@
  * - Tap once to show full text, tap again to remove (mobile)
  */
 
-// Constants
-const MOBILE_BREAKPOINT = 720; // Must match CSS media query
-
 function escapeHtml(str) {
   return (str ?? "")
     .toString()
@@ -67,25 +64,24 @@ export class PillInput {
     this.pillGrid.addEventListener("click", (e) => this.handlePillClick(e));
     
     // Mobile touch handling for showing full text
-    // Each instance has its own tap state
-    this._tapTimer = null;
-    this._lastTappedPill = null;
+    let tapTimer = null;
+    let lastTappedPill = null;
     
     this.pillGrid.addEventListener("touchstart", (e) => {
       const pill = e.target.closest(".pill-item");
       if (!pill) return;
       
       // If tapping the same pill within 300ms, it's a double tap (remove)
-      if (this._lastTappedPill === pill && this._tapTimer) {
-        clearTimeout(this._tapTimer);
-        this._tapTimer = null;
-        this._lastTappedPill = null;
+      if (lastTappedPill === pill && tapTimer) {
+        clearTimeout(tapTimer);
+        tapTimer = null;
+        lastTappedPill = null;
         // Let the click handler do the removal
         return;
       }
       
       // First tap: show full text
-      this._lastTappedPill = pill;
+      lastTappedPill = pill;
       
       // Remove show-full-text from all pills
       this.container.querySelectorAll(".pill-item").forEach(p => {
@@ -98,9 +94,9 @@ export class PillInput {
         e.preventDefault(); // Prevent click event on first tap
         
         // Set up double-tap detection
-        this._tapTimer = setTimeout(() => {
-          this._tapTimer = null;
-          this._lastTappedPill = null;
+        tapTimer = setTimeout(() => {
+          tapTimer = null;
+          lastTappedPill = null;
         }, 300);
       }
     }, { passive: false });
@@ -134,7 +130,7 @@ export class PillInput {
     if (!pill) return;
     
     // On mobile with show-full-text, first click shows text, second removes
-    if (window.innerWidth <= MOBILE_BREAKPOINT && !pill.classList.contains("show-full-text")) {
+    if (window.innerWidth <= 720 && !pill.classList.contains("show-full-text")) {
       pill.classList.add("show-full-text");
       e.preventDefault();
       return;
