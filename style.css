@@ -1874,6 +1874,12 @@ b {
   margin-top: 8px;
 }
 
+.entry-image-list:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 .entry-image-item {
   display: flex;
   align-items: center;

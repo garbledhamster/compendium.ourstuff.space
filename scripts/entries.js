@@ -157,6 +157,7 @@ export function initEntries({ user, postName = "" }) {
   });
   ui.btnAddEntryImageUrl.addEventListener("click", addImageUrlFromInput);
   ui.entryImageUrlsList.addEventListener("click", handleImageUrlListClick);
+  ui.entryImageUrlsList.addEventListener("keydown", handleImageUrlListKeydown);
   ui.btnDeleteSelectedImage?.addEventListener("click", deleteSelectedImage);
   ui.btnPreviewPrev.addEventListener("click", () => changePreviewIndex(-1));
   ui.btnPreviewNext.addEventListener("click", () => changePreviewIndex(1));
@@ -638,12 +639,57 @@ export function initEntries({ user, postName = "" }) {
     renderImageUrlList();
   }
 
+  function handleImageUrlListKeydown(event) {
+    if (imageUrls.length === 0) return;
+    
+    // Arrow keys for navigation
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      if (selectedImageIndex === null) {
+        selectedImageIndex = 0;
+      } else if (event.key === "ArrowDown") {
+        selectedImageIndex = Math.min(selectedImageIndex + 1, imageUrls.length - 1);
+      } else {
+        selectedImageIndex = Math.max(selectedImageIndex - 1, 0);
+      }
+      renderImageUrlList();
+      return;
+    }
+    
+    // Delete key to delete selected
+    if (event.key === "Delete" && selectedImageIndex !== null) {
+      event.preventDefault();
+      deleteSelectedImage();
+      return;
+    }
+    
+    // Ctrl+ArrowUp/Down to move items
+    if ((event.key === "ArrowUp" || event.key === "ArrowDown") && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      if (selectedImageIndex === null) return;
+      
+      const delta = event.key === "ArrowUp" ? -1 : 1;
+      const targetIndex = selectedImageIndex + delta;
+      if (targetIndex < 0 || targetIndex >= imageUrls.length) return;
+      
+      const updated = [...imageUrls];
+      const [item] = updated.splice(selectedImageIndex, 1);
+      updated.splice(targetIndex, 0, item);
+      imageUrls = updated;
+      selectedImageIndex = targetIndex;
+      
+      renderImageUrlList();
+      updatePreview();
+      return;
+    }
+  }
+
   function handleImageDragStart(event) {
     const row = event.target.closest("[data-image-index]");
     if (!row) return;
     draggedImageIndex = Number(row.dataset.imageIndex);
     event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/html", row.innerHTML);
+    event.dataTransfer.setData("text/plain", draggedImageIndex.toString());
     row.classList.add("is-dragging");
   }
 
@@ -662,7 +708,7 @@ export function initEntries({ user, postName = "" }) {
 
   function handleImageDragLeave(event) {
     const row = event.target.closest("[data-image-index]");
-    if (row) {
+    if (row && event.relatedTarget && !row.contains(event.relatedTarget)) {
       row.classList.remove("drag-over");
     }
   }
@@ -756,6 +802,13 @@ export function initEntries({ user, postName = "" }) {
     ui.entryImageUrlsList.innerHTML = "";
     ui.entryImageUrlsEmpty.classList.toggle("is-hidden", imageUrls.length > 0);
     ui.entryImageDeleteWrap?.classList.toggle("is-hidden", imageUrls.length === 0);
+    
+    // Make list focusable for keyboard navigation
+    if (imageUrls.length > 0) {
+      ui.entryImageUrlsList.setAttribute("tabindex", "0");
+    } else {
+      ui.entryImageUrlsList.removeAttribute("tabindex");
+    }
 
     imageUrls.forEach((url, index) => {
       const row = document.createElement("div");
@@ -768,6 +821,8 @@ export function initEntries({ user, postName = "" }) {
       if (selectedImageIndex === index) {
         row.classList.add("is-selected");
         row.setAttribute("aria-selected", "true");
+      } else {
+        row.setAttribute("aria-selected", "false");
       }
 
       const indexLabel = document.createElement("span");
