@@ -763,22 +763,6 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
         ? `<button class="thumb__image" type="button" data-thumb-action="expand" aria-label="View full image"><img class="thumb" src="${esc(initialImage)}" alt="Entry image" loading="lazy" /></button>`
         : "";
       const navDisabled = imageList.length < 2;
-      const nav = hasImages
-        ? `
-        <div class="thumb__nav">
-          <button class="thumb__btn" data-thumb-action="prev" type="button" ${navDisabled ? "disabled" : ""} aria-label="Previous image">&lt;</button>
-          <button class="thumb__btn" data-thumb-action="next" type="button" ${navDisabled ? "disabled" : ""} aria-label="Next image">&gt;</button>
-        </div>
-      `
-        : "";
-      const thumbCell = hasImages
-        ? `
-          <div class="thumb-cell">
-            ${img}
-            ${nav}
-          </div>
-        `
-        : "";
 
       const tags = Array.isArray(entry.tags) ? entry.tags : [];
       const sources = Array.isArray(entry.sources) ? entry.sources : [];
@@ -790,16 +774,29 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
         : "";
 
       const descriptionHtml = renderMarkdown(entry.description || "");
-      card.innerHTML = `
-        <div class="card__row">
-          ${thumbCell}
-          <div class="card__body">
-            <div class="card__title">${esc(entry.title || "Untitled")}</div>
-            <div class="card__text reader-entry__text markdown">${descriptionHtml}</div>
-            ${tagList}
-            ${sourceList}
-            <div class="card__meta">by ${esc(getByline(entry))}</div>
+      const indexLabelHtml = imageList.length > 0 ? `<div class="reader-entry__index">${1}/${imageList.length}</div>` : "";
+      const mediaSection = hasImages
+        ? `
+          <div class="reader-entry__media">
+            ${img}
+            <div class="reader-entry__nav">
+              <button class="btn btn--outline btn--sm" data-thumb-action="prev" type="button" ${navDisabled ? "disabled" : ""} aria-label="Previous image">&lt; Prev</button>
+              ${indexLabelHtml}
+              <button class="btn btn--outline btn--sm" data-thumb-action="next" type="button" ${navDisabled ? "disabled" : ""} aria-label="Next image">Next &gt;</button>
+            </div>
           </div>
+        `
+        : "";
+      card.innerHTML = `
+        <div class="reader-entry__header">
+          <div class="card__title">${esc(entry.title || "Untitled")}</div>
+        </div>
+        ${mediaSection}
+        <div class="card__body">
+          <div class="card__text reader-entry__text markdown">${descriptionHtml}</div>
+          ${tagList}
+          ${sourceList}
+          <div class="card__meta">by ${esc(getByline(entry))}</div>
         </div>
       `;
 
@@ -807,6 +804,7 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
       const expandBtn = card.querySelector('[data-thumb-action="expand"]');
       const prevBtn = card.querySelector('[data-thumb-action="prev"]');
       const nextBtn = card.querySelector('[data-thumb-action="next"]');
+      const indexLabel = card.querySelector(".reader-entry__index");
 
       let imageIndex = 0;
       const updateThumb = () => {
@@ -814,6 +812,9 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
         imageIndex = (imageIndex + imageList.length) % imageList.length;
         thumbImg.src = imageList[imageIndex];
         thumbImg.alt = `Entry image ${imageIndex + 1} of ${imageList.length}`;
+        if (indexLabel) {
+          indexLabel.textContent = `${imageIndex + 1}/${imageList.length}`;
+        }
       };
 
       prevBtn?.addEventListener("click", () => {
