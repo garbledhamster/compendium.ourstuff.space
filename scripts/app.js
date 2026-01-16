@@ -84,7 +84,7 @@ function initEditorTabs() {
     postNameHintEl: $("#postNameHint"),
     onProfileChange: (nextName) => {
       entries?.setPostName(nextName);
-      compendiums?.setPostName(nextName);
+      compendiums?.setOwnerName(nextName);
     }
   });
 
@@ -92,7 +92,7 @@ function initEditorTabs() {
 
   compendiums = initCompendiums({
     user,
-    postName: settingsState.postName,
+    ownerName: settingsState.postName,
     onSelectCompendium: (scope, compId, compDoc) => {
       entries.setActiveCompendium(scope, compId, compDoc);
     }

@@ -189,7 +189,8 @@
 
                 <label class="field">
                   <span class="field__label">Tags</span>
-                  <input class="input" id="personalCompTags" type="text" placeholder="comma-separated" />
+                  <div id="personalCompTags"></div>
+                  <span class="field__hint">Type a tag and press Enter to add it.</span>
                 </label>
               </div>
 
@@ -287,7 +288,8 @@
 
                 <label class="field">
                   <span class="field__label">Tags</span>
-                  <input class="input" id="publicCompTags" type="text" placeholder="comma-separated" />
+                  <div id="publicCompTags"></div>
+                  <span class="field__hint">Type a tag and press Enter to add it.</span>
                 </label>
               </div>
 
@@ -404,6 +406,13 @@
               <div class="reader__topic" id="readerTopic">—</div>
               <div class="reader__description markdown" id="readerDescription">—</div>
             </div>
+          </div>
+
+          <div class="reader__toc is-hidden" id="readerToc">
+            <div class="reader__toc-head">
+              <div class="reader__toc-title">Table of Contents</div>
+            </div>
+            <ol class="reader__toc-list" id="readerTocList"></ol>
           </div>
 
           <div class="reader__entries">
@@ -546,12 +555,14 @@
         <div class="form__row">
           <label class="field">
             <span class="field__label">Tags</span>
-            <input class="input" id="entryTags" type="text" placeholder="comma-separated" />
+            <div id="entryTags"></div>
+            <span class="field__hint">Type a tag and press Enter to add it.</span>
           </label>
 
           <label class="field">
             <span class="field__label">Sources</span>
-            <textarea class="textarea" id="entrySources" rows="3" placeholder="One per line or comma-separated"></textarea>
+            <div id="entrySources"></div>
+            <span class="field__hint">Type a source and press Enter to add it.</span>
           </label>
         </div>
 
@@ -564,7 +575,15 @@
             </div>
             <div class="subtle small" id="entryImageUrlsEmpty">No image URLs added yet.</div>
             <div class="entry-image-list" id="entryImageUrlsList" role="listbox" aria-label="Image URLs"></div>
-            <span class="field__hint">Add multiple URLs to create a list. The first image is used as the primary cover.</span>
+            <div class="hstack is-hidden" id="entryImageDeleteWrap" style="margin-top: 8px;">
+              <button class="btn btn--danger" id="btnDeleteSelectedImage" type="button">
+                <span class="ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M9 3h6l1 2h5v2H3V5h5zm1 6h2v10h-2zm4 0h2v10h-2z"/></svg>
+                </span>
+                Delete Selected
+              </button>
+            </div>
+            <span class="field__hint">Drag and drop to reorder. Click to select, then use Delete Selected button. Keyboard: Arrow keys to navigate, Ctrl+Arrow to move, Delete to remove. The first image is used as the primary cover.</span>
           </label>
         </div>
 
@@ -612,9 +631,24 @@
       </div>
 
       <div class="modal__body">
-        <div class="reader">
+        <div class="reader" id="entryReader">
           <div class="reader__media is-hidden" id="entryReaderMedia">
             <img class="reader__image" id="entryReaderImage" alt="Entry image" loading="lazy" />
+            <div class="reader__nav hstack">
+              <button class="btn btn--outline btn--sm" id="btnReaderPrev" type="button">
+                <span class="ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="m14.7 6.3l-5.7 5.7l5.7 5.7l-1.4 1.4l-7.1-7.1l7.1-7.1z"/></svg>
+                </span>
+                Prev
+              </button>
+              <div class="reader__index subtle small" id="entryReaderIndex">0/0</div>
+              <button class="btn btn--outline btn--sm" id="btnReaderNext" type="button">
+                <span class="ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="m9.3 17.7l5.7-5.7L9.3 6.3l1.4-1.4l7.1 7.1l-7.1 7.1z"/></svg>
+                </span>
+                Next
+              </button>
+            </div>
           </div>
           <div class="reader__content">
             <div class="reader__meta" id="entryReaderMeta">—</div>
