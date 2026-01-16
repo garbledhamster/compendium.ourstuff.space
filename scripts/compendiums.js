@@ -7,9 +7,11 @@ import {
   updateCompendium,
   deleteCompendium,
   addCompendiumEditor,
-  removeCompendiumEditor
+  removeCompendiumEditor,
+  updateCompendiumsByOwnerDisplayName
 } from "./firebase.js";
 import { renderMarkdown } from "./markdown.js";
+import { PillInput } from "./pill-input.js";
 
 const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
@@ -18,6 +20,12 @@ function esc(s){ return (s ?? "").toString(); }
 function normEmail(e){ return (e || "").trim().toLowerCase(); }
 function isValidEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 function parseTags(raw){ return (raw || "").split(",").map(x => x.trim()).filter(Boolean).slice(0, 40); }
+function getByline(entry) {
+  return entry?.createdByName
+    || entry?.createdByEmail
+    || entry?.createdByUid
+    || "unknown";
+}
 function getEntryImageUrls(entry) {
   if (!entry) return [];
   const urls = Array.isArray(entry.imageUrls) ? entry.imageUrls : [];
@@ -48,10 +56,13 @@ function stableSeed() {
   return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
 }
 
-function ensureOwnerFields(comp, user, updates) {
+function ensureOwnerFields(comp, user, ownerName, updates) {
   const next = { ...updates };
+  const isOwnerUser = (comp?.ownerUid && comp.ownerUid === user.uid) || (!comp?.ownerUid && user?.uid);
   if (!comp?.ownerUid && user?.uid) next.ownerUid = user.uid;
-  if (!comp?.ownerEmail && user?.email) next.ownerEmail = user.email;
+  if (isOwnerUser && ownerName && comp?.ownerName !== ownerName) {
+    next.ownerName = ownerName;
+  }
   return next;
 }
 
@@ -89,7 +100,7 @@ function fmtCount(n, label) {
   return `${n} ${label}${n === 1 ? "" : "s"}`;
 }
 
-export function initCompendiums({ user, onSelectCompendium }) {
+export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
   const goToRoute = (route) => {
     document.dispatchEvent(new CustomEvent("app:route", { detail: { route } }));
   };
@@ -205,6 +216,8 @@ export function initCompendiums({ user, onSelectCompendium }) {
     title: $("#readerTitle"),
     topic: $("#readerTopic"),
     description: $("#readerDescription"),
+    toc: $("#readerToc"),
+    tocList: $("#readerTocList"),
     entriesCount: $("#readerEntriesCount"),
     entriesList: $("#readerEntriesList"),
     btnBackToDetail: $("#btnReaderBackToDetail"),
@@ -231,6 +244,31 @@ export function initCompendiums({ user, onSelectCompendium }) {
     viewMode: "book"
   };
   let ignoreTypeConfirm = false;
+  let currentOwnerName = ownerName || "";
+
+  // Initialize PillInput components for tags
+  const personalTagsInput = new PillInput(personal.tags, {
+    placeholder: "Type a tag and press Enter...",
+    emptyMessage: "No tags yet.",
+    maxLength: 20
+  });
+  
+  const publicTagsInput = new PillInput(pub.tags, {
+    placeholder: "Type a tag and press Enter...",
+    emptyMessage: "No tags yet.",
+    maxLength: 20
+  });
+
+  async function syncOwnerDisplayName(nextName) {
+    currentOwnerName = nextName || "";
+    if (!currentOwnerName) return;
+    try {
+      await updateCompendiumsByOwnerDisplayName(user.uid, currentOwnerName);
+    } catch (err) {
+      console.error(err);
+      toast(err?.message || "Failed to update owner display name", "bad");
+    }
+  }
 
   if (listView.viewMode) {
     filterState.viewMode = listView.viewMode.value || "book";
@@ -269,8 +307,8 @@ export function initCompendiums({ user, onSelectCompendium }) {
       const isPublic = modal.typeToggle.checked;
       const ok = confirm(
         isPublic
-          ? "Make this a public compendium?\n\nAnyone logged-in can add entries. Type cannot be changed later."
-          : "Make this a personal compendium?\n\nOnly you can access it. Type cannot be changed later."
+          ? "Make this a public compendium?\n\nAnyone can view it. Any logged-in user can add entries."
+          : "Make this a personal compendium?\n\nOnly you can access and edit it."
       );
       if (!ok) {
         ignoreTypeConfirm = true;
@@ -333,6 +371,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
   });
 
   // --- Listen ---
+  syncOwnerDisplayName(currentOwnerName);
   listenPersonal();
   listenPublic();
   listenEntriesAccess();
@@ -702,9 +741,11 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
   function renderReaderEntries(entries) {
     readerView.entriesList.innerHTML = "";
+    readerView.tocList.innerHTML = "";
     readerView.entriesCount.textContent = fmtCount(entries.length, "entry");
 
     if (!entries.length) {
+      readerView.toc.classList.add("is-hidden");
       const empty = document.createElement("div");
       empty.className = "subtle";
       empty.textContent = "No entries yet.";
@@ -712,9 +753,30 @@ export function initCompendiums({ user, onSelectCompendium }) {
       return;
     }
 
-    for (const entry of entries) {
+    // Show TOC and populate it
+    readerView.toc.classList.remove("is-hidden");
+    entries.forEach((entry, index) => {
+      const li = document.createElement("li");
+      li.className = "reader__toc-item";
+      const link = document.createElement("a");
+      link.className = "reader__toc-link";
+      link.href = `#reader-entry-${index}`;
+      link.textContent = entry.title || "Untitled";
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const target = document.getElementById(`reader-entry-${index}`);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+      li.appendChild(link);
+      readerView.tocList.appendChild(li);
+    });
+
+    entries.forEach((entry, index) => {
       const card = document.createElement("div");
       card.className = "card reader-entry";
+      card.id = `reader-entry-${index}`;
 
       const imageList = getEntryImageUrls(entry);
       const hasImages = imageList.length > 0;
@@ -726,22 +788,6 @@ export function initCompendiums({ user, onSelectCompendium }) {
         ? `<button class="thumb__image" type="button" data-thumb-action="expand" aria-label="View full image"><img class="thumb" src="${esc(initialImage)}" alt="Entry image" loading="lazy" /></button>`
         : "";
       const navDisabled = imageList.length < 2;
-      const nav = hasImages
-        ? `
-        <div class="thumb__nav">
-          <button class="thumb__btn" data-thumb-action="prev" type="button" ${navDisabled ? "disabled" : ""} aria-label="Previous image">&lt;</button>
-          <button class="thumb__btn" data-thumb-action="next" type="button" ${navDisabled ? "disabled" : ""} aria-label="Next image">&gt;</button>
-        </div>
-      `
-        : "";
-      const thumbCell = hasImages
-        ? `
-          <div class="thumb-cell">
-            ${img}
-            ${nav}
-          </div>
-        `
-        : "";
 
       const tags = Array.isArray(entry.tags) ? entry.tags : [];
       const sources = Array.isArray(entry.sources) ? entry.sources : [];
@@ -753,16 +799,29 @@ export function initCompendiums({ user, onSelectCompendium }) {
         : "";
 
       const descriptionHtml = renderMarkdown(entry.description || "");
-      card.innerHTML = `
-        <div class="card__row">
-          ${thumbCell}
-          <div class="card__body">
-            <div class="card__title">${esc(entry.title || "Untitled")}</div>
-            <div class="card__text reader-entry__text markdown">${descriptionHtml}</div>
-            ${tagList}
-            ${sourceList}
-            <div class="card__meta">by ${esc(entry.createdByEmail || entry.createdByUid || "unknown")}</div>
+      const indexLabelHtml = imageList.length > 0 ? `<div class="reader-entry__index">${1}/${imageList.length}</div>` : "";
+      const mediaSection = hasImages
+        ? `
+          <div class="reader-entry__media">
+            ${img}
+            <div class="reader-entry__nav">
+              <button class="btn btn--outline btn--sm" data-thumb-action="prev" type="button" ${navDisabled ? "disabled" : ""} aria-label="Previous image">&lt; Prev</button>
+              ${indexLabelHtml}
+              <button class="btn btn--outline btn--sm" data-thumb-action="next" type="button" ${navDisabled ? "disabled" : ""} aria-label="Next image">Next &gt;</button>
+            </div>
           </div>
+        `
+        : "";
+      card.innerHTML = `
+        <div class="reader-entry__header">
+          <div class="card__title">${esc(entry.title || "Untitled")}</div>
+        </div>
+        ${mediaSection}
+        <div class="card__body">
+          <div class="card__text reader-entry__text markdown">${descriptionHtml}</div>
+          ${tagList}
+          ${sourceList}
+          <div class="card__meta">by ${esc(getByline(entry))}</div>
         </div>
       `;
 
@@ -770,6 +829,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
       const expandBtn = card.querySelector('[data-thumb-action="expand"]');
       const prevBtn = card.querySelector('[data-thumb-action="prev"]');
       const nextBtn = card.querySelector('[data-thumb-action="next"]');
+      const indexLabel = card.querySelector(".reader-entry__index");
 
       let imageIndex = 0;
       const updateThumb = () => {
@@ -777,6 +837,9 @@ export function initCompendiums({ user, onSelectCompendium }) {
         imageIndex = (imageIndex + imageList.length) % imageList.length;
         thumbImg.src = imageList[imageIndex];
         thumbImg.alt = `Entry image ${imageIndex + 1} of ${imageList.length}`;
+        if (indexLabel) {
+          indexLabel.textContent = `${imageIndex + 1}/${imageList.length}`;
+        }
       };
 
       prevBtn?.addEventListener("click", () => {
@@ -801,7 +864,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
       }
 
       readerView.entriesList.appendChild(card);
-    }
+    });
   }
 
   function paintEditor(scope) {
@@ -837,7 +900,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
     el.title.textContent = comp.name || "Untitled";
     el.subtitle.textContent = comp.topic ? `Subtitle: ${comp.topic}` : "—";
-    el.ownerLine.textContent = `Owner: ${comp.ownerEmail || comp.ownerUid}`;
+    el.ownerLine.textContent = `Owner: ${comp.ownerName || comp.ownerUid}`;
     el.btnRead.disabled = false;
 
     // Fill fields
@@ -845,7 +908,14 @@ export function initCompendiums({ user, onSelectCompendium }) {
     el.topic.value = comp.topic || "";
     el.desc.value = comp.description || "";
     el.cover.value = comp.coverUrl || "";
-    el.tags.value = Array.isArray(comp.tags) ? comp.tags.join(", ") : (comp.tags || "");
+    
+    // Set tags using PillInput
+    const tags = Array.isArray(comp.tags) ? comp.tags : [];
+    if (isPersonal) {
+      personalTagsInput.setItems(tags);
+    } else {
+      publicTagsInput.setItems(tags);
+    }
 
     if (isPersonal) {
       const editable = canEditCompendium(user, comp);
@@ -917,7 +987,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
 
         visibility: type,
         ownerUid: user.uid,
-        ownerEmail: user.email || "",
+        ownerName: currentOwnerName || "",
 
         editorEmails: type === "public" ? [] : []
       });
@@ -957,7 +1027,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     const topic = el.topic.value.trim();
     const description = el.desc.value.trim();
     const coverUrl = el.cover.value.trim();
-    const tags = parseTags(el.tags.value);
+    const tags = isPersonal ? personalTagsInput.getItems() : publicTagsInput.getItems();
 
     if (!name || !topic) {
       toast("Topic and subtitle required", "bad");
@@ -965,7 +1035,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     }
 
     // Ensure a seed exists if coverUrl is blank (for older docs)
-    const updates = ensureOwnerFields(comp, user, { name, topic, description, tags, coverUrl });
+    const updates = ensureOwnerFields(comp, user, currentOwnerName, { name, topic, description, tags, coverUrl });
     if (!comp.coverSeed) updates.coverSeed = stableSeed();
 
     try {
@@ -1016,7 +1086,7 @@ export function initCompendiums({ user, onSelectCompendium }) {
     const confirmed = await confirmVisibilityChange(nextVisibility);
     if (!confirmed) return;
 
-    const updates = ensureOwnerFields(comp, user, { visibility: nextVisibility });
+    const updates = ensureOwnerFields(comp, user, currentOwnerName, { visibility: nextVisibility });
     if (nextVisibility === "personal") {
       updates.editorEmails = [];
     } else if (!Array.isArray(comp.editorEmails)) {
@@ -1150,6 +1220,9 @@ export function initCompendiums({ user, onSelectCompendium }) {
   return {
     getSelected(scope) {
       return getSelectedForScope(scope);
+    },
+    setOwnerName(nextName) {
+      syncOwnerDisplayName(nextName);
     }
   };
 }

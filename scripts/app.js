@@ -74,6 +74,7 @@ function initEditorTabs() {
   }
 
   let entries = null;
+  let compendiums = null;
   const settingsState = await initSettings({
     user,
     themes,
@@ -81,13 +82,17 @@ function initEditorTabs() {
     postNameInputEl: $("#postNameSetting"),
     postNameSaveEl: $("#postNameSave"),
     postNameHintEl: $("#postNameHint"),
-    onProfileChange: (nextName) => entries?.setPostName(nextName)
+    onProfileChange: (nextName) => {
+      entries?.setPostName(nextName);
+      compendiums?.setOwnerName(nextName);
+    }
   });
 
   entries = initEntries({ user, postName: settingsState.postName });
 
-  initCompendiums({
+  compendiums = initCompendiums({
     user,
+    ownerName: settingsState.postName,
     onSelectCompendium: (scope, compId, compDoc) => {
       entries.setActiveCompendium(scope, compId, compDoc);
     }
