@@ -687,7 +687,9 @@ export function initEntries({ user, postName = "" }) {
   function handleImageDragStart(event) {
     const row = event.target.closest("[data-image-index]");
     if (!row) return;
-    draggedImageIndex = Number(row.dataset.imageIndex);
+    const index = Number(row.dataset.imageIndex);
+    if (Number.isNaN(index)) return;
+    draggedImageIndex = index;
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", draggedImageIndex.toString());
     row.classList.add("is-dragging");
@@ -708,7 +710,7 @@ export function initEntries({ user, postName = "" }) {
 
   function handleImageDragLeave(event) {
     const row = event.target.closest("[data-image-index]");
-    if (row && event.relatedTarget && !row.contains(event.relatedTarget)) {
+    if (row && (!event.relatedTarget || !row.contains(event.relatedTarget))) {
       row.classList.remove("drag-over");
     }
   }
@@ -803,11 +805,15 @@ export function initEntries({ user, postName = "" }) {
     ui.entryImageUrlsEmpty.classList.toggle("is-hidden", imageUrls.length > 0);
     ui.entryImageDeleteWrap?.classList.toggle("is-hidden", imageUrls.length === 0);
     
-    // Make list focusable for keyboard navigation
+    // Set ARIA attributes and make list focusable for keyboard navigation
     if (imageUrls.length > 0) {
       ui.entryImageUrlsList.setAttribute("tabindex", "0");
+      ui.entryImageUrlsList.setAttribute("role", "listbox");
+      ui.entryImageUrlsList.setAttribute("aria-multiselectable", "false");
     } else {
       ui.entryImageUrlsList.removeAttribute("tabindex");
+      ui.entryImageUrlsList.setAttribute("role", "listbox");
+      ui.entryImageUrlsList.setAttribute("aria-multiselectable", "false");
     }
 
     imageUrls.forEach((url, index) => {
