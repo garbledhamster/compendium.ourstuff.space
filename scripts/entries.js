@@ -698,7 +698,6 @@ export function initEntries({ user, postName = "" }) {
   function handleImageDragOver(event) {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
-    return false;
   }
 
   function handleImageDragEnter(event) {
@@ -753,7 +752,6 @@ export function initEntries({ user, postName = "" }) {
     
     renderImageUrlList();
     updatePreview();
-    return false;
   }
 
   function handleImageDragEnd(event) {
@@ -812,8 +810,8 @@ export function initEntries({ user, postName = "" }) {
       ui.entryImageUrlsList.setAttribute("aria-multiselectable", "false");
     } else {
       ui.entryImageUrlsList.removeAttribute("tabindex");
-      ui.entryImageUrlsList.setAttribute("role", "listbox");
-      ui.entryImageUrlsList.setAttribute("aria-multiselectable", "false");
+      ui.entryImageUrlsList.removeAttribute("role");
+      ui.entryImageUrlsList.removeAttribute("aria-multiselectable");
     }
 
     imageUrls.forEach((url, index) => {
