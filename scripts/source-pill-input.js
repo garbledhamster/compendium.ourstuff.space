@@ -417,7 +417,7 @@ export class SourcePillInput {
           ${fieldsHtml}
         </div>
         <div class="source-editor__actions">
-          <button type="button" class="btn btn--secondary source-editor__save">Save</button>
+          <button type="button" class="btn btn--primary source-editor__save">Save</button>
           <button type="button" class="btn btn--outline source-editor__cancel">Cancel</button>
         </div>
       </div>
