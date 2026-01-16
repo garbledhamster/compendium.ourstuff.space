@@ -1865,3 +1865,208 @@ b {
     display: none;
   }
 }
+
+/* Source Pill Input Component */
+.source-pill-input-container {
+  display: grid;
+  gap: 8px;
+}
+
+.source-pill-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 32px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+}
+
+.source-pill-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease;
+  position: relative;
+  max-width: 220px;
+}
+
+.source-pill-item:hover {
+  background: var(--surface-muted);
+  border-color: var(--secondary);
+}
+
+.source-pill-item--editing {
+  flex-basis: 100%;
+  max-width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 12px;
+  gap: 10px;
+  border-color: var(--secondary);
+  background: var(--surface);
+  cursor: default;
+}
+
+.source-pill-item--editing .source-pill-item__text,
+.source-pill-item--editing .source-pill-item__emoji,
+.source-pill-item--editing .source-pill-item__remove {
+  display: none;
+}
+
+.source-pill-item__emoji {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.source-pill-item__text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.source-pill-item__full {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  background: var(--overlay);
+  color: var(--overlay-text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  z-index: 100;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.source-pill-item:hover .source-pill-item__full {
+  display: block;
+}
+
+.source-pill-item--editing:hover .source-pill-item__full {
+  display: none;
+}
+
+.source-pill-item__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: var(--surface);
+  font-size: 11px;
+  line-height: 1;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.source-pill-item__remove:hover {
+  background: var(--secondary);
+}
+
+.source-pill-grid--empty {
+  color: var(--muted);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Source Editor (inline within pill) */
+.source-editor {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+
+.source-editor__field {
+  display: grid;
+  gap: 4px;
+}
+
+.source-editor__label {
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.source-editor__input,
+.source-editor__text {
+  width: 100%;
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+.source-editor__type {
+  width: 100%;
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+.source-editor__type-fields {
+  display: grid;
+  gap: 10px;
+}
+
+.source-editor__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.source-editor__actions .btn {
+  padding: 6px 14px;
+  font-size: 12px;
+}
+
+/* Source display in cards */
+.card__source-emoji {
+  margin-right: 4px;
+}
+
+/* Source display in reader */
+.reader__source-emoji {
+  margin-right: 4px;
+}
+
+/* Mobile-specific source pill interactions */
+@media (max-width: 720px) {
+  .source-pill-item.show-full-text .source-pill-item__text {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    max-width: none;
+  }
+  
+  .source-pill-item.show-full-text {
+    max-width: none;
+  }
+  
+  .source-pill-item:hover .source-pill-item__full {
+    display: none;
+  }
+  
+  .source-editor__type-fields {
+    gap: 8px;
+  }
+}
