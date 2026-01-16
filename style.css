@@ -1540,6 +1540,69 @@ b {
   line-height: 1.7;
 }
 
+/* Table of Contents */
+.reader__toc {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.reader__toc-head {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+}
+
+.reader__toc-title {
+  font-weight: 800;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.reader__toc-list {
+  margin: 0;
+  padding: 0 0 0 28px;
+  list-style-position: outside;
+  column-gap: 24px;
+}
+
+.reader__toc-item {
+  font-size: 14px;
+  line-height: 1.8;
+  break-inside: avoid;
+  padding-right: 12px;
+}
+
+.reader__toc-item::marker {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.reader__toc-link {
+  color: var(--text);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.reader__toc-link:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+@media (min-width: 600px) {
+  .reader__toc-list {
+    columns: 2;
+  }
+}
+
+@media (min-width: 900px) {
+  .reader__toc-list {
+    columns: 3;
+  }
+}
+
 .reader__tags {
   display: flex;
   flex-wrap: wrap;

@@ -216,6 +216,8 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
     title: $("#readerTitle"),
     topic: $("#readerTopic"),
     description: $("#readerDescription"),
+    toc: $("#readerToc"),
+    tocList: $("#readerTocList"),
     entriesCount: $("#readerEntriesCount"),
     entriesList: $("#readerEntriesList"),
     btnBackToDetail: $("#btnReaderBackToDetail"),
@@ -739,9 +741,11 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
 
   function renderReaderEntries(entries) {
     readerView.entriesList.innerHTML = "";
+    readerView.tocList.innerHTML = "";
     readerView.entriesCount.textContent = fmtCount(entries.length, "entry");
 
     if (!entries.length) {
+      readerView.toc.classList.add("is-hidden");
       const empty = document.createElement("div");
       empty.className = "subtle";
       empty.textContent = "No entries yet.";
@@ -749,9 +753,30 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
       return;
     }
 
-    for (const entry of entries) {
+    // Show TOC and populate it
+    readerView.toc.classList.remove("is-hidden");
+    entries.forEach((entry, index) => {
+      const li = document.createElement("li");
+      li.className = "reader__toc-item";
+      const link = document.createElement("a");
+      link.className = "reader__toc-link";
+      link.href = `#reader-entry-${index}`;
+      link.textContent = entry.title || "Untitled";
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const target = document.getElementById(`reader-entry-${index}`);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+      li.appendChild(link);
+      readerView.tocList.appendChild(li);
+    });
+
+    entries.forEach((entry, index) => {
       const card = document.createElement("div");
       card.className = "card reader-entry";
+      card.id = `reader-entry-${index}`;
 
       const imageList = getEntryImageUrls(entry);
       const hasImages = imageList.length > 0;
@@ -839,7 +864,7 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
       }
 
       readerView.entriesList.appendChild(card);
-    }
+    });
   }
 
   function paintEditor(scope) {
