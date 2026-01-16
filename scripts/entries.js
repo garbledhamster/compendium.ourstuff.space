@@ -155,9 +155,12 @@ export function initEntries({ user, postName = "" }) {
     maxLength: 20
   });
 
-  const getByline = (entry) =>
-    entry?.createdByName
-      || "Anonymous";
+  const getByline = (entry) => {
+    const entryName = (entry?.createdByName || "").trim();
+    if (entryName) return entryName;
+    if (entry?.createdByUid === user.uid && createdByName) return createdByName;
+    return "Anonymous";
+  };
 
   ui.entryUrlInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {

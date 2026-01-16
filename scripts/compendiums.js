@@ -230,6 +230,14 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
   let publicUnsub = null;
   let entriesUnsub = null;
   let readerEntriesUnsub = null;
+  let createdByName = postName.trim();
+
+  const getEntryByline = (entry) => {
+    const entryName = (entry?.createdByName || "").trim();
+    if (entryName) return entryName;
+    if (entry?.createdByUid === user.uid && createdByName) return createdByName;
+    return "Anonymous";
+  };
 
   let personalItems = [];
   let publicItems = [];
