@@ -6,10 +6,20 @@ import {
 } from "./firebase.js";
 import { renderMarkdown } from "./markdown.js";
 import { PillInput } from "./pill-input.js";
+import { SourcePillInput, getSourceEmoji, getSourceDisplayText, getSourceType } from "./source-pill-input.js";
 
 const $ = (s, r=document) => r.querySelector(s);
 function esc(s){ return (s ?? "").toString(); }
 function normEmail(e){ return (e || "").trim().toLowerCase(); }
+function escapeHtmlForReader(str) {
+  return (str ?? "")
+    .toString()
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 function toast(msg, kind="ok") {
   const el = document.createElement("div");
@@ -139,7 +149,7 @@ export function initEntries({ user, postName = "" }) {
     maxLength: 20
   });
   
-  const entrySourcesInput = new PillInput(ui.entrySources, {
+  const entrySourcesInput = new SourcePillInput(ui.entrySources, {
     placeholder: "Type a source and press Enter...",
     emptyMessage: "No sources yet.",
     maxLength: 20
@@ -295,7 +305,11 @@ export function initEntries({ user, postName = "" }) {
         ? `<div class="card__tags">${tags.map((tag) => `<span class="card__tag">${esc(tag)}</span>`).join("")}</div>`
         : "";
       const sourceList = sources.length
-        ? `<div class="card__sources"><span class="card__sources-label">Sources:</span> ${sources.map((source) => `<span class="card__source">${esc(source)}</span>`).join("")}</div>`
+        ? `<div class="card__sources"><span class="card__sources-label">Sources:</span> ${sources.map((source) => {
+            const emoji = getSourceEmoji(getSourceType(source));
+            const text = getSourceDisplayText(source);
+            return `<span class="card__source"><span class="card__source-emoji">${emoji}</span>${esc(text)}</span>`;
+          }).join("")}</div>`
         : "";
       const reorderActions = allowEdit
         ? `
@@ -438,7 +452,9 @@ export function initEntries({ user, postName = "" }) {
       sources.forEach((source) => {
         const item = document.createElement("span");
         item.className = "reader__source";
-        item.textContent = source;
+        const emoji = getSourceEmoji(getSourceType(source));
+        const text = getSourceDisplayText(source);
+        item.innerHTML = `<span class="reader__source-emoji">${emoji}</span>${escapeHtmlForReader(text)}`;
         ui.readerSources.appendChild(item);
       });
       ui.readerSourcesWrap.classList.remove("is-hidden");
