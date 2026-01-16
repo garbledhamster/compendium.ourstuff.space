@@ -619,6 +619,21 @@
         <div class="reader" id="entryReader">
           <div class="reader__media is-hidden" id="entryReaderMedia">
             <img class="reader__image" id="entryReaderImage" alt="Entry image" loading="lazy" />
+            <div class="reader__nav hstack">
+              <button class="btn btn--outline btn--sm" id="btnReaderPrev" type="button">
+                <span class="ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="m14.7 6.3l-5.7 5.7l5.7 5.7l-1.4 1.4l-7.1-7.1l7.1-7.1z"/></svg>
+                </span>
+                Prev
+              </button>
+              <div class="reader__index subtle small" id="entryReaderIndex">0/0</div>
+              <button class="btn btn--outline btn--sm" id="btnReaderNext" type="button">
+                <span class="ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="m9.3 17.7l5.7-5.7L9.3 6.3l1.4-1.4l7.1 7.1l-7.1 7.1z"/></svg>
+                </span>
+                Next
+              </button>
+            </div>
           </div>
           <div class="reader__content">
             <div class="reader__meta" id="entryReaderMeta">—</div>

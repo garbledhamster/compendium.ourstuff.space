@@ -805,6 +805,10 @@ a { color: inherit; }
   background: var(--surface-muted);
   overflow: clip;
   min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
 }
 .reader__image {
   width: 100%;
@@ -812,6 +816,14 @@ a { color: inherit; }
   max-height: 500px;
   object-fit: contain;
   display: block;
+}
+.reader__nav {
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+}
+.reader__index {
+  min-width: 60px;
 }
 .reader__content {
   display: grid;
@@ -1014,6 +1026,16 @@ b {
   }
   .modal__card--reader .reader__media {
     min-height: 180px;
+  }
+}
+
+@media (max-width: 480px) {
+  .reader__nav .btn {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  .reader__nav .btn .ico {
+    display: none;
   }
 }
 
