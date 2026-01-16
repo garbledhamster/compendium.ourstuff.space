@@ -71,6 +71,8 @@ export function initEntries({ user, postName = "" }) {
     btnAddEntryImageUrl: $("#btnAddEntryImageUrl"),
     entryImageUrlsList: $("#entryImageUrlsList"),
     entryImageUrlsEmpty: $("#entryImageUrlsEmpty"),
+    entryImageDeleteWrap: $("#entryImageDeleteWrap"),
+    btnDeleteSelectedImage: $("#btnDeleteSelectedImage"),
 
     previewWrap: $("#entryPreviewWrap"),
     previewImg: $("#entryPreviewImg"),
@@ -137,6 +139,8 @@ export function initEntries({ user, postName = "" }) {
   let readerImageUrls = [];
   let readerImageIndex = 0;
   let createdByName = postName.trim();
+  let selectedImageIndex = null;
+  let draggedImageIndex = null;
 
   // Initialize PillInput components for tags and sources
   const entryTagsInput = new PillInput(ui.entryTags, {
@@ -162,7 +166,9 @@ export function initEntries({ user, postName = "" }) {
     }
   });
   ui.btnAddEntryImageUrl.addEventListener("click", addImageUrlFromInput);
-  ui.entryImageUrlsList.addEventListener("click", handleImageUrlListAction);
+  ui.entryImageUrlsList.addEventListener("click", handleImageUrlListClick);
+  ui.entryImageUrlsList.addEventListener("keydown", handleImageUrlListKeydown);
+  ui.btnDeleteSelectedImage?.addEventListener("click", deleteSelectedImage);
   ui.btnPreviewPrev.addEventListener("click", () => changePreviewIndex(-1));
   ui.btnPreviewNext.addEventListener("click", () => changePreviewIndex(1));
 
@@ -526,6 +532,7 @@ export function initEntries({ user, postName = "" }) {
     
     imageUrls = getEntryImageUrls(entryData);
     previewIndex = 0;
+    selectedImageIndex = null;
     ui.entryUrlInput.value = "";
 
     renderImageUrlList();
@@ -638,36 +645,158 @@ export function initEntries({ user, postName = "" }) {
     }
   }
 
-  function handleImageUrlListAction(event) {
-    const btn = event.target.closest("button[data-action]");
-    if (!btn) return;
-    const index = Number(btn.dataset.index);
+  function handleImageUrlListClick(event) {
+    const row = event.target.closest("[data-image-index]");
+    if (!row) return;
+    const index = Number(row.dataset.imageIndex);
     if (Number.isNaN(index)) return;
-
-    const action = btn.dataset.action;
-    if (action === "move-up") moveImageUrl(index, -1);
-    if (action === "move-down") moveImageUrl(index, 1);
-    if (action === "delete") removeImageUrl(index);
+    
+    selectedImageIndex = index;
+    renderImageUrlList();
   }
 
-  function moveImageUrl(index, delta) {
-    const nextIndex = index + delta;
-    if (nextIndex < 0 || nextIndex >= imageUrls.length) return;
-    const updated = [...imageUrls];
-    const [item] = updated.splice(index, 1);
-    updated.splice(nextIndex, 0, item);
-    imageUrls = updated;
-    if (previewIndex === index) {
-      previewIndex = nextIndex;
-    } else if (previewIndex === nextIndex) {
-      previewIndex = index;
+  function handleImageUrlListKeydown(event) {
+    if (imageUrls.length === 0) return;
+    
+    // Arrow keys for navigation
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      if (selectedImageIndex === null) {
+        selectedImageIndex = 0;
+      } else if (event.key === "ArrowDown") {
+        selectedImageIndex = Math.min(selectedImageIndex + 1, imageUrls.length - 1);
+      } else {
+        selectedImageIndex = Math.max(selectedImageIndex - 1, 0);
+      }
+      renderImageUrlList();
+      return;
     }
+    
+    // Delete key to delete selected
+    if (event.key === "Delete" && selectedImageIndex !== null) {
+      event.preventDefault();
+      deleteSelectedImage();
+      return;
+    }
+    
+    // Ctrl+ArrowUp/Down to move items
+    if ((event.key === "ArrowUp" || event.key === "ArrowDown") && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      if (selectedImageIndex === null) return;
+      
+      const delta = event.key === "ArrowUp" ? -1 : 1;
+      const targetIndex = selectedImageIndex + delta;
+      if (targetIndex < 0 || targetIndex >= imageUrls.length) return;
+      
+      const updated = [...imageUrls];
+      const [item] = updated.splice(selectedImageIndex, 1);
+      updated.splice(targetIndex, 0, item);
+      imageUrls = updated;
+      selectedImageIndex = targetIndex;
+      
+      renderImageUrlList();
+      updatePreview();
+      return;
+    }
+  }
+
+  function handleImageDragStart(event) {
+    const row = event.target.closest("[data-image-index]");
+    if (!row) return;
+    const index = Number(row.dataset.imageIndex);
+    if (Number.isNaN(index)) return;
+    draggedImageIndex = index;
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", draggedImageIndex.toString());
+    row.classList.add("is-dragging");
+  }
+
+  function handleImageDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }
+
+  function handleImageDragEnter(event) {
+    const row = event.target.closest("[data-image-index]");
+    if (row && !row.classList.contains("is-dragging")) {
+      row.classList.add("drag-over");
+    }
+  }
+
+  function handleImageDragLeave(event) {
+    const row = event.target.closest("[data-image-index]");
+    if (row && (!event.relatedTarget || !row.contains(event.relatedTarget))) {
+      row.classList.remove("drag-over");
+    }
+  }
+
+  function handleImageDrop(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const row = event.target.closest("[data-image-index]");
+    if (!row) return;
+    
+    const dropIndex = Number(row.dataset.imageIndex);
+    if (Number.isNaN(dropIndex) || draggedImageIndex === null || draggedImageIndex === dropIndex) return;
+    
+    // Reorder the array
+    const updated = [...imageUrls];
+    const [item] = updated.splice(draggedImageIndex, 1);
+    updated.splice(dropIndex, 0, item);
+    imageUrls = updated;
+    
+    // Update selected index if necessary
+    if (selectedImageIndex === draggedImageIndex) {
+      selectedImageIndex = dropIndex;
+    } else if (selectedImageIndex !== null) {
+      if (draggedImageIndex < selectedImageIndex && dropIndex >= selectedImageIndex) {
+        selectedImageIndex--;
+      } else if (draggedImageIndex > selectedImageIndex && dropIndex <= selectedImageIndex) {
+        selectedImageIndex++;
+      }
+    }
+    
+    // Update preview index if necessary
+    if (previewIndex === draggedImageIndex) {
+      previewIndex = dropIndex;
+    } else if (draggedImageIndex < previewIndex && dropIndex >= previewIndex) {
+      previewIndex--;
+    } else if (draggedImageIndex > previewIndex && dropIndex <= previewIndex) {
+      previewIndex++;
+    }
+    
     renderImageUrlList();
     updatePreview();
   }
 
+  function handleImageDragEnd(event) {
+    const rows = ui.entryImageUrlsList.querySelectorAll("[data-image-index]");
+    rows.forEach(row => {
+      row.classList.remove("is-dragging", "drag-over");
+    });
+    draggedImageIndex = null;
+  }
+
+  function deleteSelectedImage() {
+    if (selectedImageIndex === null || selectedImageIndex < 0 || selectedImageIndex >= imageUrls.length) {
+      return;
+    }
+    removeImageUrl(selectedImageIndex);
+  }
+
   function removeImageUrl(index) {
     imageUrls = imageUrls.filter((_, idx) => idx !== index);
+    
+    // Update selectedImageIndex
+    if (selectedImageIndex !== null) {
+      if (selectedImageIndex === index) {
+        selectedImageIndex = null;
+      } else if (selectedImageIndex > index) {
+        selectedImageIndex--;
+      }
+    }
+    
     if (previewIndex >= imageUrls.length) {
       previewIndex = Math.max(0, imageUrls.length - 1);
     }
@@ -688,31 +817,54 @@ export function initEntries({ user, postName = "" }) {
   function renderImageUrlList() {
     ui.entryImageUrlsList.innerHTML = "";
     ui.entryImageUrlsEmpty.classList.toggle("is-hidden", imageUrls.length > 0);
+    ui.entryImageDeleteWrap?.classList.toggle("is-hidden", imageUrls.length === 0);
+    
+    // Set ARIA attributes and make list focusable for keyboard navigation
+    if (imageUrls.length > 0) {
+      ui.entryImageUrlsList.setAttribute("tabindex", "0");
+      ui.entryImageUrlsList.setAttribute("role", "listbox");
+      ui.entryImageUrlsList.setAttribute("aria-multiselectable", "false");
+    } else {
+      ui.entryImageUrlsList.removeAttribute("tabindex");
+      ui.entryImageUrlsList.removeAttribute("role");
+      ui.entryImageUrlsList.removeAttribute("aria-multiselectable");
+    }
 
     imageUrls.forEach((url, index) => {
       const row = document.createElement("div");
-      row.className = "hstack";
+      row.className = "entry-image-item";
+      row.setAttribute("draggable", "true");
+      row.setAttribute("data-image-index", index);
       row.setAttribute("role", "option");
       row.setAttribute("aria-label", `Image URL ${index + 1}`);
+      
+      if (selectedImageIndex === index) {
+        row.classList.add("is-selected");
+        row.setAttribute("aria-selected", "true");
+      } else {
+        row.setAttribute("aria-selected", "false");
+      }
 
       const indexLabel = document.createElement("span");
-      indexLabel.className = "subtle small";
+      indexLabel.className = "entry-image-item__index";
       indexLabel.textContent = `${index + 1}.`;
 
       const urlText = document.createElement("span");
+      urlText.className = "entry-image-item__url";
       urlText.textContent = url;
-
-      const controls = document.createElement("div");
-      controls.className = "hstack";
-      controls.innerHTML = `
-        <button class="btn btn--outline" data-action="move-up" data-index="${index}" type="button">Up</button>
-        <button class="btn btn--outline" data-action="move-down" data-index="${index}" type="button">Down</button>
-        <button class="btn btn--danger" data-action="delete" data-index="${index}" type="button">Delete</button>
-      `;
+      urlText.title = url;
 
       row.appendChild(indexLabel);
       row.appendChild(urlText);
-      row.appendChild(controls);
+      
+      // Add drag event listeners
+      row.addEventListener("dragstart", handleImageDragStart);
+      row.addEventListener("dragover", handleImageDragOver);
+      row.addEventListener("dragenter", handleImageDragEnter);
+      row.addEventListener("dragleave", handleImageDragLeave);
+      row.addEventListener("drop", handleImageDrop);
+      row.addEventListener("dragend", handleImageDragEnd);
+      
       ui.entryImageUrlsList.appendChild(row);
     });
   }
