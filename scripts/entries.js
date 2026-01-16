@@ -78,6 +78,9 @@ export function initEntries({ user, postName = "" }) {
     reader: $("#entryReader"),
     readerMedia: $("#entryReaderMedia"),
     readerImage: $("#entryReaderImage"),
+    readerIndexLabel: $("#entryReaderIndex"),
+    btnReaderPrev: $("#btnReaderPrev"),
+    btnReaderNext: $("#btnReaderNext"),
     readerTagsWrap: $("#entryReaderTagsWrap"),
     readerTags: $("#entryReaderTags"),
     readerSourcesWrap: $("#entryReaderSourcesWrap"),
@@ -121,6 +124,8 @@ export function initEntries({ user, postName = "" }) {
   let previewIndex = 0;
   let readerEntry = null;
   let readerScope = null;
+  let readerImageUrls = [];
+  let readerImageIndex = 0;
   let createdByName = postName.trim();
 
   // Initialize PillInput components for tags and sources
@@ -150,6 +155,9 @@ export function initEntries({ user, postName = "" }) {
   ui.entryImageUrlsList.addEventListener("click", handleImageUrlListAction);
   ui.btnPreviewPrev.addEventListener("click", () => changePreviewIndex(-1));
   ui.btnPreviewNext.addEventListener("click", () => changePreviewIndex(1));
+
+  ui.btnReaderPrev.addEventListener("click", () => changeReaderImageIndex(-1));
+  ui.btnReaderNext.addEventListener("click", () => changeReaderImageIndex(1));
 
   ui.btnSave.addEventListener("click", save);
   ui.btnReaderEdit.addEventListener("click", () => {
@@ -400,16 +408,9 @@ export function initEntries({ user, postName = "" }) {
     ui.readerMeta.textContent = `by ${esc(getByline(entryData))}`;
     ui.readerDesc.innerHTML = renderMarkdown(entryData?.description || "");
 
-    const primaryImageUrl = getPrimaryImageUrl(entryData);
-    if (primaryImageUrl) {
-      ui.readerImage.src = primaryImageUrl;
-      ui.readerMedia.classList.remove("is-hidden");
-      ui.reader.classList.remove("reader--no-media");
-    } else {
-      ui.readerMedia.classList.add("is-hidden");
-      ui.readerImage.removeAttribute("src");
-      ui.reader.classList.add("reader--no-media");
-    }
+    readerImageUrls = getEntryImageUrls(entryData);
+    readerImageIndex = 0;
+    updateReaderGallery();
 
     const tags = Array.isArray(entryData?.tags) ? entryData.tags : [];
     ui.readerTags.innerHTML = "";
@@ -444,6 +445,37 @@ export function initEntries({ user, postName = "" }) {
     ui.btnReaderDelete.classList.toggle("is-hidden", !allowEdit);
 
     ui.readerDlg.showModal?.();
+  }
+
+  function updateReaderGallery() {
+    const hasImages = readerImageUrls.length > 0;
+    readerImageIndex = Math.max(0, Math.min(readerImageIndex, readerImageUrls.length - 1));
+    const currentImageUrl = readerImageUrls[readerImageIndex] || "";
+
+    if (currentImageUrl && hasImages) {
+      ui.readerImage.src = currentImageUrl;
+      ui.readerMedia.classList.remove("is-hidden");
+      ui.reader.classList.remove("reader--no-media");
+    } else {
+      ui.readerMedia.classList.add("is-hidden");
+      ui.readerImage.removeAttribute("src");
+      ui.reader.classList.add("reader--no-media");
+    }
+
+    ui.readerIndexLabel.textContent = hasImages ? `${readerImageIndex + 1}/${readerImageUrls.length}` : "0/0";
+    const disableNav = readerImageUrls.length < 2;
+    ui.btnReaderPrev.disabled = disableNav;
+    ui.btnReaderNext.disabled = disableNav;
+  }
+
+  function changeReaderImageIndex(delta) {
+    if (!readerImageUrls.length) return;
+    if (readerImageUrls.length === 1) {
+      readerImageIndex = 0;
+    } else {
+      readerImageIndex = (readerImageIndex + delta + readerImageUrls.length) % readerImageUrls.length;
+    }
+    updateReaderGallery();
   }
 
   function openModal(scope, entryId, entryData) {
