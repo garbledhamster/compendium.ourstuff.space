@@ -1875,7 +1875,7 @@ b {
 }
 
 .entry-image-list:focus {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -1885,8 +1885,8 @@ b {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background-color: var(--surface-1);
-  border: 1px solid var(--border-1);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 4px;
   cursor: grab;
   user-select: none;
@@ -1894,14 +1894,14 @@ b {
 }
 
 .entry-image-item:hover {
-  background-color: var(--surface-2);
-  border-color: var(--border-2);
+  background-color: var(--surface-muted);
+  border-color: var(--muted);
 }
 
 .entry-image-item.is-selected {
-  background-color: var(--accent-surface);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+  background-color: var(--surface-muted);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
 }
 
 .entry-image-item.is-dragging {
@@ -1910,9 +1910,9 @@ b {
 }
 
 .entry-image-item.drag-over {
-  border-color: var(--accent);
+  border-color: var(--primary);
   transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .entry-image-item:active {
@@ -1922,7 +1922,7 @@ b {
 .entry-image-item__index {
   flex-shrink: 0;
   font-size: 0.875rem;
-  color: var(--text-2);
+  color: var(--muted);
   font-weight: 600;
   min-width: 24px;
 }
@@ -1930,13 +1930,13 @@ b {
 .entry-image-item__url {
   flex: 1;
   font-size: 0.875rem;
-  color: var(--text-1);
+  color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .entry-image-item.is-selected .entry-image-item__url {
-  color: var(--accent);
+  color: var(--primary);
   font-weight: 500;
 }
