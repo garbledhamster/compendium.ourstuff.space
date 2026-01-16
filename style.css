@@ -1475,13 +1475,13 @@ b {
   background: var(--surface);
   border-radius: var(--radius);
   overflow: clip;
-  min-height: 240px;
-  max-height: 45vh;
+  max-height: 250px;
 }
 
 .reader__hero img {
   width: 100%;
   height: 100%;
+  max-height: 250px;
   display: block;
   object-fit: contain;
 }
@@ -1584,7 +1584,7 @@ b {
 
 @media (max-width: 900px) {
   .reader__hero {
-    min-height: 200px;
+    max-height: 250px;
   }
 }
 
@@ -1612,13 +1612,12 @@ b {
   }
 
   .reader__grid {
-    grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
+    grid-template-columns: 1fr;
     gap: 24px;
   }
 
   .reader__hero {
-    min-height: 220px;
-    max-height: 35vh;
+    max-height: 250px;
   }
 }
 
