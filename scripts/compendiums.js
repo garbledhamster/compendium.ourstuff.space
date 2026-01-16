@@ -305,8 +305,8 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
       const isPublic = modal.typeToggle.checked;
       const ok = confirm(
         isPublic
-          ? "Make this a public compendium?\n\nAnyone logged-in can add entries. Type cannot be changed later."
-          : "Make this a personal compendium?\n\nOnly you can access it. Type cannot be changed later."
+          ? "Make this a public compendium?\n\nAnyone can view it. Any logged-in user can add entries."
+          : "Make this a personal compendium?\n\nOnly you can access and edit it."
       );
       if (!ok) {
         ignoreTypeConfirm = true;
