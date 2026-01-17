@@ -212,6 +212,47 @@ export function renderMarkdown(raw) {
       continue;
     }
 
+    // Check for titled quote box pattern: "Title: \n --- \n > quote \n ---"
+    if (trimmed.endsWith(":") && !trimmed.match(/^(#{1,6})\s/)) {
+      const nextLine1 = lines[index + 1] ?? "";
+      const nextLine2 = lines[index + 2] ?? "";
+      const isTitledQuoteBox =
+        /^(\*{3,}|-{3,}|_{3,})$/.test(nextLine1.trim()) &&
+        /^(&gt;|>)\s?/.test(nextLine2);
+
+      if (isTitledQuoteBox) {
+        closeParagraph();
+        closeList();
+        closeTable();
+
+        // Extract title (remove trailing colon)
+        const title = trimmed.slice(0, -1).trim();
+
+        // Skip the first horizontal rule
+        index += 2;
+
+        // Collect all blockquote lines
+        const quoteLines = [];
+        while (lines[index] && /^(&gt;|>)\s?/.test(lines[index])) {
+          quoteLines.push(lines[index].replace(/^(&gt;|>)\s?/, ""));
+          index += 1;
+        }
+
+        // Check if there's a closing horizontal rule and skip it
+        if (lines[index] && /^(\*{3,}|-{3,}|_{3,})$/.test(lines[index].trim())) {
+          index += 1;
+        }
+
+        // Render titled quote box
+        const quoteContent = quoteLines.map((value) => applyInlineFormatting(value)).join("<br />");
+        html += `<div class="titled-quote-box"><div class="titled-quote-title">${applyInlineFormatting(title)}</div><blockquote class="titled-quote-content">${quoteContent}</blockquote></div>`;
+
+        // Adjust index since the loop will increment it
+        index -= 1;
+        continue;
+      }
+    }
+
     const tableHeader = splitTableRow(line);
     const nextLine = lines[index + 1] ?? "";
     if (tableHeader.length > 1 && isTableSeparator(nextLine)) {

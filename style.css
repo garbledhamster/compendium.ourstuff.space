@@ -921,6 +921,30 @@ b {
   color: var(--text);
 }
 
+.markdown .titled-quote-box {
+  margin: 0 0 0.75rem;
+  border: 2px solid var(--primary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.markdown .titled-quote-title {
+  background: var(--primary);
+  color: var(--text);
+  padding: 8px 14px;
+  font-weight: 600;
+  border-bottom: 2px solid var(--primary);
+}
+
+.markdown .titled-quote-content {
+  margin: 0;
+  padding: 10px 14px;
+  border: none;
+  border-left: none;
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  color: var(--text);
+}
+
 .markdown hr {
   border: 0;
   height: 1px;
