@@ -110,15 +110,20 @@ export class PillInput {
   }
   
   addItem() {
-    const value = this.input.value.trim();
+    let value = this.input.value.trim();
     if (!value) return;
-    
+
+    // Automatically add # prefix if not present
+    if (!value.startsWith("#")) {
+      value = "#" + value;
+    }
+
     // Avoid duplicates
     if (this.items.includes(value)) {
       this.input.value = "";
       return;
     }
-    
+
     this.items.push(value);
     this.input.value = "";
     this.render();
