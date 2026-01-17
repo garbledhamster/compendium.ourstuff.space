@@ -866,7 +866,7 @@ a { color: inherit; }
 
 strong,
 b {
-  color: var(--danger);
+  color: var(--secondary);
   font-weight: 800;
 }
 
@@ -999,7 +999,7 @@ b {
 
 .markdown strong,
 .markdown b {
-  color: var(--danger);
+  color: var(--secondary);
 }
 
 @media (max-width: 640px) {
