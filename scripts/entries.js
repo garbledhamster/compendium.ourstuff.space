@@ -4,7 +4,7 @@ import {
   updateEntry,
   deleteEntry
 } from "./firebase.js";
-import { renderMarkdown } from "./markdown.js";
+import { renderMarkdown, sanitizeUrl } from "./markdown.js";
 import { PillInput } from "./pill-input.js";
 import { SourcePillInput, getSourceEmoji, getSourceDisplayText, getSourceType } from "./source-pill-input.js";
 
@@ -101,7 +101,12 @@ export function initEntries({ user, postName = "" }) {
     btnReaderDelete: $("#btnReaderDelete"),
 
     imageDlg: $("#imageModal"),
-    imageImg: $("#imageModalImg")
+    imageImg: $("#imageModalImg"),
+
+    sourceDetailDlg: $("#sourceDetailModal"),
+    sourceDetailTitle: $("#sourceDetailTitle"),
+    sourceDetailType: $("#sourceDetailType"),
+    sourceDetailContent: $("#sourceDetailContent")
   };
 
   const deleteConfirm = {
@@ -455,6 +460,12 @@ export function initEntries({ user, postName = "" }) {
         const emoji = getSourceEmoji(getSourceType(source));
         const text = getSourceDisplayText(source);
         item.innerHTML = `<span class="reader__source-emoji">${emoji}</span>${escapeHtmlForReader(text)}`;
+
+        // Make source clickable to show details
+        item.addEventListener("click", () => {
+          openSourceDetail(source);
+        });
+
         ui.readerSources.appendChild(item);
       });
       ui.readerSourcesWrap.classList.remove("is-hidden");
@@ -498,6 +509,101 @@ export function initEntries({ user, postName = "" }) {
       readerImageIndex = (readerImageIndex + delta + readerImageUrls.length) % readerImageUrls.length;
     }
     updateReaderGallery();
+  }
+
+  function openSourceDetail(source) {
+    if (!source || !ui.sourceDetailDlg) return;
+
+    const sourceType = getSourceType(source);
+    const sourceText = getSourceDisplayText(source);
+    const sourceEmoji = getSourceEmoji(sourceType);
+
+    // Set modal title
+    ui.sourceDetailTitle.textContent = sourceText || "Source";
+    ui.sourceDetailType.textContent = `${sourceEmoji} ${sourceType.charAt(0).toUpperCase() + sourceType.slice(1)}`;
+
+    // Build source details HTML
+    let detailsHtml = "";
+
+    // Always show the main text
+    if (sourceText) {
+      detailsHtml += `
+        <div class="source-detail__field">
+          <div class="source-detail__label">Title/Name</div>
+          <div class="source-detail__value">${escapeHtmlForReader(sourceText)}</div>
+        </div>
+      `;
+    }
+
+    // Get type-specific fields based on SOURCE_TYPES from source-pill-input.js
+    const typeFields = {
+      web: ["url", "siteName", "accessDate"],
+      book: ["author", "publisher", "year", "pages", "isbn"],
+      essay: ["author", "publication", "date"],
+      video: ["url", "creator", "timestamp"],
+      audio: ["url", "creator", "episode", "timestamp"],
+      person: ["role", "organization", "contactDate"]
+    };
+
+    const fields = typeFields[sourceType] || [];
+    const fieldLabels = {
+      url: "URL",
+      siteName: "Site Name",
+      accessDate: "Access Date",
+      author: "Author",
+      publisher: "Publisher",
+      year: "Year",
+      pages: "Pages",
+      isbn: "ISBN",
+      publication: "Publication",
+      date: "Date",
+      creator: "Creator",
+      timestamp: "Timestamp",
+      episode: "Episode",
+      role: "Role/Title",
+      organization: "Organization",
+      contactDate: "Contact Date"
+    };
+
+    fields.forEach(fieldName => {
+      const fieldValue = source[fieldName];
+      if (fieldValue) {
+        const label = fieldLabels[fieldName] || fieldName;
+
+        if (fieldName === "url") {
+          // Sanitize URL and display as non-clickable text
+          const sanitized = sanitizeUrl(fieldValue);
+          if (sanitized) {
+            detailsHtml += `
+              <div class="source-detail__field">
+                <div class="source-detail__label">${escapeHtmlForReader(label)}</div>
+                <div class="source-detail__value source-detail__url">${escapeHtmlForReader(sanitized)}</div>
+                <div class="source-detail__url-warning">⚠️ Copy and paste this URL into your browser. Do not click directly.</div>
+              </div>
+            `;
+          } else {
+            // Invalid URL - show as plain text
+            detailsHtml += `
+              <div class="source-detail__field">
+                <div class="source-detail__label">${escapeHtmlForReader(label)}</div>
+                <div class="source-detail__value">${escapeHtmlForReader(fieldValue)} (Invalid URL)</div>
+              </div>
+            `;
+          }
+        } else {
+          // Regular field
+          detailsHtml += `
+            <div class="source-detail__field">
+              <div class="source-detail__label">${escapeHtmlForReader(label)}</div>
+              <div class="source-detail__value">${escapeHtmlForReader(fieldValue)}</div>
+            </div>
+          `;
+        }
+      }
+    });
+
+    ui.sourceDetailContent.innerHTML = detailsHtml;
+    ui.sourceDetailDlg.showModal?.();
   }
 
   function openModal(scope, entryId, entryData) {

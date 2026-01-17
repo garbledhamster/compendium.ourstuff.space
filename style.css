@@ -1010,6 +1010,16 @@ b {
   color: var(--text);
 }
 
+.reader__source {
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.reader__source:hover {
+  background: var(--hover);
+  border-color: var(--primary);
+}
+
 @media (max-width: 860px) {
   .modal__card--reader .reader {
     grid-template-columns: 1fr;
@@ -2037,6 +2047,52 @@ b {
 /* Source display in reader */
 .reader__source-emoji {
   margin-right: 4px;
+}
+
+/* Source detail modal */
+.source-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.source-detail__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.source-detail__label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--secondary);
+}
+
+.source-detail__value {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.5;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  word-break: break-all;
+  user-select: text;
+}
+
+.source-detail__url {
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--primary);
+}
+
+.source-detail__url-warning {
+  font-size: 12px;
+  color: var(--secondary);
+  font-style: italic;
+  margin-top: 4px;
 }
 
 /* Mobile-specific source pill interactions */
