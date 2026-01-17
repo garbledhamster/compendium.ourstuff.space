@@ -96,7 +96,29 @@ export function getSourceEmoji(sourceType) {
 
 export function getSourceDisplayText(source) {
   if (typeof source === "string") return source;
-  return source?.text || "";
+
+  // If source has text field, use it
+  if (source?.text) return source.text;
+
+  // Otherwise, provide intelligent fallbacks based on source type
+  const type = source?.type || "unknown";
+
+  switch (type) {
+    case "web":
+      return source.siteName || source.url || "Web Source";
+    case "book":
+      return source.author || source.publisher || "Book Source";
+    case "essay":
+      return source.author || source.publication || "Essay Source";
+    case "video":
+      return source.creator || source.url || "Video Source";
+    case "audio":
+      return source.creator || source.episode || source.url || "Audio Source";
+    case "person":
+      return source.role || source.organization || "Person Source";
+    default:
+      return "Source";
+  }
 }
 
 export function getSourceType(source) {

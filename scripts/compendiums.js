@@ -12,6 +12,7 @@ import {
 } from "./firebase.js";
 import { renderMarkdown } from "./markdown.js";
 import { PillInput } from "./pill-input.js";
+import { getSourceEmoji, getSourceDisplayText, getSourceType } from "./source-pill-input.js";
 
 const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
@@ -795,7 +796,11 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
         ? `<div class="card__tags">${tags.map((tag) => `<span class="card__tag">${esc(tag)}</span>`).join("")}</div>`
         : "";
       const sourceList = sources.length
-        ? `<div class="card__sources"><span class="card__sources-label">Sources:</span> ${sources.map((source) => `<span class="card__source">${esc(source)}</span>`).join("")}</div>`
+        ? `<div class="card__sources"><span class="card__sources-label">Sources:</span> ${sources.map((source) => {
+            const emoji = getSourceEmoji(getSourceType(source));
+            const text = getSourceDisplayText(source);
+            return `<span class="card__source"><span class="card__source-emoji">${emoji}</span>${esc(text)}</span>`;
+          }).join("")}</div>`
         : "";
 
       const descriptionHtml = renderMarkdown(entry.description || "");
