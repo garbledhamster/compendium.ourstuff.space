@@ -212,29 +212,37 @@ export function renderMarkdown(raw) {
       continue;
     }
 
-    // Check for titled quote box pattern: "Title: \n --- \n > quote \n ---"
-    if (trimmed.endsWith(":") && !trimmed.match(/^(#{1,6})\s/)) {
-      const nextLine1 = lines[index + 1] ?? "";
-      const nextLine2 = lines[index + 2] ?? "";
-      const isTitledQuoteBox =
-        /^(\*{3,}|-{3,}|_{3,})$/.test(nextLine1.trim()) &&
-        /^(&gt;|>)\s?/.test(nextLine2);
+    // Check for titled quote box pattern: "Title text \n --- \n > quote \n ---"
+    // Look for any non-empty line followed by horizontal rule and blockquote
+    const nextLine1 = lines[index + 1] ?? "";
+    const nextLine2 = lines[index + 2] ?? "";
+    const isTitledQuoteBox =
+      trimmed &&
+      !trimmed.match(/^(#{1,6})\s/) && // Not a heading
+      /^(\*{3,}|-{3,}|_{3,})$/.test(nextLine1.trim()) && // Followed by horizontal rule
+      /^(&gt;|>)(\s|$)/.test(nextLine2.trim()); // Followed by blockquote (including empty blockquotes)
 
-      if (isTitledQuoteBox) {
+    if (isTitledQuoteBox) {
+      // Check if this looks like a title (not just regular text before a quote)
+      // We'll accept it as a title if the line contains a colon or ends with certain punctuation
+      const looksLikeTitle = trimmed.includes(':') || /[.!?]$/.test(trimmed) || trimmed.length < 100;
+
+      if (looksLikeTitle) {
         closeParagraph();
         closeList();
         closeTable();
 
-        // Extract title (remove trailing colon)
-        const title = trimmed.slice(0, -1).trim();
+        // Extract title (remove trailing colon if present)
+        const title = trimmed.endsWith(':') ? trimmed.slice(0, -1).trim() : trimmed;
 
         // Skip the first horizontal rule
         index += 2;
 
         // Collect all blockquote lines
         const quoteLines = [];
-        while (lines[index] && /^(&gt;|>)\s?/.test(lines[index])) {
-          quoteLines.push(lines[index].replace(/^(&gt;|>)\s?/, ""));
+        while (lines[index] && /^(&gt;|>)(\s|$)/.test(lines[index].trim())) {
+          const lineContent = lines[index].trim().replace(/^(&gt;|>)\s?/, "");
+          quoteLines.push(lineContent);
           index += 1;
         }
 
