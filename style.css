@@ -2062,6 +2062,14 @@ b {
 }
 
 /* Entry Image URL List Styles */
+.entry-image-list {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
 .entry-image-item {
   display: flex;
   align-items: center;
@@ -2073,6 +2081,7 @@ b {
   cursor: grab;
   transition: background .18s ease, border-color .18s ease, transform .18s ease;
   position: relative;
+  min-width: 0;
 }
 
 .entry-image-item:hover {
