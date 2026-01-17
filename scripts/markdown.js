@@ -8,7 +8,7 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
-function sanitizeUrl(url) {
+export function sanitizeUrl(url) {
   const trimmed = (url ?? "").toString().trim();
   if (!trimmed) return null;
   const lower = trimmed.toLowerCase();
