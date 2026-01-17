@@ -847,7 +847,7 @@ export function initEntries({ user, postName = "" }) {
 
       const indexLabel = document.createElement("span");
       indexLabel.className = "entry-image-item__index";
-      indexLabel.textContent = `${index + 1}.`;
+      indexLabel.textContent = `${index + 1}) `;
 
       const urlText = document.createElement("span");
       urlText.className = "entry-image-item__url";
