@@ -1,10 +1,10 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Login • Compendium</title>
-  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="./style.css">
   <script src="https://www.google.com/recaptcha/enterprise.js?render=6Leyjk4sAAAAANquA6iqXXicXD-6zTitWJsGEzLP"></script>
 </head>
 
@@ -30,29 +30,29 @@
         <form class="form" id="authForm">
           <label class="field">
             <span class="field__label">Email</span>
-            <input class="input" id="email" type="email" autocomplete="email" required />
+            <input class="input" id="email" type="email" autocomplete="email" required>
           </label>
 
           <label class="field">
             <span class="field__label">Password</span>
-            <input class="input" id="password" type="password" autocomplete="current-password" required />
+            <input class="input" id="password" type="password" autocomplete="current-password" required>
             <span class="field__hint">Minimum 6 characters (Firebase default).</span>
           </label>
 
           <label class="field is-hidden create-only" id="confirmField">
             <span class="field__label">Retype Password</span>
-            <input class="input" id="confirmPassword" type="password" autocomplete="new-password" />
+            <input class="input" id="confirmPassword" type="password" autocomplete="new-password">
             <span class="field__hint match-hint is-hidden" id="matchHint"></span>
           </label>
 
           <label class="field is-hidden create-only" id="postNameField">
             <span class="field__label">Display name</span>
-            <input class="input" id="postName" type="text" autocomplete="nickname" />
+            <input class="input" id="postName" type="text" autocomplete="nickname">
             <span class="field__hint">This is the name others will see.</span>
           </label>
 
           <label class="switch">
-            <input id="showPw" type="checkbox" />
+            <input id="showPw" type="checkbox">
             <span class="switch__ui" aria-hidden="true"></span>
             <span class="switch__label">Show password</span>
           </label>

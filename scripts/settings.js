@@ -1,10 +1,10 @@
 import {
-  getUserUiSettings,
-  setUserUiSettings,
-  getUserProfile,
-  claimDisplayName,
-  clearDisplayName,
-  updateEntriesByUserDisplayName
+	claimDisplayName,
+	clearDisplayName,
+	getUserProfile,
+	getUserUiSettings,
+	setUserUiSettings,
+	updateEntriesByUserDisplayName,
 } from "./firebase.js";
 import { applyTheme, pickTheme } from "./themes.js";
 
@@ -12,134 +12,137 @@ const THEME_STORAGE_KEY = "compendium.themeId";
 const RESERVED_NAME = "anonymous";
 
 function normalizeDisplayName(value) {
-  return (value || "").trim().toLowerCase();
+	return (value || "").trim().toLowerCase();
 }
 
 export async function initSettings({
-  user,
-  themes,
-  themeSelectEl,
-  postNameInputEl,
-  postNameSaveEl,
-  postNameHintEl,
-  onProfileChange
+	user,
+	themes,
+	themeSelectEl,
+	postNameInputEl,
+	postNameSaveEl,
+	postNameHintEl,
+	onProfileChange,
 }) {
-  const hasThemes = Array.isArray(themes) && themes.length;
-  // If themes.yaml failed, keep CSS defaults and disable selector gracefully.
-  if (!hasThemes && themeSelectEl) {
-    themeSelectEl.innerHTML = `<option value="monokai-dark">Monokai (Dark)</option>`;
-    themeSelectEl.disabled = true;
-  }
+	const hasThemes = Array.isArray(themes) && themes.length;
+	// If themes.yaml failed, keep CSS defaults and disable selector gracefully.
+	if (!hasThemes && themeSelectEl) {
+		themeSelectEl.innerHTML = `<option value="monokai-dark">Monokai (Dark)</option>`;
+		themeSelectEl.disabled = true;
+	}
 
-  // Load user setting
-  let themeId = "monokai-dark";
-  let postName = "";
-  try {
-    const storedThemeId = localStorage.getItem(THEME_STORAGE_KEY);
-    if (storedThemeId) themeId = storedThemeId;
-  } catch {}
-  try {
-    const data = await getUserUiSettings(user.uid);
-    if (data?.themeId) themeId = data.themeId;
-  } catch {}
-  try {
-    const profile = await getUserProfile(user.uid);
-    if (profile?.displayName) postName = profile.displayName;
-  } catch {}
+	// Load user setting
+	let themeId = "monokai-dark";
+	let postName = "";
+	try {
+		const storedThemeId = localStorage.getItem(THEME_STORAGE_KEY);
+		if (storedThemeId) themeId = storedThemeId;
+	} catch {}
+	try {
+		const data = await getUserUiSettings(user.uid);
+		if (data?.themeId) themeId = data.themeId;
+	} catch {}
+	try {
+		const profile = await getUserProfile(user.uid);
+		if (profile?.displayName) postName = profile.displayName;
+	} catch {}
 
-  let chosen = null;
-  if (hasThemes) {
-    // Apply
-    chosen = pickTheme(themes, themeId, "monokai-dark");
-    applyTheme(chosen);
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, chosen.id);
-    } catch {}
+	let chosen = null;
+	if (hasThemes) {
+		// Apply
+		chosen = pickTheme(themes, themeId, "monokai-dark");
+		applyTheme(chosen);
+		try {
+			localStorage.setItem(THEME_STORAGE_KEY, chosen.id);
+		} catch {}
 
-    // Populate UI
-    themeSelectEl.innerHTML = "";
-    for (const t of themes) {
-      const opt = document.createElement("option");
-      opt.value = t.id;
-      opt.textContent = t.label || t.id;
-      themeSelectEl.appendChild(opt);
-    }
-    themeSelectEl.value = chosen.id;
-    themeSelectEl.disabled = false;
+		// Populate UI
+		themeSelectEl.innerHTML = "";
+		for (const t of themes) {
+			const opt = document.createElement("option");
+			opt.value = t.id;
+			opt.textContent = t.label || t.id;
+			themeSelectEl.appendChild(opt);
+		}
+		themeSelectEl.value = chosen.id;
+		themeSelectEl.disabled = false;
 
-    themeSelectEl.addEventListener("change", async () => {
-      const next = pickTheme(themes, themeSelectEl.value, "monokai-dark");
-      if (!next) return;
-      applyTheme(next);
-      try {
-        localStorage.setItem(THEME_STORAGE_KEY, next.id);
-      } catch {}
+		themeSelectEl.addEventListener("change", async () => {
+			const next = pickTheme(themes, themeSelectEl.value, "monokai-dark");
+			if (!next) return;
+			applyTheme(next);
+			try {
+				localStorage.setItem(THEME_STORAGE_KEY, next.id);
+			} catch {}
 
-      try {
-        await setUserUiSettings(user.uid, { themeId: next.id });
-      } catch {}
-    });
-  }
+			try {
+				await setUserUiSettings(user.uid, { themeId: next.id });
+			} catch {}
+		});
+	}
 
-  if (postNameInputEl && postNameSaveEl) {
-    const setHint = (msg, state = "") => {
-      if (!postNameHintEl) return;
-      postNameHintEl.textContent = msg;
-      postNameHintEl.classList.remove("is-hidden", "is-good", "is-bad");
-      if (state) postNameHintEl.classList.add(state);
-    };
-    const clearHint = () => {
-      if (!postNameHintEl) return;
-      postNameHintEl.textContent = "";
-      postNameHintEl.classList.add("is-hidden");
-      postNameHintEl.classList.remove("is-good", "is-bad");
-    };
-    postNameInputEl.value = postName;
+	if (postNameInputEl && postNameSaveEl) {
+		const setHint = (msg, state = "") => {
+			if (!postNameHintEl) return;
+			postNameHintEl.textContent = msg;
+			postNameHintEl.classList.remove("is-hidden", "is-good", "is-bad");
+			if (state) postNameHintEl.classList.add(state);
+		};
+		const clearHint = () => {
+			if (!postNameHintEl) return;
+			postNameHintEl.textContent = "";
+			postNameHintEl.classList.add("is-hidden");
+			postNameHintEl.classList.remove("is-good", "is-bad");
+		};
+		postNameInputEl.value = postName;
 
-    postNameInputEl.addEventListener("input", () => clearHint());
-    postNameInputEl.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        postNameSaveEl.click();
-      }
-    });
+		postNameInputEl.addEventListener("input", () => clearHint());
+		postNameInputEl.addEventListener("keydown", (event) => {
+			if (event.key === "Enter") {
+				event.preventDefault();
+				postNameSaveEl.click();
+			}
+		});
 
-    postNameSaveEl.addEventListener("click", async () => {
-      const nextName = postNameInputEl.value.trim();
-      try {
-        const normalizedNext = normalizeDisplayName(nextName);
-        if (!normalizedNext) {
-          if (postName) {
-            await clearDisplayName({ uid: user.uid, previousDisplayName: postName });
-            await updateEntriesByUserDisplayName(user.uid, "");
-            postName = "";
-            setHint("Display name cleared.", "is-good");
-            if (onProfileChange) onProfileChange("");
-          } else {
-            setHint("Display name already cleared.", "is-good");
-          }
-          return;
-        }
+		postNameSaveEl.addEventListener("click", async () => {
+			const nextName = postNameInputEl.value.trim();
+			try {
+				const normalizedNext = normalizeDisplayName(nextName);
+				if (!normalizedNext) {
+					if (postName) {
+						await clearDisplayName({
+							uid: user.uid,
+							previousDisplayName: postName,
+						});
+						await updateEntriesByUserDisplayName(user.uid, "");
+						postName = "";
+						setHint("Display name cleared.", "is-good");
+						if (onProfileChange) onProfileChange("");
+					} else {
+						setHint("Display name already cleared.", "is-good");
+					}
+					return;
+				}
 
-        if (normalizedNext === RESERVED_NAME) {
-          setHint("Anonymous is reserved and cannot be used.", "is-bad");
-          return;
-        }
+				if (normalizedNext === RESERVED_NAME) {
+					setHint("Anonymous is reserved and cannot be used.", "is-bad");
+					return;
+				}
 
-        await claimDisplayName({
-          uid: user.uid,
-          displayName: nextName,
-          previousDisplayName: postName
-        });
-        await updateEntriesByUserDisplayName(user.uid, nextName);
-        postName = nextName;
-        setHint("Display name saved.", "is-good");
-        if (onProfileChange) onProfileChange(nextName);
-      } catch (err) {
-        setHint(err?.message || "Unable to save display name.", "is-bad");
-      }
-    });
-  }
+				await claimDisplayName({
+					uid: user.uid,
+					displayName: nextName,
+					previousDisplayName: postName,
+				});
+				await updateEntriesByUserDisplayName(user.uid, nextName);
+				postName = nextName;
+				setHint("Display name saved.", "is-good");
+				if (onProfileChange) onProfileChange(nextName);
+			} catch (err) {
+				setHint(err?.message || "Unable to save display name.", "is-bad");
+			}
+		});
+	}
 
-  return { themeId: chosen?.id || "monokai-dark", postName };
+	return { themeId: chosen?.id || "monokai-dark", postName };
 }
