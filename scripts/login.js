@@ -131,6 +131,16 @@ $("#authForm").addEventListener("submit", async (e) => {
 
   setBusy(true);
   try {
+    // Execute reCAPTCHA v3
+    const recaptchaToken = await grecaptcha.enterprise.execute(
+      "6Leyjk4sAAAAANquA6iqXXicXD-6zTitWJsGEzLP",
+      { action: mode === "create" ? "create_account" : "sign_in" }
+    );
+
+    // Note: Token can be sent to backend for verification
+    // For now, we'll proceed with authentication
+    console.log("reCAPTCHA token obtained:", recaptchaToken ? "✓" : "✗");
+
     if (mode === "create") {
       const cred = await createAccount(email, password);
       if (cred?.user) {
