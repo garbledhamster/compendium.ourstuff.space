@@ -489,9 +489,29 @@ export function initEntries({ user, postName = "" }) {
 				const text = getSourceDisplayText(source);
 				item.innerHTML = `<span class="reader__source-emoji">${emoji}</span>${escapeHtmlForReader(text)}`;
 
-				// Make source clickable to show details
+				const sourceType = getSourceType(source);
+				const sourceUrl = source?.url;
+				const sanitizedUrl = sourceUrl ? sanitizeUrl(sourceUrl) : null;
+
+				// Add hover tooltip for web sources with URLs
+				if (sanitizedUrl && sourceType === "web") {
+					item.title = sanitizedUrl;
+				}
+
+				// Make source clickable
 				item.addEventListener("click", () => {
-					openSourceDetail(source);
+					// For web sources with valid URLs, show confirmation dialog
+					if (sourceType === "web" && sanitizedUrl) {
+						const confirmed = confirm(
+							`You are being redirected to an external website:\n\n${sanitizedUrl}\n\nDo you want to continue?`,
+						);
+						if (confirmed) {
+							window.open(sanitizedUrl, "_blank", "noopener,noreferrer");
+						}
+					} else {
+						// For other sources or sources without URLs, show detail modal
+						openSourceDetail(source);
+					}
 				});
 
 				ui.readerSources.appendChild(item);
