@@ -1,323 +1,349 @@
 import {
-  listenEntries,
-  createEntry,
-  updateEntry,
-  deleteEntry
+	createEntry,
+	deleteEntry,
+	listenEntries,
+	updateEntry,
 } from "./firebase.js";
 import { renderMarkdown, sanitizeUrl } from "./markdown.js";
 import { PillInput } from "./pill-input.js";
-import { SourcePillInput, getSourceEmoji, getSourceDisplayText, getSourceType } from "./source-pill-input.js";
+import {
+	getSourceDisplayText,
+	getSourceEmoji,
+	getSourceType,
+	SourcePillInput,
+} from "./source-pill-input.js";
 
-const $ = (s, r=document) => r.querySelector(s);
-function esc(s){ return (s ?? "").toString(); }
-function normEmail(e){ return (e || "").trim().toLowerCase(); }
+const $ = (s, r = document) => r.querySelector(s);
+function esc(s) {
+	return (s ?? "").toString();
+}
+function normEmail(e) {
+	return (e || "").trim().toLowerCase();
+}
 function escapeHtmlForReader(str) {
-  return (str ?? "")
-    .toString()
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+	return (str ?? "")
+		.toString()
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
 }
 
-function toast(msg, kind="ok") {
-  const el = document.createElement("div");
-  el.className = `toast toast--${kind}`;
-  el.textContent = msg;
-  document.body.appendChild(el);
-  requestAnimationFrame(() => el.classList.add("is-on"));
-  setTimeout(() => { el.classList.remove("is-on"); setTimeout(() => el.remove(), 220); }, 2200);
+function toast(msg, kind = "ok") {
+	const el = document.createElement("div");
+	el.className = `toast toast--${kind}`;
+	el.textContent = msg;
+	document.body.appendChild(el);
+	requestAnimationFrame(() => el.classList.add("is-on"));
+	setTimeout(() => {
+		el.classList.remove("is-on");
+		setTimeout(() => el.remove(), 220);
+	}, 2200);
 }
 
-function isOwner(user, comp){ return comp?.ownerUid === user.uid; }
-function isEditor(user, comp){
-  if (!comp || comp.visibility !== "public") return false;
-  const emails = Array.isArray(comp.editorEmails) ? comp.editorEmails : [];
-  return emails.includes(normEmail(user.email || ""));
+function isOwner(user, comp) {
+	return comp?.ownerUid === user.uid;
 }
-function canAddEntry(user, comp){
-  if (!comp) return false;
-  if (comp.visibility === "public") return true;
-  return isOwner(user, comp);
+function isEditor(user, comp) {
+	if (!comp || comp.visibility !== "public") return false;
+	const emails = Array.isArray(comp.editorEmails) ? comp.editorEmails : [];
+	return emails.includes(normEmail(user.email || ""));
 }
-function canEditEntry(user, comp, entry){
-  if (!entry) return false;
-  if (entry.createdByUid === user.uid) return true;
-  if (comp?.visibility === "public" && (isOwner(user, comp) || isEditor(user, comp))) return true;
-  return false;
+function canAddEntry(user, comp) {
+	if (!comp) return false;
+	if (comp.visibility === "public") return true;
+	return isOwner(user, comp);
+}
+function canEditEntry(user, comp, entry) {
+	if (!entry) return false;
+	if (entry.createdByUid === user.uid) return true;
+	if (
+		comp?.visibility === "public" &&
+		(isOwner(user, comp) || isEditor(user, comp))
+	)
+		return true;
+	return false;
 }
 
 export function initEntries({ user, postName = "" }) {
-  const ui = {
-    personalCount: $("#personalEntriesCount"),
-    publicCount: $("#publicEntriesCount"),
-    personalList: $("#personalEntriesList"),
-    publicList: $("#publicEntriesList"),
+	const ui = {
+		personalCount: $("#personalEntriesCount"),
+		publicCount: $("#publicEntriesCount"),
+		personalList: $("#personalEntriesList"),
+		publicList: $("#publicEntriesList"),
 
-    btnAddPersonal: $("#btnAddPersonalEntry"),
-    btnAddPublic: $("#btnAddPublicEntry"),
+		btnAddPersonal: $("#btnAddPersonalEntry"),
+		btnAddPublic: $("#btnAddPublicEntry"),
 
-    dlg: $("#entryModal"),
-    title: $("#entryModalTitle"),
-    sub: $("#entryModalSub"),
-    err: $("#entryError"),
+		dlg: $("#entryModal"),
+		title: $("#entryModalTitle"),
+		sub: $("#entryModalSub"),
+		err: $("#entryError"),
 
-    entryTitle: $("#entryTitle"),
-    entryDesc: $("#entryDesc"),
-    entryTags: $("#entryTags"),
-    entrySources: $("#entrySources"),
-    entryUrlInput: $("#entryImageUrlInput"),
-    btnAddEntryImageUrl: $("#btnAddEntryImageUrl"),
-    entryImageUrlsList: $("#entryImageUrlsList"),
-    entryImageUrlsEmpty: $("#entryImageUrlsEmpty"),
-    entryImageDeleteWrap: $("#entryImageDeleteWrap"),
-    btnDeleteSelectedImage: $("#btnDeleteSelectedImage"),
+		entryTitle: $("#entryTitle"),
+		entryDesc: $("#entryDesc"),
+		entryTags: $("#entryTags"),
+		entrySources: $("#entrySources"),
+		entryUrlInput: $("#entryImageUrlInput"),
+		btnAddEntryImageUrl: $("#btnAddEntryImageUrl"),
+		entryImageUrlsList: $("#entryImageUrlsList"),
+		entryImageUrlsEmpty: $("#entryImageUrlsEmpty"),
+		entryImageDeleteWrap: $("#entryImageDeleteWrap"),
+		btnDeleteSelectedImage: $("#btnDeleteSelectedImage"),
 
-    previewWrap: $("#entryPreviewWrap"),
-    previewImg: $("#entryPreviewImg"),
-    previewIndexLabel: $("#entryPreviewIndex"),
-    btnPreviewPrev: $("#btnPreviewPrev"),
-    btnPreviewNext: $("#btnPreviewNext"),
+		previewWrap: $("#entryPreviewWrap"),
+		previewImg: $("#entryPreviewImg"),
+		previewIndexLabel: $("#entryPreviewIndex"),
+		btnPreviewPrev: $("#btnPreviewPrev"),
+		btnPreviewNext: $("#btnPreviewNext"),
 
-    btnSave: $("#btnSaveEntry"),
+		btnSave: $("#btnSaveEntry"),
 
-    readerDlg: $("#entryReaderModal"),
-    readerTitle: $("#entryReaderTitle"),
-    readerSub: $("#entryReaderSub"),
-    readerMeta: $("#entryReaderMeta"),
-    readerDesc: $("#entryReaderDescription"),
-    reader: $("#entryReader"),
-    readerMedia: $("#entryReaderMedia"),
-    readerImage: $("#entryReaderImage"),
-    readerIndexLabel: $("#entryReaderIndex"),
-    btnReaderPrev: $("#btnReaderPrev"),
-    btnReaderNext: $("#btnReaderNext"),
-    readerTagsWrap: $("#entryReaderTagsWrap"),
-    readerTags: $("#entryReaderTags"),
-    readerSourcesWrap: $("#entryReaderSourcesWrap"),
-    readerSources: $("#entryReaderSources"),
-    btnReaderEdit: $("#btnReaderEdit"),
-    btnReaderDelete: $("#btnReaderDelete"),
+		readerDlg: $("#entryReaderModal"),
+		readerTitle: $("#entryReaderTitle"),
+		readerSub: $("#entryReaderSub"),
+		readerMeta: $("#entryReaderMeta"),
+		readerDesc: $("#entryReaderDescription"),
+		reader: $("#entryReader"),
+		readerMedia: $("#entryReaderMedia"),
+		readerImage: $("#entryReaderImage"),
+		readerIndexLabel: $("#entryReaderIndex"),
+		btnReaderPrev: $("#btnReaderPrev"),
+		btnReaderNext: $("#btnReaderNext"),
+		readerTagsWrap: $("#entryReaderTagsWrap"),
+		readerTags: $("#entryReaderTags"),
+		readerSourcesWrap: $("#entryReaderSourcesWrap"),
+		readerSources: $("#entryReaderSources"),
+		btnReaderEdit: $("#btnReaderEdit"),
+		btnReaderDelete: $("#btnReaderDelete"),
 
-    imageDlg: $("#imageModal"),
-    imageImg: $("#imageModalImg"),
+		imageDlg: $("#imageModal"),
+		imageImg: $("#imageModalImg"),
 
-    sourceDetailDlg: $("#sourceDetailModal"),
-    sourceDetailTitle: $("#sourceDetailTitle"),
-    sourceDetailType: $("#sourceDetailType"),
-    sourceDetailContent: $("#sourceDetailContent")
-  };
+		sourceDetailDlg: $("#sourceDetailModal"),
+		sourceDetailTitle: $("#sourceDetailTitle"),
+		sourceDetailType: $("#sourceDetailType"),
+		sourceDetailContent: $("#sourceDetailContent"),
+	};
 
-  const deleteConfirm = {
-    dlg: $("#deleteConfirmModal"),
-    title: $("#deleteConfirmTitle"),
-    copy: $("#deleteConfirmCopy"),
-    detail: $("#deleteConfirmDetail")
-  };
+	const deleteConfirm = {
+		dlg: $("#deleteConfirmModal"),
+		title: $("#deleteConfirmTitle"),
+		copy: $("#deleteConfirmCopy"),
+		detail: $("#deleteConfirmDetail"),
+	};
 
-  const missing = Object.entries(ui)
-    .filter(([, el]) => !el)
-    .map(([key]) => key);
+	const missing = Object.entries(ui)
+		.filter(([, el]) => !el)
+		.map(([key]) => key);
 
-  if (missing.length) {
-    console.warn("Entries UI is missing expected elements:", missing);
-    return {
-      setActiveCompendium() {}
-    };
-  }
+	if (missing.length) {
+		console.warn("Entries UI is missing expected elements:", missing);
+		return {
+			setActiveCompendium() {},
+		};
+	}
 
-  let active = {
-    scope: null,
-    compId: null,
-    compDoc: null
-  };
+	let active = {
+		scope: null,
+		compId: null,
+		compDoc: null,
+	};
 
-  let unsub = null;
+	let unsub = null;
 
-  let editingId = null;
-  let editingData = null;
-  let imageUrls = [];
-  let previewIndex = 0;
-  let readerEntry = null;
-  let readerScope = null;
-  let readerImageUrls = [];
-  let readerImageIndex = 0;
-  let createdByName = postName.trim();
-  let selectedImageIndex = null;
-  let draggedImageIndex = null;
+	let editingId = null;
+	let editingData = null;
+	let imageUrls = [];
+	let previewIndex = 0;
+	let readerEntry = null;
+	let readerScope = null;
+	let readerImageUrls = [];
+	let readerImageIndex = 0;
+	let createdByName = postName.trim();
+	let selectedImageIndex = null;
+	let draggedImageIndex = null;
 
-  // Initialize PillInput components for tags and sources
-  const entryTagsInput = new PillInput(ui.entryTags, {
-    placeholder: "Type a tag and press Enter...",
-    emptyMessage: "No tags yet.",
-    maxLength: 20
-  });
-  
-  const entrySourcesInput = new SourcePillInput(ui.entrySources, {
-    placeholder: "Type a source and press Enter...",
-    emptyMessage: "No sources yet.",
-    maxLength: 20
-  });
+	// Initialize PillInput components for tags and sources
+	const entryTagsInput = new PillInput(ui.entryTags, {
+		placeholder: "Type a tag and press Enter...",
+		emptyMessage: "No tags yet.",
+		maxLength: 20,
+	});
 
-  const getByline = (entry) =>
-    entry?.createdByName
-      || "Anonymous";
+	const entrySourcesInput = new SourcePillInput(ui.entrySources, {
+		placeholder: "Type a source and press Enter...",
+		emptyMessage: "No sources yet.",
+		maxLength: 20,
+	});
 
-  ui.entryUrlInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      addImageUrlFromInput();
-    }
-  });
-  ui.btnAddEntryImageUrl.addEventListener("click", addImageUrlFromInput);
-  ui.entryImageUrlsList.addEventListener("click", handleImageUrlListClick);
-  ui.entryImageUrlsList.addEventListener("keydown", handleImageUrlListKeydown);
-  ui.btnDeleteSelectedImage?.addEventListener("click", deleteSelectedImage);
-  ui.btnPreviewPrev.addEventListener("click", () => changePreviewIndex(-1));
-  ui.btnPreviewNext.addEventListener("click", () => changePreviewIndex(1));
+	const getByline = (entry) => entry?.createdByName || "Anonymous";
 
-  ui.btnReaderPrev.addEventListener("click", () => changeReaderImageIndex(-1));
-  ui.btnReaderNext.addEventListener("click", () => changeReaderImageIndex(1));
+	ui.entryUrlInput.addEventListener("keydown", (event) => {
+		if (event.key === "Enter") {
+			event.preventDefault();
+			addImageUrlFromInput();
+		}
+	});
+	ui.btnAddEntryImageUrl.addEventListener("click", addImageUrlFromInput);
+	ui.entryImageUrlsList.addEventListener("click", handleImageUrlListClick);
+	ui.entryImageUrlsList.addEventListener("keydown", handleImageUrlListKeydown);
+	ui.btnDeleteSelectedImage?.addEventListener("click", deleteSelectedImage);
+	ui.btnPreviewPrev.addEventListener("click", () => changePreviewIndex(-1));
+	ui.btnPreviewNext.addEventListener("click", () => changePreviewIndex(1));
 
-  ui.btnSave.addEventListener("click", save);
-  ui.btnReaderEdit.addEventListener("click", () => {
-    if (!readerEntry || !readerScope) return;
-    if (!canEditEntry(user, active.compDoc, readerEntry)) return;
-    ui.readerDlg.close?.();
-    openModal(readerScope, readerEntry.id, readerEntry);
-  });
-  ui.btnReaderDelete.addEventListener("click", async () => {
-    if (!readerEntry) return;
-    ui.readerDlg.close?.();
-    await remove(readerEntry);
-  });
+	ui.btnReaderPrev.addEventListener("click", () => changeReaderImageIndex(-1));
+	ui.btnReaderNext.addEventListener("click", () => changeReaderImageIndex(1));
 
-  function openImageViewer(url) {
-    if (!url || !ui.imageDlg || !ui.imageImg) return;
-    ui.imageImg.src = url;
-    ui.imageDlg.showModal?.();
-  }
+	ui.btnSave.addEventListener("click", save);
+	ui.btnReaderEdit.addEventListener("click", () => {
+		if (!readerEntry || !readerScope) return;
+		if (!canEditEntry(user, active.compDoc, readerEntry)) return;
+		ui.readerDlg.close?.();
+		openModal(readerScope, readerEntry.id, readerEntry);
+	});
+	ui.btnReaderDelete.addEventListener("click", async () => {
+		if (!readerEntry) return;
+		ui.readerDlg.close?.();
+		await remove(readerEntry);
+	});
 
-  ui.btnAddPersonal.addEventListener("click", () => {
-    if (!active.compDoc || active.scope !== "personal") return;
-    openModal("personal", null, null);
-  });
+	function openImageViewer(url) {
+		if (!url || !ui.imageDlg || !ui.imageImg) return;
+		ui.imageImg.src = url;
+		ui.imageDlg.showModal?.();
+	}
 
-  ui.btnAddPublic.addEventListener("click", () => {
-    if (!active.compDoc || active.scope !== "public") return;
-    openModal("public", null, null);
-  });
+	ui.btnAddPersonal.addEventListener("click", () => {
+		if (!active.compDoc || active.scope !== "personal") return;
+		openModal("personal", null, null);
+	});
 
-  function resetLists() {
-    ui.personalList.innerHTML = "";
-    ui.publicList.innerHTML = "";
-    ui.personalCount.textContent = "—";
-    ui.publicCount.textContent = "—";
-    ui.btnAddPersonal.disabled = true;
-    ui.btnAddPublic.disabled = true;
-  }
+	ui.btnAddPublic.addEventListener("click", () => {
+		if (!active.compDoc || active.scope !== "public") return;
+		openModal("public", null, null);
+	});
 
-  function resetInactive(scope) {
-    if (scope === "personal") {
-      ui.publicList.innerHTML = "";
-      ui.publicCount.textContent = "—";
-      ui.btnAddPublic.disabled = true;
-    } else if (scope === "public") {
-      ui.personalList.innerHTML = "";
-      ui.personalCount.textContent = "—";
-      ui.btnAddPersonal.disabled = true;
-    }
-  }
+	function resetLists() {
+		ui.personalList.innerHTML = "";
+		ui.publicList.innerHTML = "";
+		ui.personalCount.textContent = "—";
+		ui.publicCount.textContent = "—";
+		ui.btnAddPersonal.disabled = true;
+		ui.btnAddPublic.disabled = true;
+	}
 
-  function setActiveCompendium(scope, compId, compDoc) {
-    // called by compendiums module
-    active = { scope, compId, compDoc };
+	function resetInactive(scope) {
+		if (scope === "personal") {
+			ui.publicList.innerHTML = "";
+			ui.publicCount.textContent = "—";
+			ui.btnAddPublic.disabled = true;
+		} else if (scope === "public") {
+			ui.personalList.innerHTML = "";
+			ui.personalCount.textContent = "—";
+			ui.btnAddPersonal.disabled = true;
+		}
+	}
 
-    unsub?.();
-    unsub = null;
+	function setActiveCompendium(scope, compId, compDoc) {
+		// called by compendiums module
+		active = { scope, compId, compDoc };
 
-    if (scope !== "personal" && scope !== "public") {
-      resetLists();
-      return;
-    }
+		unsub?.();
+		unsub = null;
 
-    // Clear UI if nothing selected
-    if (!compId || !compDoc) {
-      resetLists();
-      return;
-    }
+		if (scope !== "personal" && scope !== "public") {
+			resetLists();
+			return;
+		}
 
-    resetInactive(scope);
+		// Clear UI if nothing selected
+		if (!compId || !compDoc) {
+			resetLists();
+			return;
+		}
 
-    // Enable/disable add button UI-side
-    if (scope === "personal") ui.btnAddPersonal.disabled = !canAddEntry(user, compDoc);
-    if (scope === "public") ui.btnAddPublic.disabled = !canAddEntry(user, compDoc);
+		resetInactive(scope);
 
-    unsub = listenEntries(compId, (entries) => {
-      if (scope === "personal") {
-        ui.personalCount.textContent = `${entries.length} entr${entries.length === 1 ? "y" : "ies"}`;
-        render(entries, "personal");
-      } else {
-        ui.publicCount.textContent = `${entries.length} entr${entries.length === 1 ? "y" : "ies"}`;
-        render(entries, "public");
-      }
-    }, (err) => {
-      console.error(err);
-      toast(err?.message || "Failed to load entries", "bad");
-    });
-  }
+		// Enable/disable add button UI-side
+		if (scope === "personal")
+			ui.btnAddPersonal.disabled = !canAddEntry(user, compDoc);
+		if (scope === "public")
+			ui.btnAddPublic.disabled = !canAddEntry(user, compDoc);
 
-  function render(entries, scope) {
-    const root = scope === "personal" ? ui.personalList : ui.publicList;
-    const comp = active.compDoc;
-    root.innerHTML = "";
+		unsub = listenEntries(
+			compId,
+			(entries) => {
+				if (scope === "personal") {
+					ui.personalCount.textContent = `${entries.length} entr${entries.length === 1 ? "y" : "ies"}`;
+					render(entries, "personal");
+				} else {
+					ui.publicCount.textContent = `${entries.length} entr${entries.length === 1 ? "y" : "ies"}`;
+					render(entries, "public");
+				}
+			},
+			(err) => {
+				console.error(err);
+				toast(err?.message || "Failed to load entries", "bad");
+			},
+		);
+	}
 
-    if (!entries.length) {
-      const d = document.createElement("div");
-      d.className = "subtle";
-      d.textContent = "No entries yet.";
-      root.appendChild(d);
-      return;
-    }
+	function render(entries, scope) {
+		const root = scope === "personal" ? ui.personalList : ui.publicList;
+		const comp = active.compDoc;
+		root.innerHTML = "";
 
-    for (const [index, e] of entries.entries()) {
-      const card = document.createElement("div");
-      card.className = "card";
+		if (!entries.length) {
+			const d = document.createElement("div");
+			d.className = "subtle";
+			d.textContent = "No entries yet.";
+			root.appendChild(d);
+			return;
+		}
 
-      const imageList = getEntryImageUrls(e);
-      const hasImages = imageList.length > 0;
-      const initialImage = hasImages ? imageList[0] : "";
-      const img = hasImages
-        ? `<button class="thumb__image" type="button" data-thumb-action="expand" aria-label="View full image"><img class="thumb" src="${esc(initialImage)}" alt="Entry image" loading="lazy" /></button>`
-        : `<div class="thumb__image" aria-disabled="true"><div class="thumb--empty">No image</div></div>`;
-      const navDisabled = imageList.length < 2;
-      const nav = `
+		for (const [index, e] of entries.entries()) {
+			const card = document.createElement("div");
+			card.className = "card";
+
+			const imageList = getEntryImageUrls(e);
+			const hasImages = imageList.length > 0;
+			const initialImage = hasImages ? imageList[0] : "";
+			const img = hasImages
+				? `<button class="thumb__image" type="button" data-thumb-action="expand" aria-label="View full image"><img class="thumb" src="${esc(initialImage)}" alt="Entry image" loading="lazy" /></button>`
+				: `<div class="thumb__image" aria-disabled="true"><div class="thumb--empty">No image</div></div>`;
+			const navDisabled = imageList.length < 2;
+			const nav = `
         <div class="thumb__nav">
           <button class="thumb__btn" data-thumb-action="prev" type="button" ${navDisabled ? "disabled" : ""} aria-label="Previous image">&lt;</button>
           <button class="thumb__btn" data-thumb-action="next" type="button" ${navDisabled ? "disabled" : ""} aria-label="Next image">&gt;</button>
         </div>
       `;
 
-      const allowEdit = canEditEntry(user, comp, e);
-      const prevEntry = entries[index - 1];
-      const nextEntry = entries[index + 1];
-      const allowMoveUp = allowEdit && prevEntry && canEditEntry(user, comp, prevEntry);
-      const allowMoveDown = allowEdit && nextEntry && canEditEntry(user, comp, nextEntry);
-      const tags = Array.isArray(e.tags) ? e.tags : [];
-      const sources = Array.isArray(e.sources) ? e.sources : [];
-      const tagList = tags.length
-        ? `<div class="card__tags">${tags.map((tag) => `<span class="card__tag">${esc(tag)}</span>`).join("")}</div>`
-        : "";
-      const sourceList = sources.length
-        ? `<div class="card__sources"><span class="card__sources-label">Sources:</span> ${sources.map((source) => {
-            const emoji = getSourceEmoji(getSourceType(source));
-            const text = getSourceDisplayText(source);
-            return `<span class="card__source"><span class="card__source-emoji">${emoji}</span>${esc(text)}</span>`;
-          }).join("")}</div>`
-        : "";
-      const reorderActions = allowEdit
-        ? `
+			const allowEdit = canEditEntry(user, comp, e);
+			const prevEntry = entries[index - 1];
+			const nextEntry = entries[index + 1];
+			const allowMoveUp =
+				allowEdit && prevEntry && canEditEntry(user, comp, prevEntry);
+			const allowMoveDown =
+				allowEdit && nextEntry && canEditEntry(user, comp, nextEntry);
+			const tags = Array.isArray(e.tags) ? e.tags : [];
+			const sources = Array.isArray(e.sources) ? e.sources : [];
+			const tagList = tags.length
+				? `<div class="card__tags">${tags.map((tag) => `<span class="card__tag">${esc(tag)}</span>`).join("")}</div>`
+				: "";
+			const sourceList = sources.length
+				? `<div class="card__sources"><span class="card__sources-label">Sources:</span> ${sources
+						.map((source) => {
+							const emoji = getSourceEmoji(getSourceType(source));
+							const text = getSourceDisplayText(source);
+							return `<span class="card__source"><span class="card__source-emoji">${emoji}</span>${esc(text)}</span>`;
+						})
+						.join("")}</div>`
+				: "";
+			const reorderActions = allowEdit
+				? `
           <button class="btn btn--outline" data-act="move-up" type="button" ${allowMoveUp ? "" : "disabled"}>
             <span class="ico" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="m12 5l-6 6h4v6h4v-6h4z"/></svg>
@@ -331,9 +357,9 @@ export function initEntries({ user, postName = "" }) {
             Down
           </button>
         `
-        : "";
-      const editActions = allowEdit
-        ? `
+				: "";
+			const editActions = allowEdit
+				? `
           <button class="btn btn--secondary" data-act="edit" type="button">
             <span class="ico" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="m4 15.5l8.8-8.8l2.5 2.5L6.5 18H4zM14.8 6.2l1.5-1.5a1 1 0 0 1 1.4 0l1.1 1.1a1 1 0 0 1 0 1.4l-1.5 1.5z"/></svg>
@@ -347,9 +373,9 @@ export function initEntries({ user, postName = "" }) {
             Delete
           </button>
         `
-        : "";
+				: "";
 
-      card.innerHTML = `
+			card.innerHTML = `
         <div class="card__row">
           <div class="thumb-cell">
             ${img}
@@ -375,671 +401,721 @@ export function initEntries({ user, postName = "" }) {
         </div>
       `;
 
-      card.querySelector('[data-act="read"]').addEventListener("click", () => openReader(scope, e));
-      const editBtn = card.querySelector('[data-act="edit"]');
-      const delBtn = card.querySelector('[data-act="del"]');
-      const upBtn = card.querySelector('[data-act="move-up"]');
-      const downBtn = card.querySelector('[data-act="move-down"]');
-      const thumbImg = card.querySelector(".thumb");
-      const expandBtn = card.querySelector('[data-thumb-action="expand"]');
-      const prevBtn = card.querySelector('[data-thumb-action="prev"]');
-      const nextBtn = card.querySelector('[data-thumb-action="next"]');
+			card
+				.querySelector('[data-act="read"]')
+				.addEventListener("click", () => openReader(scope, e));
+			const editBtn = card.querySelector('[data-act="edit"]');
+			const delBtn = card.querySelector('[data-act="del"]');
+			const upBtn = card.querySelector('[data-act="move-up"]');
+			const downBtn = card.querySelector('[data-act="move-down"]');
+			const thumbImg = card.querySelector(".thumb");
+			const expandBtn = card.querySelector('[data-thumb-action="expand"]');
+			const prevBtn = card.querySelector('[data-thumb-action="prev"]');
+			const nextBtn = card.querySelector('[data-thumb-action="next"]');
 
-      let imageIndex = 0;
-      const updateThumb = () => {
-        if (!thumbImg || !imageList.length) return;
-        imageIndex = (imageIndex + imageList.length) % imageList.length;
-        thumbImg.src = imageList[imageIndex];
-        thumbImg.alt = `Entry image ${imageIndex + 1} of ${imageList.length}`;
-      };
+			let imageIndex = 0;
+			const updateThumb = () => {
+				if (!thumbImg || !imageList.length) return;
+				imageIndex = (imageIndex + imageList.length) % imageList.length;
+				thumbImg.src = imageList[imageIndex];
+				thumbImg.alt = `Entry image ${imageIndex + 1} of ${imageList.length}`;
+			};
 
-      prevBtn?.addEventListener("click", () => {
-        if (!imageList.length) return;
-        imageIndex -= 1;
-        updateThumb();
-      });
+			prevBtn?.addEventListener("click", () => {
+				if (!imageList.length) return;
+				imageIndex -= 1;
+				updateThumb();
+			});
 
-      nextBtn?.addEventListener("click", () => {
-        if (!imageList.length) return;
-        imageIndex += 1;
-        updateThumb();
-      });
+			nextBtn?.addEventListener("click", () => {
+				if (!imageList.length) return;
+				imageIndex += 1;
+				updateThumb();
+			});
 
-      expandBtn?.addEventListener("click", () => {
-        if (!imageList.length) return;
-        openImageViewer(imageList[imageIndex]);
-      });
+			expandBtn?.addEventListener("click", () => {
+				if (!imageList.length) return;
+				openImageViewer(imageList[imageIndex]);
+			});
 
-      if (imageList.length) {
-        updateThumb();
-      }
-      editBtn?.addEventListener("click", () => openModal(scope, e.id, e));
-      delBtn?.addEventListener("click", () => remove(e));
-      upBtn?.addEventListener("click", () => reorderEntry(entries, index, -1));
-      downBtn?.addEventListener("click", () => reorderEntry(entries, index, 1));
+			if (imageList.length) {
+				updateThumb();
+			}
+			editBtn?.addEventListener("click", () => openModal(scope, e.id, e));
+			delBtn?.addEventListener("click", () => remove(e));
+			upBtn?.addEventListener("click", () => reorderEntry(entries, index, -1));
+			downBtn?.addEventListener("click", () => reorderEntry(entries, index, 1));
 
-      root.appendChild(card);
-    }
-  }
+			root.appendChild(card);
+		}
+	}
 
-  function openReader(scope, entryData) {
-    if (!active.compDoc || !entryData) return;
+	function openReader(scope, entryData) {
+		if (!active.compDoc || !entryData) return;
 
-    readerEntry = entryData;
-    readerScope = scope;
+		readerEntry = entryData;
+		readerScope = scope;
 
-    ui.readerTitle.textContent = entryData?.title || "Untitled";
-    ui.readerSub.textContent = active.compDoc?.name || "—";
-    ui.readerMeta.textContent = `by ${esc(getByline(entryData))}`;
-    ui.readerDesc.innerHTML = renderMarkdown(entryData?.description || "");
+		ui.readerTitle.textContent = entryData?.title || "Untitled";
+		ui.readerSub.textContent = active.compDoc?.name || "—";
+		ui.readerMeta.textContent = `by ${esc(getByline(entryData))}`;
+		ui.readerDesc.innerHTML = renderMarkdown(entryData?.description || "");
 
-    readerImageUrls = getEntryImageUrls(entryData);
-    readerImageIndex = 0;
-    updateReaderGallery();
+		readerImageUrls = getEntryImageUrls(entryData);
+		readerImageIndex = 0;
+		updateReaderGallery();
 
-    const tags = Array.isArray(entryData?.tags) ? entryData.tags : [];
-    ui.readerTags.innerHTML = "";
-    if (tags.length) {
-      tags.forEach((tag) => {
-        const chip = document.createElement("span");
-        chip.className = "reader__tag";
-        chip.textContent = tag;
-        ui.readerTags.appendChild(chip);
-      });
-      ui.readerTagsWrap.classList.remove("is-hidden");
-    } else {
-      ui.readerTagsWrap.classList.add("is-hidden");
-    }
+		const tags = Array.isArray(entryData?.tags) ? entryData.tags : [];
+		ui.readerTags.innerHTML = "";
+		if (tags.length) {
+			tags.forEach((tag) => {
+				const chip = document.createElement("span");
+				chip.className = "reader__tag";
+				chip.textContent = tag;
+				ui.readerTags.appendChild(chip);
+			});
+			ui.readerTagsWrap.classList.remove("is-hidden");
+		} else {
+			ui.readerTagsWrap.classList.add("is-hidden");
+		}
 
-    const sources = Array.isArray(entryData?.sources) ? entryData.sources : [];
-    ui.readerSources.innerHTML = "";
-    if (sources.length) {
-      sources.forEach((source) => {
-        const item = document.createElement("span");
-        item.className = "reader__source";
-        const emoji = getSourceEmoji(getSourceType(source));
-        const text = getSourceDisplayText(source);
-        item.innerHTML = `<span class="reader__source-emoji">${emoji}</span>${escapeHtmlForReader(text)}`;
+		const sources = Array.isArray(entryData?.sources) ? entryData.sources : [];
+		ui.readerSources.innerHTML = "";
+		if (sources.length) {
+			sources.forEach((source) => {
+				const item = document.createElement("span");
+				item.className = "reader__source";
+				const emoji = getSourceEmoji(getSourceType(source));
+				const text = getSourceDisplayText(source);
+				item.innerHTML = `<span class="reader__source-emoji">${emoji}</span>${escapeHtmlForReader(text)}`;
 
-        // Make source clickable to show details
-        item.addEventListener("click", () => {
-          openSourceDetail(source);
-        });
+				// Make source clickable to show details
+				item.addEventListener("click", () => {
+					openSourceDetail(source);
+				});
 
-        ui.readerSources.appendChild(item);
-      });
-      ui.readerSourcesWrap.classList.remove("is-hidden");
-    } else {
-      ui.readerSourcesWrap.classList.add("is-hidden");
-    }
+				ui.readerSources.appendChild(item);
+			});
+			ui.readerSourcesWrap.classList.remove("is-hidden");
+		} else {
+			ui.readerSourcesWrap.classList.add("is-hidden");
+		}
 
-    const allowEdit = canEditEntry(user, active.compDoc, entryData);
-    ui.btnReaderEdit.classList.toggle("is-hidden", !allowEdit);
-    ui.btnReaderDelete.classList.toggle("is-hidden", !allowEdit);
+		const allowEdit = canEditEntry(user, active.compDoc, entryData);
+		ui.btnReaderEdit.classList.toggle("is-hidden", !allowEdit);
+		ui.btnReaderDelete.classList.toggle("is-hidden", !allowEdit);
 
-    ui.readerDlg.showModal?.();
-  }
+		ui.readerDlg.showModal?.();
+	}
 
-  function updateReaderGallery() {
-    const hasImages = readerImageUrls.length > 0;
-    readerImageIndex = Math.max(0, Math.min(readerImageIndex, readerImageUrls.length - 1));
-    const currentImageUrl = readerImageUrls[readerImageIndex] || "";
+	function updateReaderGallery() {
+		const hasImages = readerImageUrls.length > 0;
+		readerImageIndex = Math.max(
+			0,
+			Math.min(readerImageIndex, readerImageUrls.length - 1),
+		);
+		const currentImageUrl = readerImageUrls[readerImageIndex] || "";
 
-    if (currentImageUrl && hasImages) {
-      ui.readerImage.src = currentImageUrl;
-      ui.readerMedia.classList.remove("is-hidden");
-      ui.reader.classList.remove("reader--no-media");
-    } else {
-      ui.readerMedia.classList.add("is-hidden");
-      ui.readerImage.removeAttribute("src");
-      ui.reader.classList.add("reader--no-media");
-    }
+		if (currentImageUrl && hasImages) {
+			ui.readerImage.src = currentImageUrl;
+			ui.readerMedia.classList.remove("is-hidden");
+			ui.reader.classList.remove("reader--no-media");
+		} else {
+			ui.readerMedia.classList.add("is-hidden");
+			ui.readerImage.removeAttribute("src");
+			ui.reader.classList.add("reader--no-media");
+		}
 
-    ui.readerIndexLabel.textContent = hasImages ? `${readerImageIndex + 1}/${readerImageUrls.length}` : "0/0";
-    const disableNav = readerImageUrls.length < 2;
-    ui.btnReaderPrev.disabled = disableNav;
-    ui.btnReaderNext.disabled = disableNav;
-  }
+		ui.readerIndexLabel.textContent = hasImages
+			? `${readerImageIndex + 1}/${readerImageUrls.length}`
+			: "0/0";
+		const disableNav = readerImageUrls.length < 2;
+		ui.btnReaderPrev.disabled = disableNav;
+		ui.btnReaderNext.disabled = disableNav;
+	}
 
-  function changeReaderImageIndex(delta) {
-    if (!readerImageUrls.length) return;
-    if (readerImageUrls.length === 1) {
-      readerImageIndex = 0;
-    } else {
-      readerImageIndex = (readerImageIndex + delta + readerImageUrls.length) % readerImageUrls.length;
-    }
-    updateReaderGallery();
-  }
+	function changeReaderImageIndex(delta) {
+		if (!readerImageUrls.length) return;
+		if (readerImageUrls.length === 1) {
+			readerImageIndex = 0;
+		} else {
+			readerImageIndex =
+				(readerImageIndex + delta + readerImageUrls.length) %
+				readerImageUrls.length;
+		}
+		updateReaderGallery();
+	}
 
-  function openSourceDetail(source) {
-    if (!source || !ui.sourceDetailDlg) return;
+	function openSourceDetail(source) {
+		if (!source || !ui.sourceDetailDlg) return;
 
-    const sourceType = getSourceType(source);
-    const sourceText = getSourceDisplayText(source);
-    const sourceEmoji = getSourceEmoji(sourceType);
+		const sourceType = getSourceType(source);
+		const sourceText = getSourceDisplayText(source);
+		const sourceEmoji = getSourceEmoji(sourceType);
 
-    // Set modal title
-    ui.sourceDetailTitle.textContent = sourceText || "Source";
-    ui.sourceDetailType.textContent = `${sourceEmoji} ${sourceType.charAt(0).toUpperCase() + sourceType.slice(1)}`;
+		// Set modal title
+		ui.sourceDetailTitle.textContent = sourceText || "Source";
+		ui.sourceDetailType.textContent = `${sourceEmoji} ${sourceType.charAt(0).toUpperCase() + sourceType.slice(1)}`;
 
-    // Build source details HTML
-    let detailsHtml = "";
+		// Build source details HTML
+		let detailsHtml = "";
 
-    // Always show the main text
-    if (sourceText) {
-      detailsHtml += `
+		// Always show the main text
+		if (sourceText) {
+			detailsHtml += `
         <div class="source-detail__field">
           <div class="source-detail__label">Title/Name</div>
           <div class="source-detail__value">${escapeHtmlForReader(sourceText)}</div>
         </div>
       `;
-    }
+		}
 
-    // Get type-specific fields based on SOURCE_TYPES from source-pill-input.js
-    const typeFields = {
-      web: ["url", "siteName", "accessDate"],
-      book: ["author", "publisher", "year", "pages", "isbn"],
-      essay: ["author", "publication", "date"],
-      video: ["url", "creator", "timestamp"],
-      audio: ["url", "creator", "episode", "timestamp"],
-      person: ["role", "organization", "contactDate"]
-    };
+		// Get type-specific fields based on SOURCE_TYPES from source-pill-input.js
+		const typeFields = {
+			web: ["url", "siteName", "accessDate"],
+			book: ["author", "publisher", "year", "pages", "isbn"],
+			essay: ["author", "publication", "date"],
+			video: ["url", "creator", "timestamp"],
+			audio: ["url", "creator", "episode", "timestamp"],
+			person: ["role", "organization", "contactDate"],
+		};
 
-    const fields = typeFields[sourceType] || [];
-    const fieldLabels = {
-      url: "URL",
-      siteName: "Site Name",
-      accessDate: "Access Date",
-      author: "Author",
-      publisher: "Publisher",
-      year: "Year",
-      pages: "Pages",
-      isbn: "ISBN",
-      publication: "Publication",
-      date: "Date",
-      creator: "Creator",
-      timestamp: "Timestamp",
-      episode: "Episode",
-      role: "Role/Title",
-      organization: "Organization",
-      contactDate: "Contact Date"
-    };
+		const fields = typeFields[sourceType] || [];
+		const fieldLabels = {
+			url: "URL",
+			siteName: "Site Name",
+			accessDate: "Access Date",
+			author: "Author",
+			publisher: "Publisher",
+			year: "Year",
+			pages: "Pages",
+			isbn: "ISBN",
+			publication: "Publication",
+			date: "Date",
+			creator: "Creator",
+			timestamp: "Timestamp",
+			episode: "Episode",
+			role: "Role/Title",
+			organization: "Organization",
+			contactDate: "Contact Date",
+		};
 
-    fields.forEach(fieldName => {
-      const fieldValue = source[fieldName];
-      if (fieldValue) {
-        const label = fieldLabels[fieldName] || fieldName;
+		fields.forEach((fieldName) => {
+			const fieldValue = source[fieldName];
+			if (fieldValue) {
+				const label = fieldLabels[fieldName] || fieldName;
 
-        if (fieldName === "url") {
-          // Sanitize URL and display as non-clickable text
-          const sanitized = sanitizeUrl(fieldValue);
-          if (sanitized) {
-            detailsHtml += `
+				if (fieldName === "url") {
+					// Sanitize URL and display as non-clickable text
+					const sanitized = sanitizeUrl(fieldValue);
+					if (sanitized) {
+						detailsHtml += `
               <div class="source-detail__field">
                 <div class="source-detail__label">${escapeHtmlForReader(label)}</div>
                 <div class="source-detail__value source-detail__url">${escapeHtmlForReader(sanitized)}</div>
                 <div class="source-detail__url-warning">⚠️ Copy and paste this URL into your browser. Do not click directly.</div>
               </div>
             `;
-          } else {
-            // Invalid URL - show as plain text
-            detailsHtml += `
+					} else {
+						// Invalid URL - show as plain text
+						detailsHtml += `
               <div class="source-detail__field">
                 <div class="source-detail__label">${escapeHtmlForReader(label)}</div>
                 <div class="source-detail__value">${escapeHtmlForReader(fieldValue)} (Invalid URL)</div>
               </div>
             `;
-          }
-        } else {
-          // Regular field
-          detailsHtml += `
+					}
+				} else {
+					// Regular field
+					detailsHtml += `
             <div class="source-detail__field">
               <div class="source-detail__label">${escapeHtmlForReader(label)}</div>
               <div class="source-detail__value">${escapeHtmlForReader(fieldValue)}</div>
             </div>
           `;
-        }
-      }
-    });
+				}
+			}
+		});
 
-    ui.sourceDetailContent.innerHTML = detailsHtml;
-    ui.sourceDetailDlg.showModal?.();
-  }
+		ui.sourceDetailContent.innerHTML = detailsHtml;
+		ui.sourceDetailDlg.showModal?.();
+	}
 
-  function openModal(scope, entryId, entryData) {
-    if (!active.compDoc || !active.compId) return;
+	function openModal(scope, entryId, entryData) {
+		if (!active.compDoc || !active.compId) return;
 
-    if (!entryId && !canAddEntry(user, active.compDoc)) {
-      toast("You cannot add entries here", "bad");
-      return;
-    }
-    if (entryId && !canEditEntry(user, active.compDoc, entryData)) {
-      toast("You cannot edit this entry", "bad");
-      return;
-    }
+		if (!entryId && !canAddEntry(user, active.compDoc)) {
+			toast("You cannot add entries here", "bad");
+			return;
+		}
+		if (entryId && !canEditEntry(user, active.compDoc, entryData)) {
+			toast("You cannot edit this entry", "bad");
+			return;
+		}
 
-    editingId = entryId;
-    editingData = entryData;
+		editingId = entryId;
+		editingData = entryData;
 
-    ui.title.textContent = entryId ? "Edit Entry" : "Add Entry";
-    ui.sub.textContent = active.compDoc?.name || "—";
+		ui.title.textContent = entryId ? "Edit Entry" : "Add Entry";
+		ui.sub.textContent = active.compDoc?.name || "—";
 
-    ui.err.classList.add("is-hidden");
-    ui.err.textContent = "";
+		ui.err.classList.add("is-hidden");
+		ui.err.textContent = "";
 
-    ui.entryTitle.value = entryData?.title || "";
-    ui.entryDesc.value = entryData?.description || "";
-    
-    // Set tags and sources using PillInput
-    const tags = Array.isArray(entryData?.tags) ? entryData.tags : [];
-    const sources = Array.isArray(entryData?.sources) ? entryData.sources : [];
-    entryTagsInput.setItems(tags);
-    entrySourcesInput.setItems(sources);
-    
-    imageUrls = getEntryImageUrls(entryData);
-    previewIndex = 0;
-    selectedImageIndex = null;
-    ui.entryUrlInput.value = "";
+		ui.entryTitle.value = entryData?.title || "";
+		ui.entryDesc.value = entryData?.description || "";
 
-    renderImageUrlList();
-    updatePreview();
-    ui.dlg.showModal?.();
-  }
+		// Set tags and sources using PillInput
+		const tags = Array.isArray(entryData?.tags) ? entryData.tags : [];
+		const sources = Array.isArray(entryData?.sources) ? entryData.sources : [];
+		entryTagsInput.setItems(tags);
+		entrySourcesInput.setItems(sources);
 
-  function showError(msg) {
-    ui.err.textContent = msg;
-    ui.err.classList.remove("is-hidden");
-  }
+		imageUrls = getEntryImageUrls(entryData);
+		previewIndex = 0;
+		selectedImageIndex = null;
+		ui.entryUrlInput.value = "";
 
-  function updatePreview() {
-    const hasImages = imageUrls.length > 0;
-    previewIndex = Math.max(0, Math.min(previewIndex, imageUrls.length - 1));
-    const primaryImageUrl = imageUrls[previewIndex] || "";
+		renderImageUrlList();
+		updatePreview();
+		ui.dlg.showModal?.();
+	}
 
-    if (primaryImageUrl && hasImages) {
-      ui.previewImg.src = primaryImageUrl;
-      ui.previewWrap.classList.remove("is-hidden");
-    } else {
-      ui.previewWrap.classList.add("is-hidden");
-      ui.previewImg.removeAttribute("src");
-    }
+	function showError(msg) {
+		ui.err.textContent = msg;
+		ui.err.classList.remove("is-hidden");
+	}
 
-    ui.previewIndexLabel.textContent = hasImages ? `${previewIndex + 1}/${imageUrls.length}` : "0/0";
-    const disableNav = imageUrls.length < 2;
-    ui.btnPreviewPrev.disabled = disableNav;
-    ui.btnPreviewNext.disabled = disableNav;
-  }
+	function updatePreview() {
+		const hasImages = imageUrls.length > 0;
+		previewIndex = Math.max(0, Math.min(previewIndex, imageUrls.length - 1));
+		const primaryImageUrl = imageUrls[previewIndex] || "";
 
-  async function save() {
-    if (!active.compDoc || !active.compId) return;
+		if (primaryImageUrl && hasImages) {
+			ui.previewImg.src = primaryImageUrl;
+			ui.previewWrap.classList.remove("is-hidden");
+		} else {
+			ui.previewWrap.classList.add("is-hidden");
+			ui.previewImg.removeAttribute("src");
+		}
 
-    const title = ui.entryTitle.value.trim();
-    const description = ui.entryDesc.value.trim();
-    const tags = entryTagsInput.getItems();
-    const sources = entrySourcesInput.getItems();
-    addImageUrlFromInput({ silent: true });
+		ui.previewIndexLabel.textContent = hasImages
+			? `${previewIndex + 1}/${imageUrls.length}`
+			: "0/0";
+		const disableNav = imageUrls.length < 2;
+		ui.btnPreviewPrev.disabled = disableNav;
+		ui.btnPreviewNext.disabled = disableNav;
+	}
 
-    if (!title || !description) return showError("Title and details are required.");
+	async function save() {
+		if (!active.compDoc || !active.compId) return;
 
-    if (!editingId && !canAddEntry(user, active.compDoc)) return showError("You cannot add entries here.");
-    if (editingId && !canEditEntry(user, active.compDoc, editingData)) return showError("You cannot edit this entry.");
+		const title = ui.entryTitle.value.trim();
+		const description = ui.entryDesc.value.trim();
+		const tags = entryTagsInput.getItems();
+		const sources = entrySourcesInput.getItems();
+		addImageUrlFromInput({ silent: true });
 
-    try {
-      const imageUrlsToSave = [...imageUrls];
+		if (!title || !description)
+			return showError("Title and details are required.");
 
-      if (editingId) {
-        await updateEntry(editingId, { title, description, imageUrls: imageUrlsToSave, tags, sources });
-        toast("Entry updated");
-      } else {
-        await createEntry({
-          compendiumId: active.compId,
-          title,
-          description,
-          imageUrls: imageUrlsToSave,
-          tags,
-          sources,
-          createdByUid: user.uid,
-          createdByName: createdByName || undefined
-        });
-        toast("Entry created");
-      }
+		if (!editingId && !canAddEntry(user, active.compDoc))
+			return showError("You cannot add entries here.");
+		if (editingId && !canEditEntry(user, active.compDoc, editingData))
+			return showError("You cannot edit this entry.");
 
-      ui.dlg.close?.();
-    } catch (e) {
-      showError(e?.message || "Save failed");
-    }
-  }
+		try {
+			const imageUrlsToSave = [...imageUrls];
 
-  function normalizeList(value) {
-    return (value || "")
-      .split(/[,\n]/)
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
+			if (editingId) {
+				await updateEntry(editingId, {
+					title,
+					description,
+					imageUrls: imageUrlsToSave,
+					tags,
+					sources,
+				});
+				toast("Entry updated");
+			} else {
+				await createEntry({
+					compendiumId: active.compId,
+					title,
+					description,
+					imageUrls: imageUrlsToSave,
+					tags,
+					sources,
+					createdByUid: user.uid,
+					createdByName: createdByName || undefined,
+				});
+				toast("Entry created");
+			}
 
-  function getEntryImageUrls(entryData) {
-    if (!entryData) return [];
-    const urls = Array.isArray(entryData.imageUrls) ? entryData.imageUrls : [];
-    if (urls.length) return urls.filter(Boolean);
-    if (entryData.imageUrl) return [entryData.imageUrl];
-    return [];
-  }
+			ui.dlg.close?.();
+		} catch (e) {
+			showError(e?.message || "Save failed");
+		}
+	}
 
-  function getPrimaryImageUrl(entryData) {
-    const urls = getEntryImageUrls(entryData);
-    return urls[0] || "";
-  }
+	function normalizeList(value) {
+		return (value || "")
+			.split(/[,\n]/)
+			.map((item) => item.trim())
+			.filter(Boolean);
+	}
 
-  function getEntryOrderValue(entryData, index) {
-    if (typeof entryData?.order === "number") return entryData.order;
-    if (typeof entryData?.createdAt?.toMillis === "function") return entryData.createdAt.toMillis();
-    return Date.now() + index;
-  }
+	function getEntryImageUrls(entryData) {
+		if (!entryData) return [];
+		const urls = Array.isArray(entryData.imageUrls) ? entryData.imageUrls : [];
+		if (urls.length) return urls.filter(Boolean);
+		if (entryData.imageUrl) return [entryData.imageUrl];
+		return [];
+	}
 
-  function addImageUrlFromInput({ silent = false } = {}) {
-    const value = ui.entryUrlInput.value.trim();
-    if (!value) return;
-    imageUrls = [...imageUrls, value];
-    if (imageUrls.length === 1) {
-      previewIndex = 0;
-    }
-    ui.entryUrlInput.value = "";
-    renderImageUrlList();
-    updatePreview();
-    if (!silent) {
-      ui.entryUrlInput.focus();
-    }
-  }
+	function getPrimaryImageUrl(entryData) {
+		const urls = getEntryImageUrls(entryData);
+		return urls[0] || "";
+	}
 
-  function handleImageUrlListClick(event) {
-    const row = event.target.closest("[data-image-index]");
-    if (!row) return;
-    const index = Number(row.dataset.imageIndex);
-    if (Number.isNaN(index)) return;
-    
-    selectedImageIndex = index;
-    renderImageUrlList();
-  }
+	function getEntryOrderValue(entryData, index) {
+		if (typeof entryData?.order === "number") return entryData.order;
+		if (typeof entryData?.createdAt?.toMillis === "function")
+			return entryData.createdAt.toMillis();
+		return Date.now() + index;
+	}
 
-  function handleImageUrlListKeydown(event) {
-    if (imageUrls.length === 0) return;
-    
-    // Arrow keys for navigation
-    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      event.preventDefault();
-      if (selectedImageIndex === null) {
-        selectedImageIndex = 0;
-      } else if (event.key === "ArrowDown") {
-        selectedImageIndex = Math.min(selectedImageIndex + 1, imageUrls.length - 1);
-      } else {
-        selectedImageIndex = Math.max(selectedImageIndex - 1, 0);
-      }
-      renderImageUrlList();
-      return;
-    }
-    
-    // Delete key to delete selected
-    if (event.key === "Delete" && selectedImageIndex !== null) {
-      event.preventDefault();
-      deleteSelectedImage();
-      return;
-    }
-    
-    // Ctrl+ArrowUp/Down to move items
-    if ((event.key === "ArrowUp" || event.key === "ArrowDown") && (event.ctrlKey || event.metaKey)) {
-      event.preventDefault();
-      if (selectedImageIndex === null) return;
-      
-      const delta = event.key === "ArrowUp" ? -1 : 1;
-      const targetIndex = selectedImageIndex + delta;
-      if (targetIndex < 0 || targetIndex >= imageUrls.length) return;
-      
-      const updated = [...imageUrls];
-      const [item] = updated.splice(selectedImageIndex, 1);
-      updated.splice(targetIndex, 0, item);
-      imageUrls = updated;
-      selectedImageIndex = targetIndex;
-      
-      renderImageUrlList();
-      updatePreview();
-      return;
-    }
-  }
+	function addImageUrlFromInput({ silent = false } = {}) {
+		const value = ui.entryUrlInput.value.trim();
+		if (!value) return;
+		imageUrls = [...imageUrls, value];
+		if (imageUrls.length === 1) {
+			previewIndex = 0;
+		}
+		ui.entryUrlInput.value = "";
+		renderImageUrlList();
+		updatePreview();
+		if (!silent) {
+			ui.entryUrlInput.focus();
+		}
+	}
 
-  function handleImageDragStart(event) {
-    const row = event.target.closest("[data-image-index]");
-    if (!row) return;
-    const index = Number(row.dataset.imageIndex);
-    if (Number.isNaN(index)) return;
-    draggedImageIndex = index;
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", draggedImageIndex.toString());
-    row.classList.add("is-dragging");
-  }
+	function handleImageUrlListClick(event) {
+		const row = event.target.closest("[data-image-index]");
+		if (!row) return;
+		const index = Number(row.dataset.imageIndex);
+		if (Number.isNaN(index)) return;
 
-  function handleImageDragOver(event) {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-  }
+		selectedImageIndex = index;
+		renderImageUrlList();
+	}
 
-  function handleImageDragEnter(event) {
-    const row = event.target.closest("[data-image-index]");
-    if (row && !row.classList.contains("is-dragging")) {
-      row.classList.add("drag-over");
-    }
-  }
+	function handleImageUrlListKeydown(event) {
+		if (imageUrls.length === 0) return;
 
-  function handleImageDragLeave(event) {
-    const row = event.target.closest("[data-image-index]");
-    if (row && (!event.relatedTarget || !row.contains(event.relatedTarget))) {
-      row.classList.remove("drag-over");
-    }
-  }
+		// Arrow keys for navigation
+		if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+			event.preventDefault();
+			if (selectedImageIndex === null) {
+				selectedImageIndex = 0;
+			} else if (event.key === "ArrowDown") {
+				selectedImageIndex = Math.min(
+					selectedImageIndex + 1,
+					imageUrls.length - 1,
+				);
+			} else {
+				selectedImageIndex = Math.max(selectedImageIndex - 1, 0);
+			}
+			renderImageUrlList();
+			return;
+		}
 
-  function handleImageDrop(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    const row = event.target.closest("[data-image-index]");
-    if (!row) return;
-    
-    const dropIndex = Number(row.dataset.imageIndex);
-    if (Number.isNaN(dropIndex) || draggedImageIndex === null || draggedImageIndex === dropIndex) return;
-    
-    // Reorder the array
-    const updated = [...imageUrls];
-    const [item] = updated.splice(draggedImageIndex, 1);
-    updated.splice(dropIndex, 0, item);
-    imageUrls = updated;
-    
-    // Update selected index if necessary
-    if (selectedImageIndex === draggedImageIndex) {
-      selectedImageIndex = dropIndex;
-    } else if (selectedImageIndex !== null) {
-      if (draggedImageIndex < selectedImageIndex && dropIndex >= selectedImageIndex) {
-        selectedImageIndex--;
-      } else if (draggedImageIndex > selectedImageIndex && dropIndex <= selectedImageIndex) {
-        selectedImageIndex++;
-      }
-    }
-    
-    // Update preview index if necessary
-    if (previewIndex === draggedImageIndex) {
-      previewIndex = dropIndex;
-    } else if (draggedImageIndex < previewIndex && dropIndex >= previewIndex) {
-      previewIndex--;
-    } else if (draggedImageIndex > previewIndex && dropIndex <= previewIndex) {
-      previewIndex++;
-    }
-    
-    renderImageUrlList();
-    updatePreview();
-  }
+		// Delete key to delete selected
+		if (event.key === "Delete" && selectedImageIndex !== null) {
+			event.preventDefault();
+			deleteSelectedImage();
+			return;
+		}
 
-  function handleImageDragEnd(event) {
-    const rows = ui.entryImageUrlsList.querySelectorAll("[data-image-index]");
-    rows.forEach(row => {
-      row.classList.remove("is-dragging", "drag-over");
-    });
-    draggedImageIndex = null;
-  }
+		// Ctrl+ArrowUp/Down to move items
+		if (
+			(event.key === "ArrowUp" || event.key === "ArrowDown") &&
+			(event.ctrlKey || event.metaKey)
+		) {
+			event.preventDefault();
+			if (selectedImageIndex === null) return;
 
-  function deleteSelectedImage() {
-    if (selectedImageIndex === null || selectedImageIndex < 0 || selectedImageIndex >= imageUrls.length) {
-      return;
-    }
-    removeImageUrl(selectedImageIndex);
-  }
+			const delta = event.key === "ArrowUp" ? -1 : 1;
+			const targetIndex = selectedImageIndex + delta;
+			if (targetIndex < 0 || targetIndex >= imageUrls.length) return;
 
-  function removeImageUrl(index) {
-    imageUrls = imageUrls.filter((_, idx) => idx !== index);
-    
-    // Update selectedImageIndex
-    if (selectedImageIndex !== null) {
-      if (selectedImageIndex === index) {
-        selectedImageIndex = null;
-      } else if (selectedImageIndex > index) {
-        selectedImageIndex--;
-      }
-    }
-    
-    if (previewIndex >= imageUrls.length) {
-      previewIndex = Math.max(0, imageUrls.length - 1);
-    }
-    renderImageUrlList();
-    updatePreview();
-  }
+			const updated = [...imageUrls];
+			const [item] = updated.splice(selectedImageIndex, 1);
+			updated.splice(targetIndex, 0, item);
+			imageUrls = updated;
+			selectedImageIndex = targetIndex;
 
-  function changePreviewIndex(delta) {
-    if (!imageUrls.length) return;
-    if (imageUrls.length === 1) {
-      previewIndex = 0;
-    } else {
-      previewIndex = (previewIndex + delta + imageUrls.length) % imageUrls.length;
-    }
-    updatePreview();
-  }
+			renderImageUrlList();
+			updatePreview();
+			return;
+		}
+	}
 
-  function renderImageUrlList() {
-    ui.entryImageUrlsList.innerHTML = "";
-    ui.entryImageUrlsEmpty.classList.toggle("is-hidden", imageUrls.length > 0);
-    ui.entryImageDeleteWrap?.classList.toggle("is-hidden", imageUrls.length === 0);
-    
-    // Set ARIA attributes and make list focusable for keyboard navigation
-    if (imageUrls.length > 0) {
-      ui.entryImageUrlsList.setAttribute("tabindex", "0");
-      ui.entryImageUrlsList.setAttribute("role", "listbox");
-      ui.entryImageUrlsList.setAttribute("aria-multiselectable", "false");
-    } else {
-      ui.entryImageUrlsList.removeAttribute("tabindex");
-      ui.entryImageUrlsList.removeAttribute("role");
-      ui.entryImageUrlsList.removeAttribute("aria-multiselectable");
-    }
+	function handleImageDragStart(event) {
+		const row = event.target.closest("[data-image-index]");
+		if (!row) return;
+		const index = Number(row.dataset.imageIndex);
+		if (Number.isNaN(index)) return;
+		draggedImageIndex = index;
+		event.dataTransfer.effectAllowed = "move";
+		event.dataTransfer.setData("text/plain", draggedImageIndex.toString());
+		row.classList.add("is-dragging");
+	}
 
-    imageUrls.forEach((url, index) => {
-      const row = document.createElement("div");
-      row.className = "entry-image-item";
-      row.setAttribute("draggable", "true");
-      row.setAttribute("data-image-index", index);
-      row.setAttribute("role", "option");
-      row.setAttribute("aria-label", `Image URL ${index + 1}`);
-      
-      if (selectedImageIndex === index) {
-        row.classList.add("is-selected");
-        row.setAttribute("aria-selected", "true");
-      } else {
-        row.setAttribute("aria-selected", "false");
-      }
+	function handleImageDragOver(event) {
+		event.preventDefault();
+		event.dataTransfer.dropEffect = "move";
+	}
 
-      const indexLabel = document.createElement("span");
-      indexLabel.className = "entry-image-item__index";
-      indexLabel.textContent = `${index + 1}) `;
+	function handleImageDragEnter(event) {
+		const row = event.target.closest("[data-image-index]");
+		if (row && !row.classList.contains("is-dragging")) {
+			row.classList.add("drag-over");
+		}
+	}
 
-      const urlText = document.createElement("span");
-      urlText.className = "entry-image-item__url";
-      urlText.textContent = url;
-      urlText.title = url;
+	function handleImageDragLeave(event) {
+		const row = event.target.closest("[data-image-index]");
+		if (row && (!event.relatedTarget || !row.contains(event.relatedTarget))) {
+			row.classList.remove("drag-over");
+		}
+	}
 
-      row.appendChild(indexLabel);
-      row.appendChild(urlText);
-      
-      // Add drag event listeners
-      row.addEventListener("dragstart", handleImageDragStart);
-      row.addEventListener("dragover", handleImageDragOver);
-      row.addEventListener("dragenter", handleImageDragEnter);
-      row.addEventListener("dragleave", handleImageDragLeave);
-      row.addEventListener("drop", handleImageDrop);
-      row.addEventListener("dragend", handleImageDragEnd);
-      
-      ui.entryImageUrlsList.appendChild(row);
-    });
-  }
+	function handleImageDrop(event) {
+		event.preventDefault();
+		event.stopPropagation();
 
-  async function remove(entry) {
-    if (!canEditEntry(user, active.compDoc, entry)) return toast("Not allowed", "bad");
+		const row = event.target.closest("[data-image-index]");
+		if (!row) return;
 
-    const ok = await confirmDelete({
-      title: "Delete this entry?",
-      copy: "This will remove it from the compendium."
-    });
-    if (!ok) return;
+		const dropIndex = Number(row.dataset.imageIndex);
+		if (
+			Number.isNaN(dropIndex) ||
+			draggedImageIndex === null ||
+			draggedImageIndex === dropIndex
+		)
+			return;
 
-    try {
-      await deleteEntry(entry.id);
-      toast("Deleted");
-    } catch (e) {
-      toast(e?.message || "Delete failed", "bad");
-    }
-  }
+		// Reorder the array
+		const updated = [...imageUrls];
+		const [item] = updated.splice(draggedImageIndex, 1);
+		updated.splice(dropIndex, 0, item);
+		imageUrls = updated;
 
-  function confirmDelete({ title, copy, detail }) {
-    const fallbackMessage = [title, copy, detail].filter(Boolean).join("\n\n");
-    if (!deleteConfirm.dlg?.showModal) {
-      return Promise.resolve(confirm(fallbackMessage || "Delete?"));
-    }
+		// Update selected index if necessary
+		if (selectedImageIndex === draggedImageIndex) {
+			selectedImageIndex = dropIndex;
+		} else if (selectedImageIndex !== null) {
+			if (
+				draggedImageIndex < selectedImageIndex &&
+				dropIndex >= selectedImageIndex
+			) {
+				selectedImageIndex--;
+			} else if (
+				draggedImageIndex > selectedImageIndex &&
+				dropIndex <= selectedImageIndex
+			) {
+				selectedImageIndex++;
+			}
+		}
 
-    deleteConfirm.title.textContent = title || "Delete";
-    deleteConfirm.copy.textContent = copy || "";
-    deleteConfirm.detail.textContent = detail || "";
-    deleteConfirm.copy.classList.toggle("is-hidden", !copy);
-    deleteConfirm.detail.classList.toggle("is-hidden", !detail);
+		// Update preview index if necessary
+		if (previewIndex === draggedImageIndex) {
+			previewIndex = dropIndex;
+		} else if (draggedImageIndex < previewIndex && dropIndex >= previewIndex) {
+			previewIndex--;
+		} else if (draggedImageIndex > previewIndex && dropIndex <= previewIndex) {
+			previewIndex++;
+		}
 
-    return new Promise((resolve) => {
-      const handleClose = () => {
-        deleteConfirm.dlg.removeEventListener("close", handleClose);
-        resolve(deleteConfirm.dlg.returnValue === "confirm");
-      };
+		renderImageUrlList();
+		updatePreview();
+	}
 
-      deleteConfirm.dlg.addEventListener("close", handleClose);
-      deleteConfirm.dlg.showModal();
-    });
-  }
+	function handleImageDragEnd(event) {
+		const rows = ui.entryImageUrlsList.querySelectorAll("[data-image-index]");
+		rows.forEach((row) => {
+			row.classList.remove("is-dragging", "drag-over");
+		});
+		draggedImageIndex = null;
+	}
 
-  async function reorderEntry(entries, index, delta) {
-    const targetIndex = index + delta;
-    if (targetIndex < 0 || targetIndex >= entries.length) return;
-    const entry = entries[index];
-    const targetEntry = entries[targetIndex];
-    if (!canEditEntry(user, active.compDoc, entry) || !canEditEntry(user, active.compDoc, targetEntry)) {
-      toast("Not allowed", "bad");
-      return;
-    }
-    const entryOrder = getEntryOrderValue(entry, index);
-    const targetOrder = getEntryOrderValue(targetEntry, targetIndex);
-    try {
-      await Promise.all([
-        updateEntry(entry.id, { order: targetOrder }),
-        updateEntry(targetEntry.id, { order: entryOrder })
-      ]);
-    } catch (e) {
-      toast(e?.message || "Reorder failed", "bad");
-    }
-  }
+	function deleteSelectedImage() {
+		if (
+			selectedImageIndex === null ||
+			selectedImageIndex < 0 ||
+			selectedImageIndex >= imageUrls.length
+		) {
+			return;
+		}
+		removeImageUrl(selectedImageIndex);
+	}
 
-  return {
-    setActiveCompendium,
-    setPostName(nextName) {
-      createdByName = (nextName || "").trim();
-    }
-  };
+	function removeImageUrl(index) {
+		imageUrls = imageUrls.filter((_, idx) => idx !== index);
+
+		// Update selectedImageIndex
+		if (selectedImageIndex !== null) {
+			if (selectedImageIndex === index) {
+				selectedImageIndex = null;
+			} else if (selectedImageIndex > index) {
+				selectedImageIndex--;
+			}
+		}
+
+		if (previewIndex >= imageUrls.length) {
+			previewIndex = Math.max(0, imageUrls.length - 1);
+		}
+		renderImageUrlList();
+		updatePreview();
+	}
+
+	function changePreviewIndex(delta) {
+		if (!imageUrls.length) return;
+		if (imageUrls.length === 1) {
+			previewIndex = 0;
+		} else {
+			previewIndex =
+				(previewIndex + delta + imageUrls.length) % imageUrls.length;
+		}
+		updatePreview();
+	}
+
+	function renderImageUrlList() {
+		ui.entryImageUrlsList.innerHTML = "";
+		ui.entryImageUrlsEmpty.classList.toggle("is-hidden", imageUrls.length > 0);
+		ui.entryImageDeleteWrap?.classList.toggle(
+			"is-hidden",
+			imageUrls.length === 0,
+		);
+
+		// Set ARIA attributes and make list focusable for keyboard navigation
+		if (imageUrls.length > 0) {
+			ui.entryImageUrlsList.setAttribute("tabindex", "0");
+			ui.entryImageUrlsList.setAttribute("role", "listbox");
+			ui.entryImageUrlsList.setAttribute("aria-multiselectable", "false");
+		} else {
+			ui.entryImageUrlsList.removeAttribute("tabindex");
+			ui.entryImageUrlsList.removeAttribute("role");
+			ui.entryImageUrlsList.removeAttribute("aria-multiselectable");
+		}
+
+		imageUrls.forEach((url, index) => {
+			const row = document.createElement("div");
+			row.className = "entry-image-item";
+			row.setAttribute("draggable", "true");
+			row.setAttribute("data-image-index", index);
+			row.setAttribute("role", "option");
+			row.setAttribute("aria-label", `Image URL ${index + 1}`);
+
+			if (selectedImageIndex === index) {
+				row.classList.add("is-selected");
+				row.setAttribute("aria-selected", "true");
+			} else {
+				row.setAttribute("aria-selected", "false");
+			}
+
+			const indexLabel = document.createElement("span");
+			indexLabel.className = "entry-image-item__index";
+			indexLabel.textContent = `${index + 1}) `;
+
+			const urlText = document.createElement("span");
+			urlText.className = "entry-image-item__url";
+			urlText.textContent = url;
+			urlText.title = url;
+
+			row.appendChild(indexLabel);
+			row.appendChild(urlText);
+
+			// Add drag event listeners
+			row.addEventListener("dragstart", handleImageDragStart);
+			row.addEventListener("dragover", handleImageDragOver);
+			row.addEventListener("dragenter", handleImageDragEnter);
+			row.addEventListener("dragleave", handleImageDragLeave);
+			row.addEventListener("drop", handleImageDrop);
+			row.addEventListener("dragend", handleImageDragEnd);
+
+			ui.entryImageUrlsList.appendChild(row);
+		});
+	}
+
+	async function remove(entry) {
+		if (!canEditEntry(user, active.compDoc, entry))
+			return toast("Not allowed", "bad");
+
+		const ok = await confirmDelete({
+			title: "Delete this entry?",
+			copy: "This will remove it from the compendium.",
+		});
+		if (!ok) return;
+
+		try {
+			await deleteEntry(entry.id);
+			toast("Deleted");
+		} catch (e) {
+			toast(e?.message || "Delete failed", "bad");
+		}
+	}
+
+	function confirmDelete({ title, copy, detail }) {
+		const fallbackMessage = [title, copy, detail].filter(Boolean).join("\n\n");
+		if (!deleteConfirm.dlg?.showModal) {
+			return Promise.resolve(confirm(fallbackMessage || "Delete?"));
+		}
+
+		deleteConfirm.title.textContent = title || "Delete";
+		deleteConfirm.copy.textContent = copy || "";
+		deleteConfirm.detail.textContent = detail || "";
+		deleteConfirm.copy.classList.toggle("is-hidden", !copy);
+		deleteConfirm.detail.classList.toggle("is-hidden", !detail);
+
+		return new Promise((resolve) => {
+			const handleClose = () => {
+				deleteConfirm.dlg.removeEventListener("close", handleClose);
+				resolve(deleteConfirm.dlg.returnValue === "confirm");
+			};
+
+			deleteConfirm.dlg.addEventListener("close", handleClose);
+			deleteConfirm.dlg.showModal();
+		});
+	}
+
+	async function reorderEntry(entries, index, delta) {
+		const targetIndex = index + delta;
+		if (targetIndex < 0 || targetIndex >= entries.length) return;
+		const entry = entries[index];
+		const targetEntry = entries[targetIndex];
+		if (
+			!canEditEntry(user, active.compDoc, entry) ||
+			!canEditEntry(user, active.compDoc, targetEntry)
+		) {
+			toast("Not allowed", "bad");
+			return;
+		}
+		const entryOrder = getEntryOrderValue(entry, index);
+		const targetOrder = getEntryOrderValue(targetEntry, targetIndex);
+		try {
+			await Promise.all([
+				updateEntry(entry.id, { order: targetOrder }),
+				updateEntry(targetEntry.id, { order: entryOrder }),
+			]);
+		} catch (e) {
+			toast(e?.message || "Reorder failed", "bad");
+		}
+	}
+
+	return {
+		setActiveCompendium,
+		setPostName(nextName) {
+			createdByName = (nextName || "").trim();
+		},
+	};
 }
