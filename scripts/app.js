@@ -16,18 +16,18 @@ const routeTabs = new Map([
 
 function setRoute(route) {
 	const activeTab = routeTabs.get(route) || route;
-	$$(".tab").forEach((b) =>
-		b.classList.toggle("is-active", b.dataset.route === activeTab),
-	);
-	$$(".view").forEach((v) =>
-		v.classList.toggle("is-active", v.dataset.view === route),
-	);
+	$$(".tab").forEach((b) => {
+		b.classList.toggle("is-active", b.dataset.route === activeTab);
+	});
+	$$(".view").forEach((v) => {
+		v.classList.toggle("is-active", v.dataset.view === route);
+	});
 }
 
 function initTabs() {
-	$$(".tab").forEach((b) =>
-		b.addEventListener("click", () => setRoute(b.dataset.route)),
-	);
+	$$(".tab").forEach((b) => {
+		b.addEventListener("click", () => setRoute(b.dataset.route));
+	});
 }
 
 function initEditorTabs() {
@@ -38,15 +38,15 @@ function initEditorTabs() {
 		const views = Array.from(panel.querySelectorAll("[data-editor-view]"));
 
 		const setView = (viewName) => {
-			tabs.forEach((tab) =>
-				tab.classList.toggle("is-active", tab.dataset.editorTab === viewName),
-			);
-			views.forEach((view) =>
+			tabs.forEach((tab) => {
+				tab.classList.toggle("is-active", tab.dataset.editorTab === viewName);
+			});
+			views.forEach((view) => {
 				view.classList.toggle(
 					"is-active",
 					view.dataset.editorView === viewName,
-				),
-			);
+				);
+			});
 		};
 
 		tabs.forEach((tab) => {

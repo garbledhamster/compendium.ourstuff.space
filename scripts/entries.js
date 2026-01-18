@@ -641,7 +641,7 @@ export function initEntries({ user, postName = "" }) {
 		ui.sourceDetailDlg.showModal?.();
 	}
 
-	function openModal(scope, entryId, entryData) {
+	function openModal(_scope, entryId, entryData) {
 		if (!active.compDoc || !active.compId) return;
 
 		if (!entryId && !canAddEntry(user, active.compDoc)) {
@@ -756,24 +756,12 @@ export function initEntries({ user, postName = "" }) {
 		}
 	}
 
-	function normalizeList(value) {
-		return (value || "")
-			.split(/[,\n]/)
-			.map((item) => item.trim())
-			.filter(Boolean);
-	}
-
 	function getEntryImageUrls(entryData) {
 		if (!entryData) return [];
 		const urls = Array.isArray(entryData.imageUrls) ? entryData.imageUrls : [];
 		if (urls.length) return urls.filter(Boolean);
 		if (entryData.imageUrl) return [entryData.imageUrl];
 		return [];
-	}
-
-	function getPrimaryImageUrl(entryData) {
-		const urls = getEntryImageUrls(entryData);
-		return urls[0] || "";
 	}
 
 	function getEntryOrderValue(entryData, index) {
@@ -940,7 +928,7 @@ export function initEntries({ user, postName = "" }) {
 		updatePreview();
 	}
 
-	function handleImageDragEnd(event) {
+	function handleImageDragEnd() {
 		const rows = ui.entryImageUrlsList.querySelectorAll("[data-image-index]");
 		rows.forEach((row) => {
 			row.classList.remove("is-dragging", "drag-over");
