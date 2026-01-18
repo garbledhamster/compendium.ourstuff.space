@@ -89,8 +89,6 @@ export function initEntries({ user, postName = "" }) {
 		btnAddEntryImageUrl: $("#btnAddEntryImageUrl"),
 		entryImageUrlsList: $("#entryImageUrlsList"),
 		entryImageUrlsEmpty: $("#entryImageUrlsEmpty"),
-		entryImageDeleteWrap: $("#entryImageDeleteWrap"),
-		btnDeleteSelectedImage: $("#btnDeleteSelectedImage"),
 
 		previewWrap: $("#entryPreviewWrap"),
 		previewImg: $("#entryPreviewImg"),
@@ -189,7 +187,6 @@ export function initEntries({ user, postName = "" }) {
 	ui.btnAddEntryImageUrl.addEventListener("click", addImageUrlFromInput);
 	ui.entryImageUrlsList.addEventListener("click", handleImageUrlListClick);
 	ui.entryImageUrlsList.addEventListener("keydown", handleImageUrlListKeydown);
-	ui.btnDeleteSelectedImage?.addEventListener("click", deleteSelectedImage);
 	ui.btnPreviewPrev.addEventListener("click", () => changePreviewIndex(-1));
 	ui.btnPreviewNext.addEventListener("click", () => changePreviewIndex(1));
 
@@ -992,10 +989,6 @@ export function initEntries({ user, postName = "" }) {
 	function renderImageUrlList() {
 		ui.entryImageUrlsList.innerHTML = "";
 		ui.entryImageUrlsEmpty.classList.toggle("is-hidden", imageUrls.length > 0);
-		ui.entryImageDeleteWrap?.classList.toggle(
-			"is-hidden",
-			imageUrls.length === 0,
-		);
 
 		// Set ARIA attributes and make list focusable for keyboard navigation
 		if (imageUrls.length > 0) {
@@ -1032,8 +1025,20 @@ export function initEntries({ user, postName = "" }) {
 			urlText.textContent = url;
 			urlText.title = url;
 
+			// Create delete button
+			const deleteBtn = document.createElement("button");
+			deleteBtn.className = "entry-image-item__delete";
+			deleteBtn.type = "button";
+			deleteBtn.setAttribute("aria-label", `Delete image ${index + 1}`);
+			deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2m-6 5v6m4-6v6"/></svg>';
+			deleteBtn.addEventListener("click", (e) => {
+				e.stopPropagation();
+				removeImageUrl(index);
+			});
+
 			row.appendChild(indexLabel);
 			row.appendChild(urlText);
+			row.appendChild(deleteBtn);
 
 			// Add drag event listeners
 			row.addEventListener("dragstart", handleImageDragStart);

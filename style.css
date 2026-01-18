@@ -2674,3 +2674,37 @@ b {
 	text-overflow: ellipsis;
 	flex: 1;
 }
+
+.entry-image-item__delete {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	margin-left: auto;
+	background: var(--danger);
+	border: none;
+	border-radius: var(--radius-sm);
+	cursor: pointer;
+	color: white;
+	transition: all 0.18s ease;
+	flex-shrink: 0;
+}
+
+.entry-image-item:hover .entry-image-item__delete {
+	display: flex;
+}
+
+.entry-image-item__delete:hover {
+	background: var(--danger-hover, #dc2626);
+	transform: scale(1.05);
+}
+
+.entry-image-item__delete:active {
+	transform: scale(0.95);
+}
+
+.entry-image-item__delete svg {
+	display: block;
+}
