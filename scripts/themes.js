@@ -11,7 +11,7 @@ export async function loadThemesFromYaml({ allowedIds = null } = {}) {
 	if (!Array.isArray(parsed))
 		throw new Error("themes.yaml must be a list of theme objects.");
 
-	let themes = parsed.filter((t) => t && t.id && t.colors);
+	let themes = parsed.filter((t) => t?.id && t.colors);
 
 	if (Array.isArray(allowedIds) && allowedIds.length) {
 		themes = themes.filter((t) => allowedIds.includes(t.id));

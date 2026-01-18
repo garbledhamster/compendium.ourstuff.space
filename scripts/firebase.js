@@ -174,7 +174,9 @@ export async function updateEntriesByUserDisplayName(uid, displayName) {
 	);
 	const snap = await getDocs(entriesQuery);
 	const updates = [];
-	snap.forEach((docSnap) => updates.push(docSnap));
+	snap.forEach((docSnap) => {
+		updates.push(docSnap);
+	});
 
 	const value = displayName ? displayName.trim() : "";
 	const chunkSize = 450;
@@ -197,7 +199,9 @@ export async function updateCompendiumsByOwnerDisplayName(uid, displayName) {
 	);
 	const snap = await getDocs(compendiumsQuery);
 	const updates = [];
-	snap.forEach((docSnap) => updates.push(docSnap));
+	snap.forEach((docSnap) => {
+		updates.push(docSnap);
+	});
 
 	const value = displayName ? displayName.trim() : "";
 	const chunkSize = 450;
@@ -249,7 +253,9 @@ export function listenPersonalCompendiums(uid, cb, onErr) {
 
 	const handleSnapshot = (snap, { sort = false } = {}) => {
 		const items = [];
-		snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
+		snap.forEach((d) => {
+			items.push({ id: d.id, ...d.data() });
+		});
 		cb(sort ? sortByUpdatedAtDesc(items) : items);
 	};
 
@@ -296,7 +302,9 @@ export function listenPublicCompendiums(cb, onErr) {
 
 	const handleSnapshot = (snap, { sort = false } = {}) => {
 		const items = [];
-		snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
+		snap.forEach((d) => {
+			items.push({ id: d.id, ...d.data() });
+		});
 		cb(sort ? sortByUpdatedAtDesc(items) : items);
 	};
 
@@ -372,7 +380,9 @@ export function listenEntries(compendiumId, cb, onErr) {
 
 	const handleSnapshot = (snap) => {
 		const items = [];
-		snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
+		snap.forEach((d) => {
+			items.push({ id: d.id, ...d.data() });
+		});
 		items.sort((a, b) => {
 			const orderA =
 				typeof a.order === "number"
@@ -419,7 +429,9 @@ export function listenEntriesByUserAccess(uid, cb, onErr) {
 
 	const handleSnapshot = (snap, { sort = false } = {}) => {
 		const items = [];
-		snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
+		snap.forEach((d) => {
+			items.push({ id: d.id, ...d.data() });
+		});
 		cb(sort ? sortByUpdatedAtDesc(items) : items);
 	};
 

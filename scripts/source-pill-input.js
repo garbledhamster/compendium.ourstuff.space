@@ -297,7 +297,7 @@ export class SourcePillInput {
 		// Handle remove button click
 		if (e.target.closest(".source-pill-item__remove")) {
 			const index = parseInt(pill.dataset.index, 10);
-			if (isNaN(index) || index < 0 || index >= this.items.length) return;
+			if (Number.isNaN(index) || index < 0 || index >= this.items.length) return;
 
 			const item = this.items[index];
 			this.items.splice(index, 1);
@@ -328,7 +328,7 @@ export class SourcePillInput {
 
 		// Toggle editor on pill click
 		const index = parseInt(pill.dataset.index, 10);
-		if (isNaN(index) || index < 0 || index >= this.items.length) return;
+		if (Number.isNaN(index) || index < 0 || index >= this.items.length) return;
 
 		// If already editing this pill, close editor
 		if (this.editingIndex === index) {
@@ -404,7 +404,7 @@ export class SourcePillInput {
 		if (typeConfig?.fields) {
 			typeConfig.fields.forEach((field) => {
 				const fieldInput = editor.querySelector(`[data-field="${field.name}"]`);
-				if (fieldInput && fieldInput.value.trim()) {
+				if (fieldInput?.value.trim()) {
 					updatedSource[field.name] = fieldInput.value.trim();
 				}
 			});
