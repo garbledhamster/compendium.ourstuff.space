@@ -486,29 +486,9 @@ export function initEntries({ user, postName = "" }) {
 				const text = getSourceDisplayText(source);
 				item.innerHTML = `<span class="reader__source-emoji">${emoji}</span>${escapeHtmlForReader(text)}`;
 
-				const sourceType = getSourceType(source);
-				const sourceUrl = source?.url;
-				const sanitizedUrl = sourceUrl ? sanitizeUrl(sourceUrl) : null;
-
-				// Add hover tooltip for web sources with URLs
-				if (sanitizedUrl && sourceType === "web") {
-					item.title = sanitizedUrl;
-				}
-
-				// Make source clickable
+				// Make source clickable to show details
 				item.addEventListener("click", () => {
-					// For web sources with valid URLs, show confirmation dialog
-					if (sourceType === "web" && sanitizedUrl) {
-						const confirmed = confirm(
-							`You are being redirected to an external website:\n\n${sanitizedUrl}\n\nDo you want to continue?`,
-						);
-						if (confirmed) {
-							window.open(sanitizedUrl, "_blank", "noopener,noreferrer");
-						}
-					} else {
-						// For other sources or sources without URLs, show detail modal
-						openSourceDetail(source);
-					}
+					openSourceDetail(source);
 				});
 
 				ui.readerSources.appendChild(item);
@@ -658,7 +638,7 @@ export function initEntries({ user, postName = "" }) {
 		ui.sourceDetailDlg.showModal?.();
 	}
 
-	function openModal(_scope, entryId, entryData) {
+	function openModal(scope, entryId, entryData) {
 		if (!active.compDoc || !active.compId) return;
 
 		if (!entryId && !canAddEntry(user, active.compDoc)) {
@@ -773,12 +753,24 @@ export function initEntries({ user, postName = "" }) {
 		}
 	}
 
+	function normalizeList(value) {
+		return (value || "")
+			.split(/[,\n]/)
+			.map((item) => item.trim())
+			.filter(Boolean);
+	}
+
 	function getEntryImageUrls(entryData) {
 		if (!entryData) return [];
 		const urls = Array.isArray(entryData.imageUrls) ? entryData.imageUrls : [];
 		if (urls.length) return urls.filter(Boolean);
 		if (entryData.imageUrl) return [entryData.imageUrl];
 		return [];
+	}
+
+	function getPrimaryImageUrl(entryData) {
+		const urls = getEntryImageUrls(entryData);
+		return urls[0] || "";
 	}
 
 	function getEntryOrderValue(entryData, index) {
@@ -945,7 +937,7 @@ export function initEntries({ user, postName = "" }) {
 		updatePreview();
 	}
 
-	function handleImageDragEnd() {
+	function handleImageDragEnd(event) {
 		const rows = ui.entryImageUrlsList.querySelectorAll("[data-image-index]");
 		rows.forEach((row) => {
 			row.classList.remove("is-dragging", "drag-over");

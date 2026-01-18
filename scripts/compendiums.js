@@ -30,6 +30,13 @@ function normEmail(e) {
 function isValidEmail(e) {
 	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 }
+function parseTags(raw) {
+	return (raw || "")
+		.split(",")
+		.map((x) => x.trim())
+		.filter(Boolean)
+		.slice(0, 40);
+}
 function getByline(entry) {
 	return (
 		entry?.createdByName ||
@@ -44,6 +51,10 @@ function getEntryImageUrls(entry) {
 	if (urls.length) return urls.filter(Boolean);
 	if (entry.imageUrl) return [entry.imageUrl];
 	return [];
+}
+function getPrimaryImageUrl(entry) {
+	const urls = getEntryImageUrls(entry);
+	return urls[0] || "";
 }
 
 function toast(msg, kind = "ok") {
@@ -64,7 +75,7 @@ function isPermissionDenied(err) {
 
 function stableSeed() {
 	// Stable-enough random seed for covers (stored in doc)
-	return `${Math.random().toString(16).slice(2)}-${Date.now().toString(16)}`;
+	return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
 }
 
 function ensureOwnerFields(comp, user, ownerName, updates) {
@@ -1146,6 +1157,7 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
 	}
 
 	async function removeCompendium(scope) {
+		const isPersonal = scope === "personal";
 		const { id: compId, doc: comp } = getSelectedForScope(scope);
 		if (!compId || !comp) return;
 

@@ -119,7 +119,7 @@ export class PillInput {
 
 		// Automatically add # prefix if not present
 		if (!value.startsWith("#")) {
-			value = `#${value}`;
+			value = "#" + value;
 		}
 
 		// Avoid duplicates
@@ -149,7 +149,7 @@ export class PillInput {
 		}
 
 		const index = parseInt(pill.dataset.index, 10);
-		if (Number.isNaN(index) || index < 0 || index >= this.items.length) return;
+		if (isNaN(index) || index < 0 || index >= this.items.length) return;
 
 		const item = this.items[index];
 		this.items.splice(index, 1);

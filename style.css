@@ -1475,7 +1475,7 @@ b {
 	padding: 10px 12px;
 }
 .is-hidden {
-	display: none;
+	display: none !important;
 }
 .match-hint {
 	margin-top: 6px;
