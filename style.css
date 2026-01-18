@@ -377,6 +377,9 @@ a {
 	justify-content: flex-end;
 	width: 100%;
 }
+.hstack--mt-8 {
+	margin-top: 8px;
+}
 
 @media (max-width: 720px) {
 	.panel__head {
