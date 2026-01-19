@@ -971,6 +971,28 @@ a {
 	justify-content: flex-end;
 	gap: 10px;
 }
+.auto-save-indicator {
+	display: flex;
+	align-items: center;
+	margin-right: auto;
+	font-size: 0.875rem;
+	color: var(--subtle);
+	opacity: 0;
+	transition: opacity 0.2s ease;
+}
+.auto-save-indicator:not(.is-hidden) {
+	opacity: 1;
+}
+.auto-save-indicator__text::before {
+	content: '●';
+	margin-right: 6px;
+	color: var(--primary);
+	animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.4; }
+}
 .modal__card--reader {
 	width: min(980px, calc(100vw - 26px));
 }

@@ -45,6 +45,9 @@ export const firebaseApp = initializeApp(firebaseConfig);
 export const auth = getAuth(firebaseApp);
 export const db = getFirestore(firebaseApp);
 
+// Export deleteField for removing fields from documents
+export { deleteField };
+
 function normalizeDisplayName(value) {
 	return (value || "").trim().toLowerCase();
 }
