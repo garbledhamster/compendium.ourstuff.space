@@ -1,6 +1,7 @@
 import {
 	createEntry,
 	deleteEntry,
+	deleteField,
 	listenEntries,
 	updateEntry,
 } from "./firebase.js";
@@ -99,6 +100,7 @@ export function initEntries({ user, postName = "" }) {
 		btnPreviewNext: $("#btnPreviewNext"),
 
 		btnSave: $("#btnSaveEntry"),
+		autoSaveIndicator: $("#autoSaveIndicator"),
 
 		readerDlg: $("#entryReaderModal"),
 		readerTitle: $("#entryReaderTitle"),
@@ -165,6 +167,10 @@ export function initEntries({ user, postName = "" }) {
 	let selectedImageIndex = null;
 	let draggedImageIndex = null;
 
+	// Auto-save state
+	let autoSaveTimer = null;
+	let autoSaveListeners = [];
+
 	// Initialize PillInput components for tags and sources
 	const entryTagsInput = new PillInput(ui.entryTags, {
 		placeholder: "Type a tag and press Enter...",
@@ -197,6 +203,12 @@ export function initEntries({ user, postName = "" }) {
 	ui.btnReaderNext.addEventListener("click", () => changeReaderImageIndex(1));
 
 	ui.btnSave.addEventListener("click", save);
+
+	// Stop auto-save when modal closes
+	ui.dlg.addEventListener("close", () => {
+		stopAutoSave();
+	});
+
 	ui.btnReaderEdit.addEventListener("click", () => {
 		if (!readerEntry || !readerScope) return;
 		if (!canEditEntry(user, active.compDoc, readerEntry)) return;
@@ -641,7 +653,99 @@ export function initEntries({ user, postName = "" }) {
 		ui.sourceDetailDlg.showModal?.();
 	}
 
-	function openModal(scope, entryId, entryData) {
+	// Auto-save functionality
+	async function performAutoSave() {
+		// Only auto-save if we're editing an existing entry
+		if (!editingId) return;
+
+		const title = ui.entryTitle.value.trim();
+		const description = ui.entryDesc.value.trim();
+		const tags = entryTagsInput.getItems();
+		const sources = entrySourcesInput.getItems();
+
+		// Don't save if required fields are empty
+		if (!title || !description) return;
+
+		try {
+			// Show auto-save indicator
+			ui.autoSaveIndicator?.classList.remove("is-hidden");
+
+			await updateEntry(editingId, {
+				title,
+				description,
+				imageUrls: [...imageUrls],
+				tags,
+				sources,
+			});
+
+			// Hide auto-save indicator after a short delay
+			setTimeout(() => {
+				ui.autoSaveIndicator?.classList.add("is-hidden");
+			}, 1000);
+		} catch (e) {
+			console.error("Auto-save failed:", e);
+			ui.autoSaveIndicator?.classList.add("is-hidden");
+		}
+	}
+
+	function debounceAutoSave() {
+		// Clear existing timer
+		if (autoSaveTimer) {
+			clearTimeout(autoSaveTimer);
+		}
+
+		// Set new timer for 1 second debounce
+		autoSaveTimer = setTimeout(() => {
+			performAutoSave();
+		}, 1000);
+	}
+
+	function startAutoSave() {
+		// Only enable auto-save for editing existing entries
+		if (!editingId) return;
+
+		// Remove existing listeners
+		stopAutoSave();
+
+		// Add input listeners for auto-save
+		const titleListener = () => debounceAutoSave();
+		const descListener = () => debounceAutoSave();
+		const tagsListener = () => debounceAutoSave();
+		const sourcesListener = () => debounceAutoSave();
+
+		ui.entryTitle.addEventListener("input", titleListener);
+		ui.entryDesc.addEventListener("input", descListener);
+		entryTagsInput.onChange = tagsListener;
+		entrySourcesInput.onChange = sourcesListener;
+
+		// Store listeners for cleanup
+		autoSaveListeners = [
+			{ el: ui.entryTitle, type: "input", fn: titleListener },
+			{ el: ui.entryDesc, type: "input", fn: descListener },
+			{ component: entryTagsInput, fn: tagsListener },
+			{ component: entrySourcesInput, fn: sourcesListener },
+		];
+	}
+
+	function stopAutoSave() {
+		// Clear timer
+		if (autoSaveTimer) {
+			clearTimeout(autoSaveTimer);
+			autoSaveTimer = null;
+		}
+
+		// Remove all listeners
+		autoSaveListeners.forEach((listener) => {
+			if (listener.el) {
+				listener.el.removeEventListener(listener.type, listener.fn);
+			} else if (listener.component) {
+				listener.component.onChange = null;
+			}
+		});
+		autoSaveListeners = [];
+	}
+
+	async function openModal(scope, entryId, entryData) {
 		if (!active.compDoc || !active.compId) return;
 
 		if (!entryId && !canAddEntry(user, active.compDoc)) {
@@ -678,6 +782,27 @@ export function initEntries({ user, postName = "" }) {
 
 		renderImageUrlList();
 		updatePreview();
+
+		// Save draft version when opening for edit
+		if (entryId && entryData) {
+			try {
+				await updateEntry(editingId, {
+					draftVersion: {
+						title: entryData.title || "",
+						description: entryData.description || "",
+						imageUrls: getEntryImageUrls(entryData),
+						tags: Array.isArray(entryData.tags) ? entryData.tags : [],
+						sources: Array.isArray(entryData.sources) ? entryData.sources : [],
+					},
+				});
+			} catch (e) {
+				console.error("Failed to save draft version:", e);
+			}
+		}
+
+		// Start auto-save after modal opens
+		startAutoSave();
+
 		ui.dlg.showModal?.();
 	}
 
@@ -734,6 +859,7 @@ export function initEntries({ user, postName = "" }) {
 					imageUrls: imageUrlsToSave,
 					tags,
 					sources,
+					draftVersion: deleteField(), // Clear draft version on explicit save
 				});
 				toast("Entry updated");
 			} else {
@@ -793,6 +919,7 @@ export function initEntries({ user, postName = "" }) {
 		ui.entryUrlInput.value = "";
 		renderImageUrlList();
 		updatePreview();
+		debounceAutoSave(); // Trigger auto-save when image is added
 		if (!silent) {
 			ui.entryUrlInput.focus();
 		}
@@ -938,6 +1065,7 @@ export function initEntries({ user, postName = "" }) {
 
 		renderImageUrlList();
 		updatePreview();
+		debounceAutoSave(); // Trigger auto-save when images are reordered
 	}
 
 	function handleImageDragEnd(event) {
@@ -976,6 +1104,7 @@ export function initEntries({ user, postName = "" }) {
 		}
 		renderImageUrlList();
 		updatePreview();
+		debounceAutoSave(); // Trigger auto-save when image is removed
 	}
 
 	function changePreviewIndex(delta) {
