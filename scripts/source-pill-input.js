@@ -605,4 +605,19 @@ export class SourcePillInput {
 		this.editingIndex = null;
 		this.render();
 	}
+
+	setDisabled(disabled) {
+		if (this.input) {
+			this.input.disabled = disabled;
+		}
+		if (this.pillGrid) {
+			if (disabled) {
+				this.pillGrid.style.pointerEvents = "none";
+				this.pillGrid.style.opacity = "0.6";
+			} else {
+				this.pillGrid.style.pointerEvents = "";
+				this.pillGrid.style.opacity = "";
+			}
+		}
+	}
 }
