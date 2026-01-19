@@ -101,6 +101,8 @@ export function initEntries({ user, postName = "" }) {
 
 		btnSave: $("#btnSaveEntry"),
 		autoSaveIndicator: $("#autoSaveIndicator"),
+		btnToggleDraftLive: $("#btnToggleDraftLive"),
+		btnToggleDraftLiveText: $("#btnToggleDraftLiveText"),
 
 		readerDlg: $("#entryReaderModal"),
 		readerTitle: $("#entryReaderTitle"),
@@ -171,6 +173,11 @@ export function initEntries({ user, postName = "" }) {
 	let autoSaveTimer = null;
 	let autoSaveListeners = [];
 
+	// Draft/Live toggle state
+	let isViewingOriginal = false;
+	let originalVersion = null;
+	let currentDraftState = null;
+
 	// Initialize PillInput components for tags and sources
 	const entryTagsInput = new PillInput(ui.entryTags, {
 		placeholder: "Type a tag and press Enter...",
@@ -203,10 +210,14 @@ export function initEntries({ user, postName = "" }) {
 	ui.btnReaderNext.addEventListener("click", () => changeReaderImageIndex(1));
 
 	ui.btnSave.addEventListener("click", save);
+	ui.btnToggleDraftLive.addEventListener("click", toggleDraftLive);
 
 	// Stop auto-save when modal closes
 	ui.dlg.addEventListener("close", () => {
 		stopAutoSave();
+		isViewingOriginal = false;
+		originalVersion = null;
+		currentDraftState = null;
 	});
 
 	ui.btnReaderEdit.addEventListener("click", () => {
@@ -783,8 +794,26 @@ export function initEntries({ user, postName = "" }) {
 		renderImageUrlList();
 		updatePreview();
 
+		// Initialize draft/live toggle state
+		isViewingOriginal = false;
+		originalVersion = null;
+		currentDraftState = null;
+
 		// Save draft version when opening for edit
 		if (entryId && entryData) {
+			// Store the original version for toggling
+			originalVersion = {
+				title: entryData.title || "",
+				description: entryData.description || "",
+				imageUrls: getEntryImageUrls(entryData),
+				tags: Array.isArray(entryData.tags) ? [...entryData.tags] : [],
+				sources: Array.isArray(entryData.sources) ? [...entryData.sources] : [],
+			};
+
+			// Show toggle button
+			ui.btnToggleDraftLive.classList.remove("is-hidden");
+			ui.btnToggleDraftLiveText.textContent = "View Original";
+
 			try {
 				await updateEntry(editingId, {
 					draftVersion: {
@@ -798,6 +827,9 @@ export function initEntries({ user, postName = "" }) {
 			} catch (e) {
 				console.error("Failed to save draft version:", e);
 			}
+		} else {
+			// Hide toggle button for new entries
+			ui.btnToggleDraftLive.classList.add("is-hidden");
 		}
 
 		// Start auto-save after modal opens
@@ -809,6 +841,70 @@ export function initEntries({ user, postName = "" }) {
 	function showError(msg) {
 		ui.err.textContent = msg;
 		ui.err.classList.remove("is-hidden");
+	}
+
+	function toggleDraftLive() {
+		if (!editingId || !originalVersion) return;
+
+		if (isViewingOriginal) {
+			// Switch back to draft (current edits)
+			loadEntryDataIntoForm(currentDraftState);
+			ui.btnToggleDraftLiveText.textContent = "View Original";
+			isViewingOriginal = false;
+
+			// Re-enable form fields
+			ui.entryTitle.disabled = false;
+			ui.entryDesc.disabled = false;
+			ui.entryUrlInput.disabled = false;
+			ui.btnAddEntryImageUrl.disabled = false;
+			ui.btnSave.disabled = false;
+			entryTagsInput.setDisabled(false);
+			entrySourcesInput.setDisabled(false);
+
+			// Resume auto-save
+			startAutoSave();
+		} else {
+			// Save current draft state before switching to original
+			currentDraftState = {
+				title: ui.entryTitle.value,
+				description: ui.entryDesc.value,
+				tags: entryTagsInput.getItems(),
+				sources: entrySourcesInput.getItems(),
+				imageUrls: [...imageUrls],
+			};
+
+			// Switch to original version
+			loadEntryDataIntoForm(originalVersion);
+			ui.btnToggleDraftLiveText.textContent = "View Draft";
+			isViewingOriginal = true;
+
+			// Disable form fields while viewing original
+			ui.entryTitle.disabled = true;
+			ui.entryDesc.disabled = true;
+			ui.entryUrlInput.disabled = true;
+			ui.btnAddEntryImageUrl.disabled = true;
+			ui.btnSave.disabled = true;
+			entryTagsInput.setDisabled(true);
+			entrySourcesInput.setDisabled(true);
+
+			// Stop auto-save while viewing original
+			stopAutoSave();
+		}
+	}
+
+	function loadEntryDataIntoForm(data) {
+		if (!data) return;
+
+		ui.entryTitle.value = data.title || "";
+		ui.entryDesc.value = data.description || "";
+		entryTagsInput.setItems(Array.isArray(data.tags) ? data.tags : []);
+		entrySourcesInput.setItems(Array.isArray(data.sources) ? data.sources : []);
+		imageUrls = Array.isArray(data.imageUrls) ? [...data.imageUrls] : [];
+		previewIndex = 0;
+		selectedImageIndex = null;
+
+		renderImageUrlList();
+		updatePreview();
 	}
 
 	function updatePreview() {
