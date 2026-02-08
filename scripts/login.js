@@ -137,7 +137,7 @@ $("#authForm").addEventListener("submit", async (e) => {
 	try {
 		// Execute reCAPTCHA v3
 		const recaptchaToken = await grecaptcha.execute(
-			"6Leyjk4sAAAAANquA6iqXXicXD-6zTitWJsGEzLP",
+			"6LdVslAsAAAAAAwyU1wyjAxIG_K187E82ID2C7Re",
 			{ action: mode === "create" ? "create_account" : "sign_in" },
 		);
 
