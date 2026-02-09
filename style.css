@@ -1072,7 +1072,7 @@ a {
 	min-height: 200px;
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: 8px;
 	padding: 12px;
 }
 .reader__image {

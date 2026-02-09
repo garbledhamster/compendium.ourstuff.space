@@ -1295,16 +1295,12 @@ export function initEntries({ user, postName = "" }) {
 			const captionInput = document.createElement("input");
 			captionInput.type = "text";
 			captionInput.className = "entry-image-item__caption-input";
-			captionInput.placeholder = "Caption";
+			captionInput.placeholder = "Caption (optional)";
 			captionInput.value = caption;
 			captionInput.addEventListener("input", (e) => {
 				const newCaption = e.target.value.trim();
-				if (newCaption) {
-					imageUrls[index] = { url, caption: newCaption };
-				} else {
-					// If caption is empty, store as string for simplicity
-					imageUrls[index] = url;
-				}
+				// Always store as object to maintain structure and support future properties
+				imageUrls[index] = { url, caption: newCaption };
 				debounceAutoSave();
 			});
 			captionInput.addEventListener("click", (e) => {
