@@ -1158,6 +1158,7 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
 		try {
 			await updateCompendium(compId, updates);
 			// Optimistically update local state to avoid showing stale data
+			// The Firebase listener will eventually overwrite this with authoritative data
 			if (selectedCompendium && selectedCompendium.id === compId) {
 				selectedCompendium.doc = { ...selectedCompendium.doc, ...updates };
 				paintEditor(scope);
