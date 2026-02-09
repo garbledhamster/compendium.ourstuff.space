@@ -1014,13 +1014,13 @@ export function initEntries({ user, postName = "" }) {
 
 	// Helper functions to handle mixed format (string URLs or objects with {url, caption})
 	function getImageUrl(imageEntry) {
-		if (typeof imageEntry === 'string') return imageEntry;
-		return imageEntry?.url || '';
+		if (typeof imageEntry === "string") return imageEntry;
+		return imageEntry?.url || "";
 	}
 
 	function getImageCaption(imageEntry) {
-		if (typeof imageEntry === 'string') return '';
-		return imageEntry?.caption || '';
+		if (typeof imageEntry === "string") return "";
+		return imageEntry?.caption || "";
 	}
 
 	function getEntryOrderValue(entryData, index) {
