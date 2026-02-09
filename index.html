@@ -573,6 +573,7 @@
             <span class="field__label">Image URLs (optional)</span>
             <div class="hstack">
               <input class="input" id="entryImageUrlInput" type="url" placeholder="https://...">
+              <input class="input" id="entryImageCaptionInput" type="text" placeholder="Caption (optional)">
               <button class="btn btn--outline" id="btnAddEntryImageUrl" type="button">Add</button>
             </div>
             <div class="subtle small" id="entryImageUrlsEmpty">No image URLs added yet.</div>
@@ -645,6 +646,7 @@
         <div class="reader" id="entryReader">
           <div class="reader__media is-hidden" id="entryReaderMedia">
             <img class="reader__image" id="entryReaderImage" alt="Entry image" loading="lazy" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E">
+            <div class="reader__caption subtle small is-hidden" id="entryReaderCaption"></div>
             <div class="reader__nav hstack">
               <button class="btn btn--outline btn--sm" id="btnReaderPrev" type="button">
                 <span class="ico" aria-hidden="true">

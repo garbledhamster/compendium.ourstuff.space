@@ -1072,7 +1072,7 @@ a {
 	min-height: 200px;
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 8px;
 	padding: 12px;
 }
 .reader__image {
@@ -1081,6 +1081,12 @@ a {
 	max-height: 500px;
 	object-fit: contain;
 	display: block;
+}
+.reader__caption {
+	text-align: center;
+	font-style: italic;
+	padding: 4px 8px;
+	margin-bottom: 8px;
 }
 .reader__nav {
 	justify-content: center;
@@ -2624,7 +2630,8 @@ b {
 }
 
 .entry-image-item {
-	display: flex;
+	display: grid;
+	grid-template-columns: auto 1fr auto;
 	align-items: center;
 	gap: 10px;
 	padding: 10px 12px;
@@ -2694,5 +2701,27 @@ b {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	flex: 1;
+	min-width: 0;
+}
+
+.entry-image-item__caption-input {
+	width: 200px;
+	font-size: 13px;
+	padding: 4px 8px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius-sm);
+	background: var(--bg);
+	color: var(--text);
+	transition: border-color 0.18s ease;
+}
+
+.entry-image-item__caption-input:focus {
+	outline: none;
+	border-color: var(--primary);
+}
+
+.entry-image-item.is-selected .entry-image-item__caption-input {
+	background: var(--bg);
+	color: var(--text);
+	border-color: var(--secondary);
 }
