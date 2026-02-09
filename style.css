@@ -1086,6 +1086,7 @@ a {
 	text-align: center;
 	font-style: italic;
 	padding: 4px 8px;
+	/* Reduce spacing between image and caption for tighter grouping */
 	margin-top: -8px;
 }
 .reader__nav {

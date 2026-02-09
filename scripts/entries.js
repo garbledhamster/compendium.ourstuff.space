@@ -547,7 +547,7 @@ export function initEntries({ user, postName = "" }) {
 			ui.readerImage.src = currentImageUrl;
 			ui.readerMedia.classList.remove("is-hidden");
 			ui.reader.classList.remove("reader--no-media");
-			
+
 			// Show caption if it exists
 			if (currentImageCaption) {
 				ui.readerCaption.textContent = currentImageCaption;
@@ -1034,11 +1034,11 @@ export function initEntries({ user, postName = "" }) {
 		const url = ui.entryUrlInput.value.trim();
 		if (!url) return;
 		const caption = ui.entryCaptionInput.value.trim();
-		
+
 		// Store as object if caption exists, otherwise as string for backward compatibility
 		const imageEntry = caption ? { url, caption } : url;
 		imageUrls = [...imageUrls, imageEntry];
-		
+
 		if (imageUrls.length === 1) {
 			previewIndex = 0;
 		}
@@ -1267,7 +1267,7 @@ export function initEntries({ user, postName = "" }) {
 		imageUrls.forEach((imageEntry, index) => {
 			const url = getImageUrl(imageEntry);
 			const caption = getImageCaption(imageEntry);
-			
+
 			const row = document.createElement("div");
 			row.className = "entry-image-item";
 			row.setAttribute("draggable", "true");
