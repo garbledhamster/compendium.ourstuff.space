@@ -491,15 +491,22 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
 		}
 		const scope = selectedCompendium.doc?.visibility;
 		const allItems = [...personalItems, ...publicItems];
-		const found = allItems.find(
+		// First try to find with matching visibility
+		let found = allItems.find(
 			(item) => item.id === selectedCompendium.id && item.visibility === scope,
 		);
+		// If not found, try to find by ID only (handles visibility changes)
+		if (!found) {
+			found = allItems.find((item) => item.id === selectedCompendium.id);
+		}
 		if (found) {
 			selectedCompendium = { id: found.id, doc: found };
-			showDetailPanel(scope);
-			paintEditor(scope);
+			// Update selectedScope to match the found item's actual visibility
+			selectedScope = found.visibility;
+			showDetailPanel(found.visibility);
+			paintEditor(found.visibility);
 			renderReader(found);
-			onSelectCompendium?.(scope, found.id, found);
+			onSelectCompendium?.(found.visibility, found.id, found);
 		} else {
 			selectedCompendium = null;
 			showDetailPanel(selectedScope);
@@ -1150,6 +1157,12 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
 
 		try {
 			await updateCompendium(compId, updates);
+			// Optimistically update local state to avoid showing stale data
+			// The Firebase listener will eventually overwrite this with authoritative data
+			if (selectedCompendium && selectedCompendium.id === compId) {
+				selectedCompendium.doc = { ...selectedCompendium.doc, ...updates };
+				paintEditor(scope);
+			}
 			toast("Saved");
 		} catch (e) {
 			toast(e?.message || "Save failed", "bad");
@@ -1207,7 +1220,9 @@ export function initCompendiums({ user, ownerName = "", onSelectCompendium }) {
 
 		try {
 			await updateCompendium(compId, updates);
-			selectedScope = nextVisibility;
+			// Don't update selectedScope here - let Firebase listener handle it
+			// This prevents race conditions where we switch scope before the item
+			// has moved between personalItems and publicItems arrays
 			toast("Visibility updated");
 		} catch (e) {
 			toast(e?.message || "Visibility update failed", "bad");
