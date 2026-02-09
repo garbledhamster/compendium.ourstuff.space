@@ -87,6 +87,7 @@ export function initEntries({ user, postName = "" }) {
 		entryTags: $("#entryTags"),
 		entrySources: $("#entrySources"),
 		entryUrlInput: $("#entryImageUrlInput"),
+		entryCaptionInput: $("#entryImageCaptionInput"),
 		btnAddEntryImageUrl: $("#btnAddEntryImageUrl"),
 		entryImageUrlsList: $("#entryImageUrlsList"),
 		entryImageUrlsEmpty: $("#entryImageUrlsEmpty"),
@@ -112,6 +113,7 @@ export function initEntries({ user, postName = "" }) {
 		reader: $("#entryReader"),
 		readerMedia: $("#entryReaderMedia"),
 		readerImage: $("#entryReaderImage"),
+		readerCaption: $("#entryReaderCaption"),
 		readerIndexLabel: $("#entryReaderIndex"),
 		btnReaderPrev: $("#btnReaderPrev"),
 		btnReaderNext: $("#btnReaderNext"),
@@ -537,15 +539,26 @@ export function initEntries({ user, postName = "" }) {
 			0,
 			Math.min(readerImageIndex, readerImageUrls.length - 1),
 		);
-		const currentImageUrl = readerImageUrls[readerImageIndex] || "";
+		const currentImageEntry = readerImageUrls[readerImageIndex];
+		const currentImageUrl = getImageUrl(currentImageEntry);
+		const currentImageCaption = getImageCaption(currentImageEntry);
 
 		if (currentImageUrl && hasImages) {
 			ui.readerImage.src = currentImageUrl;
 			ui.readerMedia.classList.remove("is-hidden");
 			ui.reader.classList.remove("reader--no-media");
+			
+			// Show caption if it exists
+			if (currentImageCaption) {
+				ui.readerCaption.textContent = currentImageCaption;
+				ui.readerCaption.classList.remove("is-hidden");
+			} else {
+				ui.readerCaption.classList.add("is-hidden");
+			}
 		} else {
 			ui.readerMedia.classList.add("is-hidden");
 			ui.readerImage.removeAttribute("src");
+			ui.readerCaption.classList.add("is-hidden");
 			ui.reader.classList.add("reader--no-media");
 		}
 
@@ -910,7 +923,8 @@ export function initEntries({ user, postName = "" }) {
 	function updatePreview() {
 		const hasImages = imageUrls.length > 0;
 		previewIndex = Math.max(0, Math.min(previewIndex, imageUrls.length - 1));
-		const primaryImageUrl = imageUrls[previewIndex] || "";
+		const primaryImageEntry = imageUrls[previewIndex];
+		const primaryImageUrl = getImageUrl(primaryImageEntry);
 
 		if (primaryImageUrl && hasImages) {
 			ui.previewImg.src = primaryImageUrl;
@@ -998,6 +1012,17 @@ export function initEntries({ user, postName = "" }) {
 		return urls[0] || "";
 	}
 
+	// Helper functions to handle mixed format (string URLs or objects with {url, caption})
+	function getImageUrl(imageEntry) {
+		if (typeof imageEntry === 'string') return imageEntry;
+		return imageEntry?.url || '';
+	}
+
+	function getImageCaption(imageEntry) {
+		if (typeof imageEntry === 'string') return '';
+		return imageEntry?.caption || '';
+	}
+
 	function getEntryOrderValue(entryData, index) {
 		if (typeof entryData?.order === "number") return entryData.order;
 		if (typeof entryData?.createdAt?.toMillis === "function")
@@ -1006,13 +1031,19 @@ export function initEntries({ user, postName = "" }) {
 	}
 
 	function addImageUrlFromInput({ silent = false } = {}) {
-		const value = ui.entryUrlInput.value.trim();
-		if (!value) return;
-		imageUrls = [...imageUrls, value];
+		const url = ui.entryUrlInput.value.trim();
+		if (!url) return;
+		const caption = ui.entryCaptionInput.value.trim();
+		
+		// Store as object if caption exists, otherwise as string for backward compatibility
+		const imageEntry = caption ? { url, caption } : url;
+		imageUrls = [...imageUrls, imageEntry];
+		
 		if (imageUrls.length === 1) {
 			previewIndex = 0;
 		}
 		ui.entryUrlInput.value = "";
+		ui.entryCaptionInput.value = "";
 		renderImageUrlList();
 		updatePreview();
 		debounceAutoSave(); // Trigger auto-save when image is added
@@ -1233,7 +1264,10 @@ export function initEntries({ user, postName = "" }) {
 			ui.entryImageUrlsList.removeAttribute("aria-multiselectable");
 		}
 
-		imageUrls.forEach((url, index) => {
+		imageUrls.forEach((imageEntry, index) => {
+			const url = getImageUrl(imageEntry);
+			const caption = getImageCaption(imageEntry);
+			
 			const row = document.createElement("div");
 			row.className = "entry-image-item";
 			row.setAttribute("draggable", "true");
@@ -1257,8 +1291,29 @@ export function initEntries({ user, postName = "" }) {
 			urlText.textContent = url;
 			urlText.title = url;
 
+			// Create a caption input field
+			const captionInput = document.createElement("input");
+			captionInput.type = "text";
+			captionInput.className = "entry-image-item__caption-input";
+			captionInput.placeholder = "Caption";
+			captionInput.value = caption;
+			captionInput.addEventListener("input", (e) => {
+				const newCaption = e.target.value.trim();
+				if (newCaption) {
+					imageUrls[index] = { url, caption: newCaption };
+				} else {
+					// If caption is empty, store as string for simplicity
+					imageUrls[index] = url;
+				}
+				debounceAutoSave();
+			});
+			captionInput.addEventListener("click", (e) => {
+				e.stopPropagation(); // Prevent row selection when clicking caption input
+			});
+
 			row.appendChild(indexLabel);
 			row.appendChild(urlText);
+			row.appendChild(captionInput);
 
 			// Add drag event listeners
 			row.addEventListener("dragstart", handleImageDragStart);
