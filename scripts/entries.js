@@ -1035,7 +1035,7 @@ export function initEntries({ user, postName = "" }) {
 		if (!url) return;
 		const caption = ui.entryCaptionInput.value.trim();
 
-		// Store as object if caption exists, otherwise as string for backward compatibility
+		// Store as object if caption exists, otherwise as string to maintain backward compatibility
 		const imageEntry = caption ? { url, caption } : url;
 		imageUrls = [...imageUrls, imageEntry];
 
@@ -1299,8 +1299,8 @@ export function initEntries({ user, postName = "" }) {
 			captionInput.value = caption;
 			captionInput.addEventListener("input", (e) => {
 				const newCaption = e.target.value.trim();
-				// Always store as object to maintain structure and support future properties
-				imageUrls[index] = { url, caption: newCaption };
+				// Store as object if caption exists, otherwise as string to maintain consistency
+				imageUrls[index] = newCaption ? { url, caption: newCaption } : url;
 				debounceAutoSave();
 			});
 			captionInput.addEventListener("click", (e) => {
