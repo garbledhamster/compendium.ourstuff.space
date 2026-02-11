@@ -96,6 +96,7 @@ export function initEntries({ user, postName = "" }) {
 
 		previewWrap: $("#entryPreviewWrap"),
 		previewImg: $("#entryPreviewImg"),
+		previewNav: $("#entryPreviewNav"),
 		previewIndexLabel: $("#entryPreviewIndex"),
 		btnPreviewPrev: $("#btnPreviewPrev"),
 		btnPreviewNext: $("#btnPreviewNext"),
@@ -114,6 +115,7 @@ export function initEntries({ user, postName = "" }) {
 		readerMedia: $("#entryReaderMedia"),
 		readerImage: $("#entryReaderImage"),
 		readerCaption: $("#entryReaderCaption"),
+		readerNav: $("#entryReaderNav"),
 		readerIndexLabel: $("#entryReaderIndex"),
 		btnReaderPrev: $("#btnReaderPrev"),
 		btnReaderNext: $("#btnReaderNext"),
@@ -568,6 +570,13 @@ export function initEntries({ user, postName = "" }) {
 		const disableNav = readerImageUrls.length < 2;
 		ui.btnReaderPrev.disabled = disableNav;
 		ui.btnReaderNext.disabled = disableNav;
+		
+		// Hide navigation when there's only one or no images
+		if (disableNav) {
+			ui.readerNav?.classList.add("is-hidden");
+		} else {
+			ui.readerNav?.classList.remove("is-hidden");
+		}
 	}
 
 	function changeReaderImageIndex(delta) {
@@ -940,6 +949,13 @@ export function initEntries({ user, postName = "" }) {
 		const disableNav = imageUrls.length < 2;
 		ui.btnPreviewPrev.disabled = disableNav;
 		ui.btnPreviewNext.disabled = disableNav;
+		
+		// Hide navigation when there's only one or no images
+		if (disableNav) {
+			ui.previewNav?.classList.add("is-hidden");
+		} else {
+			ui.previewNav?.classList.remove("is-hidden");
+		}
 	}
 
 	async function save() {
