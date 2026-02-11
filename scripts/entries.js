@@ -572,11 +572,7 @@ export function initEntries({ user, postName = "" }) {
 		ui.btnReaderNext.disabled = disableNav;
 		
 		// Hide navigation when there's only one or no images
-		if (disableNav) {
-			ui.readerNav?.classList.add("is-hidden");
-		} else {
-			ui.readerNav?.classList.remove("is-hidden");
-		}
+		ui.readerNav?.classList.toggle("is-hidden", disableNav);
 	}
 
 	function changeReaderImageIndex(delta) {
@@ -951,11 +947,7 @@ export function initEntries({ user, postName = "" }) {
 		ui.btnPreviewNext.disabled = disableNav;
 		
 		// Hide navigation when there's only one or no images
-		if (disableNav) {
-			ui.previewNav?.classList.add("is-hidden");
-		} else {
-			ui.previewNav?.classList.remove("is-hidden");
-		}
+		ui.previewNav?.classList.toggle("is-hidden", disableNav);
 	}
 
 	async function save() {
