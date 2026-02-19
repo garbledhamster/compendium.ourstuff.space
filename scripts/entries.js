@@ -336,7 +336,7 @@ export function initEntries({ user, postName = "" }) {
 
 			const imageList = getEntryImageUrls(e);
 			const hasImages = imageList.length > 0;
-			const initialImage = hasImages ? imageList[0] : "";
+			const initialImage = hasImages ? getImageUrl(imageList[0]) : "";
 			const img = hasImages
 				? `<button class="thumb__image" type="button" data-thumb-action="expand" aria-label="View full image"><img class="thumb" src="${esc(initialImage)}" alt="Entry image" loading="lazy" /></button>`
 				: `<div class="thumb__image" aria-disabled="true"><div class="thumb--empty">No image</div></div>`;
@@ -444,7 +444,7 @@ export function initEntries({ user, postName = "" }) {
 			const updateThumb = () => {
 				if (!thumbImg || !imageList.length) return;
 				imageIndex = (imageIndex + imageList.length) % imageList.length;
-				thumbImg.src = imageList[imageIndex];
+				thumbImg.src = getImageUrl(imageList[imageIndex]);
 				thumbImg.alt = `Entry image ${imageIndex + 1} of ${imageList.length}`;
 			};
 
@@ -462,7 +462,7 @@ export function initEntries({ user, postName = "" }) {
 
 			expandBtn?.addEventListener("click", () => {
 				if (!imageList.length) return;
-				openImageViewer(imageList[imageIndex]);
+				openImageViewer(getImageUrl(imageList[imageIndex]));
 			});
 
 			if (imageList.length) {
